@@ -1,0 +1,16 @@
+# {{ llms.title | markdown_text }}
+{% if llms.description %}
+> {{ llms.description | markdown_text }}
+{% endif %}
+{% if llms.coverage == "all-pages" %}
+{% for page in llms.pages %}
+- [{{ page.title | markdown_text }}{% if page.listing_direction is defined and page.listing_direction %} · {{ page.listing_direction | markdown_text }}{% endif %}{% if page.page_number is defined and (page.page_number > 1 or page.listing_variant is defined and page.listing_variant == 'alternate') %} · {{ page.page_number }} / {{ page.page_count }}{% endif %}]({{ page.url | markdown_destination }}){% if page.description %}: {{ page.description | markdown_text }}{% endif %}{% if llms.include_human_link and page.url != page.html_url %} ([HTML]({{ page.html_url | markdown_destination }})){% endif %}
+{% endfor %}
+{% else %}
+{% for section in llms.sections %}
+## {{ section.title | markdown_text }}
+{% for page in section.pages %}
+- [{{ page.title | markdown_text }}]({{ page.url | markdown_destination }}){% if page.description %}: {{ page.description | markdown_text }}{% endif %}{% if llms.include_human_link and page.url != page.html_url %} ([HTML]({{ page.html_url | markdown_destination }})){% endif %}
+{% endfor %}
+{% endfor %}
+{% endif %}

@@ -1,0 +1,21 @@
+format: gazette-landing/v1
+template: base/services.html
+content:
+  id: page:canonical-services-minimal
+  site: site:reading
+  title: Minimal service specimen
+  lifecycle: draft
+  language: en
+  route:
+    path: /canonical-services-minimal/
+  structure:
+    kind: page
+    family:
+      kind: project
+sections:
+- component: service-opening
+  heading:
+    level: 1
+    text: Minimal service specimen
+  body: |
+    This complete minimal account supplies no media, action or optional questions.

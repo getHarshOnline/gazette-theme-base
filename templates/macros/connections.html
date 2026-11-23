@@ -1,0 +1,22 @@
+{% import "base/macros/connection-destination.html" as destination %}
+{# Draw the group identified by id with its parents, children, members and ordered steps from memberships/containers/journeys; nodes/routes/references resolve labels and links, and copy/source supply their context. #}
+{% macro group(id, nodes, routes, references, memberships, containers, journeys, copy, source="") %}
+{% set key = id | replace(from="%", to="%25") | replace(from=":", to="%3A") %}
+{% set members = memberships | filter(attribute="collection", value=id) %}
+{% set children = containers | filter(attribute="parent", value=id) %}
+{% set parents = containers | filter(attribute="child", value=id) %}
+{% set steps = journeys | filter(attribute="journey", value=id) %}
+{% set node = nodes | get(key=id, default=false) %}
+<section class="connection-group">
+  <div class="connection-group__identity">
+    <h3>{{ destination::link(id=id,scope="connection-group",nodes=nodes,routes=routes,references=references,missing=copy["base:graph-unrouted"],source=source,copy=copy) }}</h3>
+    {% if node and node.description is defined and node.description %}<p>{{ node.description }}</p>{% endif %}
+    {% if parents %}<div class="connection-group__parent"><span>{{ copy["base:graph-parent"] }}</span><ul>{% for parent in parents %}<li>{{ destination::link(id=parent.parent,scope="connection-parent:" ~ key,nodes=nodes,routes=routes,references=references,missing=copy["base:graph-unrouted"],source=source,copy=copy) }}</li>{% endfor %}</ul></div>{% endif %}
+  </div>
+  <div class="connection-group__choices">
+    {% if children %}<div><h4>{{ copy["base:graph-nested"] }}</h4><ul>{% for child in children %}<li>{{ destination::link(id=child.child,scope="connection-child:" ~ key,nodes=nodes,routes=routes,references=references,missing=copy["base:graph-unrouted"],source=source,copy=copy) }}</li>{% endfor %}</ul></div>{% endif %}
+    {% if members %}<div><h4>{{ copy["base:graph-members"] }}</h4><ul>{% for member in members %}<li>{{ destination::link(id=member.content,scope="connection-member:" ~ key,nodes=nodes,routes=routes,references=references,missing=copy["base:graph-unrouted"],source=source,copy=copy) }}</li>{% endfor %}</ul></div>{% endif %}
+    {% if steps %}<div><h4>{{ copy["base:graph-steps"] }}</h4><ol>{% for step in steps %}<li value="{{ step.position + 1 }}">{{ destination::link(id=step.content,scope="connection-step:" ~ key ~ ":" ~ step.position,nodes=nodes,routes=routes,references=references,missing=copy["base:graph-unrouted"],source=source,copy=copy) }}</li>{% endfor %}</ol></div>{% endif %}
+  </div>
+</section>
+{% endmacro group %}

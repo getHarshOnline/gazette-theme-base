@@ -1,0 +1,48 @@
+@use 'typography';
+@use 'sass:list';
+
+// Chromium follows MathML Core, which ignores mtable's columnalign and centres every
+// cell, so aligned equations lose the relation column their author set. Read the value
+// by position for the first three columns, alternate right and left for wider aligned
+// equations, and repeat a single value across every column, as MathML does.
+@mixin maths-columns {
+  @each $value in (left,right) {
+    $cells: ();
+    $prefixes: ('');
+    @for $column from 1 through 3 {
+      @each $prefix in $prefixes { $cells: list.append($cells,"mtable[columnalign^='#{$prefix}#{$value}'] > mtr > mtd:nth-child(#{$column})",comma); }
+      $next: ();
+      @each $prefix in $prefixes { @each $word in (left,center,right) { $next: list.append($next,'#{$prefix}#{$word} ',comma); } }
+      $prefixes: $next;
+    }
+    #{$cells} { text-align: $value; }
+  }
+  mtable[columnalign~='left']:not([columnalign~='center'],[columnalign~='right']) > mtr > mtd { text-align: left; }
+  mtable[columnalign~='right']:not([columnalign~='center'],[columnalign~='left']) > mtr > mtd { text-align: right; }
+  mtable[columnalign^='right left right left'] > mtr > mtd:nth-child(n+4):nth-child(odd) { text-align: right; }
+  mtable[columnalign^='right left right left'] > mtr > mtd:nth-child(n+4):nth-child(even) { text-align: left; }
+}
+
+@mixin recipes {
+  [data-gazette-table] { display: block; inline-size: 100%; max-inline-size: 100%; min-inline-size: 0; overflow-x: auto; }
+  table { display: table; table-layout: auto; inline-size: 100%; border-collapse: collapse; font-size: var(--type-size-body); }
+  th,td { padding: var(--space-3) var(--space-4); text-align: start; border-block-end: var(--stroke-hair) solid var(--color-line); vertical-align: top; font-variant-numeric: tabular-nums; }
+  // Outer edges need less space than the gutter between adjacent columns.
+  table > :is(thead,tbody,tfoot) > tr > :is(th,td):first-child { padding-inline-start: var(--space-3); }
+  table > :is(thead,tbody,tfoot) > tr > :is(th,td):last-child { padding-inline-end: var(--space-3); }
+  :is(th,td)[align='left'] { text-align: left; }
+  :is(th,td)[align='center'] { text-align: center; }
+  :is(th,td)[align='right'] { text-align: right; }
+  @include maths-columns;
+  th { font-weight: var(--type-weight-display); }
+  :is([data-gazette-table],pre,p:has(> math[display='block'])) { --focus-ring-offset: calc(-1 * var(--focus-width)); }
+  :is([data-gazette-table],p:has(> math[display='block'])):is([tabindex],:focus-visible) { border-radius: var(--world-material-optical-radius); }
+  .reading-overflow__hint { margin-block: var(--space-2) var(--space-5); @include typography.reading-face(); font-size: var(--type-size-meta); line-height: var(--type-line-height-body); color: var(--color-muted); }
+  :is([data-gazette-table],pre,p:has(> math[display='block']))::-webkit-scrollbar { -webkit-appearance: none; height: var(--space-2); }
+  :is([data-gazette-table],pre,p:has(> math[display='block']))::-webkit-scrollbar-track { background: color-mix(in srgb,var(--reading-scroll-ink,var(--color-ink)) calc(var(--world-material-optical-edge) * 100%),transparent); border-radius: var(--radius-control); }
+  :is([data-gazette-table],pre,p:has(> math[display='block']))::-webkit-scrollbar-thumb { background: var(--reading-scroll-ink,var(--color-muted)); border-radius: var(--radius-control); }
+  @media print {
+    [data-gazette-table] { overflow: visible; }
+    th,td { overflow-wrap: anywhere; }
+  }
+}

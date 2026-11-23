@@ -1,0 +1,36 @@
+{% set has_related = false %}
+{% if presentation.chrome is defined and presentation.chrome %}
+{% set related_label = presentation.chrome.regions | get(key="base:related", default="") %}
+{% set sequence_ids = [] %}
+{% if presentation.chrome.regions | get(key="base:reading-sequence", default="") and presentation.chrome.regions | get(key="base:sequence-overview", default="") %}
+  {% for membership in journeys %}
+    {% if membership.previous %}{% set_global sequence_ids = sequence_ids | concat(with=membership.previous.node.id) %}{% endif %}
+    {% if membership.next %}{% set_global sequence_ids = sequence_ids | concat(with=membership.next.node.id) %}{% endif %}
+  {% endfor %}
+{% endif %}
+{% set reading_choices = [] %}
+{% for item in recommendations.items %}
+  {% if item.id not in sequence_ids %}{% set_global reading_choices = reading_choices | concat(with=item) %}{% endif %}
+{% endfor %}
+{% set has_related = related_label and reading_choices | length > 0 %}
+{% endif %}
+
+{% if has_related or preferred_source_action %}
+<div class="reading-resources">
+{% if has_related %}
+<h2>{{ related_label }}</h2>
+<nav class="reading-related discovery-explorer" aria-label="{{ related_label }}" data-discovery-origin="{{ content.title }}" data-discovery-previous="{{ presentation.chrome.regions | get(key='base:related-previous', default='') }}" data-discovery-next="{{ presentation.chrome.regions | get(key='base:related-next', default='') }}">
+  <ul>
+  {% for item in reading_choices %}
+    <li class="reading-card card-surface">
+      <h3><a class="reading-related__title" href="{{ item.route.url }}" {{ links::attributes(copy=presentation.chrome.regions | default(value=false), destination=item.destination | default(value=false), source=serving_site, site=item.site, content_id=item.id, target=item.presentation | default(value=false)) }}>{{ item.title }}</a></h3>
+      {% if item.description is defined and item.description %}<p>{{ item.description }}</p>{% endif %}
+      {% if item.classifications is defined %}{{ metadata::classifications(entries=item.classifications,copy=presentation.chrome.regions | default(value=false)) }}{% endif %}
+    </li>
+  {% endfor %}
+  </ul>
+</nav>
+{% endif %}
+{{ preferred_source_action | safe }}
+</div>
+{% endif %}

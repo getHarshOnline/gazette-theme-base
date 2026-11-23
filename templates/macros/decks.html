@@ -1,0 +1,12 @@
+{% import "base/macros/links.html" as links %}
+{% import "base/macros/carousel-controls.html" as carousel_controls %}
+{# Draw cards from body_html or entries: title/aria_label name the deck, kind/owned/ordered select its form, field selects viewport or container sizing, card_id_prefix distinguishes card IDs, copy/source describe links, previous/next/pause/resume label controls, and autoplay/wheel enable those inputs. #}
+{% macro render(title="",previous="",next="",body_html="",entries=false,copy=false,source="",kind="",owned=false,aria_label="",ordered=false,pause="",resume="",autoplay=false,wheel=false,field="viewport",card_id_prefix="") %}
+<section data-autoplay="{{ autoplay }}" data-wheel="{{ wheel }}" data-deck-field="{{ field }}" class="quote-deck{% if kind %} quote-deck--{{ kind }}{% endif %}"{% if owned %} data-content-deck{% endif %}{% if aria_label or title %} aria-label="{% if aria_label %}{{ aria_label }}{% else %}{{ title }}{% endif %}"{% endif %}>
+  {% if title %}<header class="quote-deck__header"><h2>{{ title }}</h2></header>{% endif %}
+  {% if ordered %}<ol role="list"{% else %}<div{% endif %} class="quote-deck__stage">{% if body_html %}{{ body_html | safe }}{% else %}{% for item in entries %}{% if ordered %}<li{% else %}<article{% endif %} class="quote-deck__card" data-deck-label="{{ item.title }}">{% include "base/partials/folder-card.html" %}{% if ordered %}</li>{% else %}</article>{% endif %}{% endfor %}{% endif %}{% if ordered %}</ol>{% else %}</div>{% endif %}
+  {% set controls_label = title %}
+  {% if aria_label %}{% set controls_label = aria_label %}{% endif %}
+  {{ carousel_controls::render(prefix="quote-deck",action="quote",previous=previous,next=next,pause=pause,resume=resume,label=controls_label) }}
+</section>
+{% endmacro render %}

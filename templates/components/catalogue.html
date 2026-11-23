@@ -1,0 +1,6 @@
+{% import "base/macros/carousel-controls.html" as carousel_controls %}
+{% set copy = presentation.chrome.regions %}
+<section class="catalogue" data-autoplay="{{ component.arguments.autoplay | default(value=true) }}" aria-label="{{ component.arguments.label }}">
+  <div class="catalogue__stage">{{ component.body.html | safe }}</div>
+  {{ carousel_controls::render(prefix="catalogue",action="catalogue",previous=copy | get(key="base:catalogue-previous",default=""),next=copy | get(key="base:catalogue-next",default=""),pause=copy | get(key="base:catalogue-pause",default=""),resume=copy | get(key="base:catalogue-resume",default=""),label=component.arguments.label) }}
+</section>

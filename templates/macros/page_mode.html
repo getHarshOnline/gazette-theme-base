@@ -1,0 +1,12 @@
+{# Page tasks and defaults: docs/page-families.md. Worlds override the frame block for a scoped exception and use super() for other cases; product_entrance is currently unused. #}
+{% macro page_mode(content, product_entrance=false) -%}
+{%- if content.route is defined and content.route.path == "/" -%}home
+{%- elif content.structure.kind == "collection" -%}index
+{%- elif content.structure.kind == "journey" -%}sequence
+{%- elif content.structure.family.kind == "article" -%}reading
+{%- elif content.structure.family.kind == "documentation" -%}reading
+{%- elif content.structure.family.kind == "project" -%}product
+{%- elif content.structure.family.kind == "index" -%}index
+{%- else -%}utility
+{%- endif -%}
+{%- endmacro page_mode %}

@@ -1,0 +1,31 @@
+{%- import "base/macros/links.html" as links -%}
+{% set resources = false %}
+{% if component.context is defined and component.context and component.context.host.project_resources is defined %}{% set resources = component.context.host.project_resources %}{% endif %}
+{% set copy = false %}
+{% if presentation is defined and presentation.chrome is defined and presentation.chrome %}{% set copy = presentation.chrome.regions | default(value=false) %}{% endif %}
+{% if resources and copy %}
+<nav class="project-links project-resources" aria-label="{{ copy | get(key='base:product-resources', default='') }}{% if resources.name is defined and resources.name %}: {{ resources.name }}{% endif %}">
+  <ul>
+  {% for kind in ['code-documentation', 'learn', 'github', 'mentions', 'available-through'] %}
+    {% set label_key = ['base:product-', kind] | join(sep='') %}
+    {% set description_key = [label_key, '-description'] | join(sep='') %}
+    {% set missing_key = [label_key, '-unavailable'] | join(sep='') %}
+    {% set label = copy | get(key=label_key, default='') %}
+    {% set description = copy | get(key=description_key, default='') %}
+    {% set actions = resources.actions | filter(attribute='kind', value=kind) %}
+    {% if label and (actions or kind == 'mentions') %}
+    <li>
+      {% if actions %}
+        {% set action = actions | first %}
+        <a class="control control--primary" href="{{ action.url }}"{% if action.destination.content is defined and action.destination.content and action.destination.content == component.context.host.content %} aria-current="page"{% endif %} aria-label="{{ label }}{% if resources.name is defined and resources.name %}: {{ resources.name }}{% endif %}{% if description %} · {{ description }}{% endif %}" title="{{ description }}" {{ links::attributes(copy=copy, destination=action.destination) }}>{{ label }}</a>
+      {% else %}
+        <button class="control control--primary" type="button" disabled title="{{ copy | get(key=missing_key, default='') }}" aria-label="{{ label }}: {{ copy | get(key=missing_key, default='') }}">{{ label }}</button>
+      {% endif %}
+    </li>
+    {% endif %}
+  {% endfor %}
+  </ul>
+</nav>
+{% else %}
+<div class="project-links">{{ component.body.html | safe }}</div>
+{% endif %}

@@ -1,0 +1,193 @@
+@use 'typography';
+@use 'optical';
+@use '../tokens/scss/layout';
+
+@mixin opening {
+  .reading-page-header { display: grid; gap: var(--space-4); margin: 0 0 var(--space-7); }
+  .reading-page-header > h1 { margin: 0; inline-size: 100%; max-inline-size: var(--layout-measure); justify-self: center; font-size: var(--type-size-display-2); line-height: var(--type-line-height-heading); text-align: center; }
+  .reading-page-header > .title-group { inline-size: 100%; max-inline-size: var(--layout-measure); justify-self: center; margin: 0; }
+  .reading-page-header > .title-group h1 { text-align: center; }
+  .reading-page-header .reading-context { justify-content: center; inline-size: 100%; margin: 0; font-size: var(--type-size-meta); text-align: center; }
+  .reading-page-header .reading-context ol { display: flex; justify-content: center; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; backdrop-filter: none; }
+}
+
+@mixin navigation {
+  main:has(> .reading-document) { max-inline-size: var(--layout-field-max); }
+  .reading-document > .publication-layout { display: grid; grid-template-columns: var(--layout-track-min) minmax(0,1fr) var(--layout-track-min); grid-template-areas: "navigation body sidebar"; gap: var(--space-6); align-items: start; }
+  :is(.reading-navigation,.reading-sidebar) { position: sticky; inset-block-start: calc(var(--frame-chrome,var(--layout-sticky-chrome)) + var(--space-5)); max-block-size: calc(100svh - var(--frame-chrome,var(--layout-sticky-chrome)) - var(--space-7)); overflow-y: auto; min-inline-size: 0; font-size: var(--type-size-meta); scrollbar-gutter: stable; }
+  .reading-navigation { grid-area: navigation; display: grid; gap: var(--space-5); --reading-placement: beside; }
+  .reading-sidebar { grid-area: sidebar; display: grid; gap: var(--space-5); }
+  .reading-navigation > .reading-corpus,.reading-navigation > .reading-margin { position: static; max-block-size: none; }
+  .reading-document .publication-body { grid-area: body; }
+  .reading-metadata { display: grid; gap: 0; font-size: var(--type-size-meta); }
+  .reading-metadata > :is(.reading-credit,.reading-classifications,.reading-keywords) { margin: 0; }
+
+  .reading-metadata:not(:has(> *)) { display: none; }
+  .reading-document .reading-resources { min-inline-size: 0; margin: 0; }
+  .reading-resources > .preferred-source-link { display: flex; justify-content: center; text-align: center; }
+  .reading-resources > nav + .preferred-source-link { margin-block-start: var(--space-3); }
+  .reading-sidebar .reading-resources > h2 { font-size: var(--type-size-body); margin-block-end: var(--space-4); text-align: center; }
+  // The rail steps back beside the text: its deck arrows are outlined ink rather than filled.
+  .reading-sidebar .discovery-controls .control--navigation { --control-primary-face: transparent; --control-primary-ink: var(--color-ink); }
+  .reading-sidebar .reading-card { padding: var(--space-4); }
+  .reading-sidebar .reading-card > h3 { font-size: var(--type-size-body); }
+  .reading-sidebar .reading-card > p { font-size: var(--type-size-meta); }
+
+  .reading-document .discovery-explorer--ready { grid-template-columns: minmax(0,1fr); }
+  .reading-document .discovery-map { grid-row: auto; aspect-ratio: auto; block-size: calc(var(--target-project) * 4); }
+  .reading-document .discovery-controls { grid-column: 1; }
+  .reading-orientation { padding-block: var(--space-3) var(--space-5); }
+  .reading-orientation > * + * { margin-block-start: var(--space-4); }
+  .reading-orientation__label { color: var(--color-muted); margin-block-end: var(--space-2); }
+  .reading-orientation__position { @include typography.system-face(); font-size: var(--type-size-meta); color: var(--color-muted); font-variant-numeric: tabular-nums; margin-block-start: var(--space-2); }
+  .reading-orientation__journey > summary .reading-orientation__position { display: inline-block; margin: 0 0 0 var(--space-3); font-weight: var(--type-weight-reading); }
+  .reading-orientation .reading-chapters { list-style: decimal; columns: auto; margin-inline-start: var(--space-5); }
+  .reading-chapters li::marker { color: var(--color-muted); font-variant-numeric: tabular-nums; }
+  .reading-orientation .reading-siblings { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  .reading-siblings .reading-siblings { padding-inline-start: var(--space-4); }
+  // A group heading shares the rail's text edge and binds to its own links rather than the group above.
+  .reading-group > .reading-orientation__label { padding-inline: var(--reading-item-inset,0); margin-block: var(--space-4) 0; }
+  .reading-group > .reading-siblings { margin-block-start: var(--space-1); }
+  :is(.reading-chapters,.reading-siblings) li > span { display: block; padding-block: var(--space-2); }
+  :is(.reading-chapters,.reading-siblings) [aria-current='page'] { font-weight: var(--type-weight-display); }
+  // A reading shelf marks the reader's place with its light alone, so the underline stays outside shelves.
+  :is(.reading-chapters,.reading-siblings) [aria-current='page']:not(:where(.reading-corpus,.reading-outline--local) *) { text-decoration: underline; text-decoration-color: var(--color-accent); text-decoration-thickness: var(--stroke-underline-active); text-underline-offset: var(--space-1); }
+  .reading-orientation .reading-orientation__overview { font-weight: var(--type-weight-display); margin-block-start: var(--space-3); }
+  :is(.reading-outline,.reading-corpus) summary { padding-inline: var(--reading-item-inset,0); padding-block: var(--space-3); font-weight: var(--type-weight-display); }
+  :is(.reading-outline,.reading-corpus) ol { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
+  :is(.reading-outline,.reading-corpus) li[data-heading-level='3'] { padding-inline-start: var(--space-4); }
+  :is(.reading-outline,.reading-corpus) a { display: flex; align-items: center; min-block-size: var(--target-project); padding-block: var(--space-2); padding-inline: var(--reading-item-inset,0); text-decoration: none; overflow-wrap: anywhere; }
+  :is(.reading-outline,.reading-corpus) [aria-current='page'] { display: flex; align-items: center; min-block-size: var(--target-project); }
+  :is(.reading-outline,.reading-corpus) a:focus-visible { text-decoration: underline; }
+  @media (hover: hover) and (pointer: fine) { :is(.reading-outline,.reading-corpus) a:hover { text-decoration: underline; } }
+  .reading-sections,.reading-chapters,.reading-siblings,.reading-orientation__overview,.reading-orientation__journey > summary,.reading-orientation__collection > summary,.reading-orientation__journey > p:not([class]),nav.reading-orientation__collection { @include typography.reading-face(); font-size: var(--type-size-body); line-height: var(--type-line-height-body); }
+  .reading-section-control > summary .reading-section-current { display: none; }
+  .reading-header-row { position: relative; flex-basis: 100%; inline-size: 100%; min-inline-size: 0; background: var(--frame-surface,var(--color-paper)); }
+  // The native outline link occupies the same compact row before enhancement.
+  .reading-header-row[data-reading-initial] { display: none; }
+  @media (width < layout.$layout-breakpoint-reading) { .reading-header-row[data-reading-initial] { display: block; } }
+  .reading-header-fallback { text-decoration: none; }
+  .reading-header-row > details { margin: 0; }
+  .reading-header-row:has(> .reading-focus-toggle) { display: flex; align-items: center; gap: var(--space-3); }
+  .reading-header-row:has(> .reading-focus-toggle) > details { flex: 1; min-inline-size: 0; }
+  .reading-focus-toggle { flex: none; justify-content: start; --control-inset-inline: var(--reading-item-inset,0); font-size: var(--type-size-meta); }
+  .reading-focus-muted { visibility: hidden !important; }
+  @media print { .reading-focus-toggle { display: none !important; } }
+  .reading-header-row summary,.reading-header-fallback { display: flex; align-items: center; gap: var(--space-3); min-block-size: var(--target-project); padding-block: var(--space-3); @include typography.reading-face(); font-size: var(--type-size-meta); cursor: pointer; }
+  .reading-header-row summary > span:first-child { flex: none; white-space: nowrap; }
+  .reading-header-row summary::before,.reading-header-fallback::before { content: ''; flex: none; border-inline-start: var(--space-2) solid currentColor; border-block: var(--space-1) solid transparent; }
+  .reading-header-row details[open] > summary::before { transform: rotate(90deg); }
+  .reading-header-row .reading-section-control > summary .reading-section-current:not([hidden]) { display: block; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-muted); }
+  .reading-header-row .reading-tools__body { position: absolute; inset-inline: 0; inset-block-start: calc(100% + var(--space-2)); max-block-size: calc(100svh - var(--frame-header-height,var(--layout-sticky-chrome)) - var(--space-3)); overflow-y: auto; overscroll-behavior: contain; padding: var(--space-4) var(--space-5); background: var(--frame-surface,var(--color-paper)); @include optical.frame($radius: var(--radius-control),$depth: 0 var(--elevation-shell-offset-y) var(--elevation-shell-blur) color-mix(in srgb,var(--color-shadow) calc(var(--elevation-shell-opacity) * 100%),transparent)); }
+  .reading-header-row .reading-sections ol { list-style: none; margin: 0; padding: 0; }
+  .reading-header-row .reading-sections a { display: flex; align-items: center; min-block-size: var(--target-project); padding-block: var(--space-2); text-decoration: none; overflow-wrap: anywhere; }
+  .reading-header-row .reading-sections a:focus-visible { text-decoration: underline; }
+  @media (hover: hover) and (pointer: fine) { .reading-header-row .reading-sections a:hover { text-decoration: underline; } }
+  .reading-header-row .reading-sections li[data-heading-level='3'] { padding-inline-start: var(--space-4); }
+  @media print { .reading-header-row { display: none; } }
+  .reading-sections a[aria-current='location'] { color: var(--color-ink); font-weight: var(--type-weight-display); }
+  .reading-sections a[aria-current='location']:not(:where(.reading-corpus,.reading-outline--local) *) { text-decoration: underline; text-decoration-color: var(--color-accent); text-decoration-thickness: var(--stroke-underline-active); text-underline-offset: var(--space-1); }
+  .reading-margin { display: grid; gap: var(--space-3); overflow: visible; }
+  .reading-margin > .reading-notes-trigger { justify-self: start; }
+  // Beside the text, the trigger sits outside the outline shelf, so it takes the shelf's rule and
+  // padding as its own inset; its outline border is part of the label inset the Focus toggle uses.
+  @media (width >= layout.$layout-breakpoint-reading) {
+    .reading-navigation .reading-margin > .reading-notes-trigger { margin-inline-start: calc(var(--stroke-hair) + var(--space-4)); --control-inset-inline: calc(var(--space-3) - var(--stroke-hair)); }
+  }
+  .reading-margin > .reading-outline { position: static; min-block-size: 0; max-block-size: none; overflow: visible; }
+  .reading-outline--local:not(:has(> :not([hidden]))) { display: none; }
+  .reading-margin:not(:has(.reading-outline > *)):not(:has(> .reading-notes-trigger)) { display: none; }
+  .reading-outline--compact { --reading-placement: flow; position: static; max-block-size: none; margin-block-end: var(--space-6); }
+  .reading-outline--compact ol { columns: 2; column-gap: var(--space-6); }
+  .reading-outline--compact li { break-inside: avoid; }
+}
+
+@mixin apparatus {
+  .reading-apparatus { margin-block-start: var(--space-section); }
+  .reading-context { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); margin-block-end: var(--space-4); @include typography.reading-face(); font-size: var(--type-size-body); line-height: var(--type-line-height-body); color: var(--color-muted); overflow-wrap: anywhere; }
+  .reading-context ol { display: inline-flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); list-style: none; padding: var(--space-1) var(--space-3); margin: 0; @include optical.frame(); @include optical.layer($face: color-mix(in srgb,var(--color-ink) calc(var(--world-material-optical-scene-fill) * 100%),transparent), $filter: blur(var(--world-material-optical-blur)) Saturate(var(--world-material-optical-saturation)), $solid: var(--color-sheet)); }
+  .reading-context li { display: inline-flex; align-items: center; min-inline-size: 0; gap: var(--space-2); }
+  .reading-context a { display: inline-flex; align-items: center; min-block-size: var(--target-project); text-decoration: none; }
+  .reading-context a:focus-visible { text-decoration: underline; }
+  @media (hover: hover) and (pointer: fine) { .reading-context a:hover { text-decoration: underline; } }
+  .reading-context li + li::before { content: '/'; color: var(--color-muted); }
+  .reading-context [aria-current='page'] { color: var(--color-ink); }
+  .reading-notes { margin-block-start: var(--space-5); }
+  .reading-notes > summary { padding-block: var(--space-4); font-size: var(--type-size-h3); }
+  .reading-notes[open] > summary { color: var(--color-accent); }
+  .reading-notes__body { padding-block: var(--space-4) var(--space-6); }
+  .reading-notes__body :target { outline: var(--stroke-hair) solid var(--color-focus); outline-offset: var(--space-2); }
+  .reading-notes__body :is(ul,ol) { padding-inline-start: var(--space-6); max-inline-size: var(--layout-measure); }
+  .reading-notes__body li + li { margin-block-start: var(--space-2); }
+  .reading-notes__body > :is(h2,h3) { margin-block-start: var(--space-6); }
+  .reading-notes__body > :first-child { margin-block-start: 0; }
+  // Ordinary figures in the body and Notes share one caption role. Classed figures keep their own.
+  // A world that reads its figure tokens sets --prose-caption-gap on its figure rule.
+  :is(.publication-body,.reading-notes__body) [data-gazette-image-block] {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  :is(.publication-body,.reading-notes__body) [data-gazette-image-block] > p { max-inline-size: 100%; }
+  :is(.publication-body,.reading-notes__body) :is([data-gazette-image-block] > p,figure:not([class])) > :is(img:not([hidden]),picture:not([data-gazette-image-modes]),a:has(> img,> :where(picture[data-gazette-image-modes]) > img),span[data-gazette-image-ref]),
+  :is(.publication-body,.reading-notes__body) :is([data-gazette-image-block] > p,figure:not([class])) > :where(picture[data-gazette-image-modes]) > img:not([hidden]) {
+    display: block;
+    max-inline-size: 100%;
+    margin-inline: auto;
+  }
+  :is(.publication-body,.reading-notes__body) [data-gazette-image-ref][data-media-standalone] {
+    margin-inline: auto;
+  }
+  // The caption wraps to the declared drawing; a moved drawing leaves its measured place.
+  :is(.publication-body,.reading-notes__body) figure:not([class]):has(> [data-gazette-image-block] img[data-gazette-image-sized]):has(> [data-gazette-image-block] > p :is(img:not([hidden]),span[data-gazette-image-ref]:not([hidden]),.media-viewer-placeholder)) {
+    inline-size: fit-content;
+    max-inline-size: 100%;
+    margin-inline: auto;
+    > figcaption { contain: inline-size; }
+    @media (width < layout.$layout-breakpoint-navigation) {
+      --prose-figure-padding-inline: var(--space-2);
+    }
+  }
+  .reading-notes__body figcaption,.publication-body figure:where(:not([class])) > figcaption { margin-block-start: var(--prose-caption-gap,var(--space-3)); font-size: var(--type-size-meta); color: var(--color-muted); text-align: center; }
+  .footnote-ref { @include typography.system-face(); font-size: var(--type-size-meta); line-height: 0; }
+  .footnote-ref > a { padding-inline: var(--space-1); text-decoration: none; }
+  .footnotes { max-inline-size: var(--layout-measure); margin-block-start: var(--space-6); padding-block-start: var(--space-4); border-block-start: var(--stroke-hair) solid var(--color-strong-line); font-size: var(--type-size-body); }
+  .footnotes > ol { margin: 0; padding-inline-start: var(--space-6); }
+  .footnotes > ol > li { padding-inline-start: var(--space-2); }
+  .footnotes > ol > li + li { margin-block-start: var(--space-5); }
+  .footnotes li > * + * { margin-block-start: var(--space-3); }
+  .footnotes li::marker { @include typography.system-face(); font-size: var(--type-size-meta); }
+  .footnote-backref { display: inline-flex; align-items: center; justify-content: center; min-inline-size: var(--target-project); min-block-size: var(--target-project); margin-inline-start: var(--space-2); text-decoration: none; }
+  .footnotes li:target,.footnote-ref > a:target { outline: var(--focus-width) solid var(--color-focus); outline-offset: var(--focus-offset); }
+  .reading-notes-trigger { --control-font-family: var(--type-family-reading); }
+  :root:has(.reading-notes-trigger:not([hidden])) .reading-apparatus > .reading-notes:not([open]) { border: 0; }
+  :root:has(.reading-notes-trigger:not([hidden])) .reading-apparatus > .reading-notes:not([open]) > summary { display: none; }
+  :root:has(.reading-notes[open]) .reading-notes-trigger { display: none; }
+}
+
+@mixin metadata {
+  .reading-credit,.reading-classifications { display: grid; gap: 0; margin: 0; font-size: var(--type-size-meta); }
+  :is(.reading-credit,.reading-classifications) > div { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,2fr); gap: var(--space-3); padding-block: var(--space-3); border-block-start: var(--stroke-hair) solid var(--color-line); align-items: first baseline; }
+  :is(.reading-credit,.reading-classifications) dt { color: var(--color-muted); }
+  :is(.reading-credit,.reading-classifications) dd { min-inline-size: 0; margin: 0; }
+  :is(.reading-credit,.reading-classifications,.reading-keywords) ul { display: grid; gap: var(--space-2); padding: 0; margin: 0; list-style: none; }
+  // The rule belongs to the row, not its rounded trigger, so it stays straight.
+  .reading-keywords { border-block-start: var(--stroke-hair) solid var(--color-line); }
+  .reading-keywords > summary { padding-block: var(--space-3); color: var(--color-muted); }
+  .reading-keywords > summary > :last-child { float: inline-end; font-variant-numeric: tabular-nums; }
+  // Inline metadata links keep the outset ring that clears their glyphs. Keywords
+  // start at the scrollport's edge, so their list leaves room for that ring.
+  .reading-keywords > ul { padding-block-end: var(--space-3); padding-inline: calc(var(--focus-width) + var(--focus-offset)); }
+  .reading-metadata a { text-decoration-thickness: var(--stroke-hair); --focus-ring-offset: var(--focus-offset); }
+}
+
+@mixin citation {
+  .reading-outline--local > * + * { margin-block-start: var(--space-5); }
+  .reading-citation__body { display: grid; gap: var(--space-4); padding-block: var(--space-3); @include typography.reading-face(); font-size: var(--type-size-meta); }
+  .reading-citation__text { white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; }
+  .reading-citation__formats { display: grid; gap: var(--space-4); }
+  .reading-citation__formats dt { @include typography.system-face($weight: var(--type-weight-display)); margin-block-end: var(--space-2); }
+  .reading-citation__formats dd { margin: 0; }
+  .reading-citation__downloads { display: flex; flex-wrap: wrap; gap: var(--space-4); padding: 0; margin: 0; list-style: none; }
+
+}

@@ -1,0 +1,87 @@
+{% import "base/macros/links.html" as links %}
+{% import "base/macros/authors.html" as attribution %}
+
+{# Show the authors and publication date supplied by a listing item; copy supplies accessible link descriptions. #}
+{% macro item(item,copy=false) %}
+{% set authors = [] %}
+{% set date_format = "%-d %B %Y" %}
+{% if copy %}{% set date_format = copy | get(key="base:date-format", default=date_format) %}{% endif %}
+{% if item.attributions is defined %}{% set authors = item.attributions | filter(attribute="role",value="author") | filter(attribute="principal.name") %}{% endif %}
+{% if authors or item.published is defined and item.published %}<p class="reading-list__metadata">{% if authors %}<span>{{ attribution::names(authors=authors,copy=copy) }}</span>{% endif %}{% if item.published is defined and item.published %}<time datetime="{{ item.published }}">{{ item.published | editorial_date(format=date_format) }}</time>{% endif %}</p>{% endif %}
+{% endmacro item %}
+
+{# Group the supplied entries by taxonomy and link available taxonomy and term destinations; copy supplies accessible link descriptions. #}
+{% macro classifications(entries,copy=false) %}
+{% if entries %}
+<dl class="reading-classifications">
+  {% for taxonomy_id, terms in entries | group_by(attribute="taxonomy.id") %}
+  <div><dt>{% if terms[0].taxonomy.destination is defined and terms[0].taxonomy.destination %}{% set target = terms[0].taxonomy.destination %}<a href="{{ target.url }}" {{ links::attributes(copy=copy,destination=target.destination) }}>{{ terms[0].taxonomy.label }}</a>{% else %}{{ terms[0].taxonomy.label }}{% endif %}</dt><dd><ul>{% for entry in terms %}<li>{% if entry.destination is defined and entry.destination %}<a href="{{ entry.destination.url }}" {{ links::attributes(copy=copy,destination=entry.destination.destination) }}>{{ entry.term.label }}</a>{% else %}{{ entry.term.label }}{% endif %}</li>{% endfor %}</ul></dd></div>
+  {% endfor %}
+</dl>
+{% endif %}
+{% endmacro classifications %}
+
+{# Show supplied keyword entries under the copy label; search optionally turns them into query links and source identifies the current site. #}
+{% macro keywords(entries,copy=false,search=false,source="") %}
+{% if entries and copy %}
+{% set label = copy | get(key="base:keywords", default="") %}
+{% if label %}
+<details class="reading-keywords"><summary><span>{{ label }}</span><span>{{ entries | length }}</span></summary><ul>
+{% for keyword in entries %}
+<li>{% if search and search.page is defined and search.page %}<a href="{{ search.page.route.url }}?keyword={{ keyword | url_query }}" {{ links::attributes(copy=copy,source=source,node=search.page.content) }}>{{ keyword }}</a>{% else %}{{ keyword }}{% endif %}</li>
+{% endfor %}
+</ul></details>
+{% endif %}
+{% endif %}
+{% endmacro keywords %}
+
+{# Show content dates, author attributions and projects whose relation is about, using copy for labels; absent information stays absent. #}
+{% macro credit(content,attributions,projects,copy=false) %}
+{% if copy %}
+{% set byline_label = copy | get(key="base:byline", default="") %}
+{% set subject_label = copy | get(key="base:project-subject", default="") %}
+{% set published_label = copy | get(key="base:published", default="") %}
+{% if content.lifecycle == "draft" %}{% set published_label = copy | get(key="base:written", default="") %}{% endif %}
+{% set modified_label = copy | get(key="base:modified", default="") %}
+{% set date_format = copy | get(key="base:date-format", default="%-d %B %Y") %}
+{% set authors = attributions | filter(attribute="role", value="author") | filter(attribute="principal.name") %}
+{% if content.structure.family.kind == "documentation" %}{% set authors = [] %}{% endif %}
+{% set subjects = projects | filter(attribute="relationship.relation", value="about") | filter(attribute="project.name") %}
+{% set has_published = published_label and content.published is defined and content.published %}
+{% set has_modified = modified_label and content.modified is defined and content.modified and (content.published is not defined or content.modified != content.published) %}
+{% if authors or subjects and subject_label or has_published or has_modified %}
+<dl class="reading-credit">
+  {% if authors %}<div class="reading-byline"><dt>{{ byline_label }}</dt><dd>{{ attribution::names(authors=authors,copy=copy) }}</dd></div>{% endif %}
+  {% if subjects and subject_label %}<div class="reading-subject"><dt>{{ subject_label }}</dt><dd><ul>{% for member in subjects %}<li>{% if member.landing is defined and member.landing %}<a href="{{ member.landing.url }}" {{ links::attributes(copy=copy,destination=member.landing.destination) }}>{{ member.project.name }}</a>{% else %}{{ member.project.name }}{% endif %}</li>{% endfor %}</ul></dd></div>{% endif %}
+  {% if has_published %}<div class="reading-date"><dt>{{ published_label }}</dt><dd><time datetime="{{ content.published }}">{{ content.published | editorial_date(format=date_format) }}</time></dd></div>{% endif %}
+  {% if has_modified %}<div class="reading-date"><dt>{{ modified_label }}</dt><dd><time datetime="{{ content.modified }}">{{ content.modified | editorial_date(format=date_format) }}</time></dd></div>{% endif %}
+</dl>
+{% endif %}
+{% endif %}
+{% endmacro credit %}
+
+{# Show the citation text, formats and available downloads supplied by item, using copy for disclosure and download labels. #}
+{% macro citation(item,copy) %}
+{% set citation_label = copy | get(key="base:citation",default="") %}
+{% if citation_label %}
+<details class="reading-citation">
+  <summary>{{ citation_label }}</summary>
+  <div class="reading-citation__body">
+    {% if item.text is defined and item.text %}<p class="reading-citation__text">{{ item.text }}</p>{% endif %}
+    {% if item.formats %}
+    <dl class="reading-citation__formats">
+      {% for format in item.formats %}<div><dt>{{ format.label }}</dt><dd class="reading-citation__text">{{ format.text }}</dd></div>{% endfor %}
+    </dl>
+    {% endif %}
+    {% set bibtex_label = copy | get(key="base:citation-bibtex", default="") %}
+    {% set pdf_label = copy | get(key="base:citation-pdf", default="") %}
+    {% if item.bibtex is defined and bibtex_label or item.pdf is defined and pdf_label %}
+    <ul class="reading-citation__downloads">
+      {% if item.bibtex is defined and bibtex_label %}<li><a href="{{ item.bibtex }}" {{ links::attributes(copy=copy, destination=item.bibtex_destination | default(value=false)) }}>{{ bibtex_label }}</a></li>{% endif %}
+      {% if item.pdf is defined and pdf_label %}<li><a href="{{ item.pdf }}" {{ links::attributes(copy=copy, destination=item.pdf_destination | default(value=false)) }}>{{ pdf_label }}</a></li>{% endif %}
+    </ul>
+    {% endif %}
+  </div>
+</details>
+{% endif %}
+{% endmacro citation %}

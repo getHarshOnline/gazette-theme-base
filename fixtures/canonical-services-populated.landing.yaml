@@ -1,0 +1,136 @@
+format: gazette-landing/v1
+template: base/services.html
+content:
+  id: page:canonical-services-populated
+  site: site:reading
+  title: Service specimen
+  lifecycle: draft
+  language: en
+  route:
+    path: /canonical-services-populated/
+  structure:
+    kind: page
+    family:
+      kind: project
+sections:
+- component: service-opening
+  heading:
+    level: 1
+    text: Service specimen
+  body: |
+    This neutral comparison is not an offer or an available engagement.
+- component: service-example
+  arguments:
+    label: Illustrative scope conditions
+    conditions:
+    - title: Agreed question
+      explanation: The requested account defines the period to inspect.
+    - title: Acceptance remains open
+      explanation: A delivered account still requires the responsible reader's decision.
+  body: |
+    These conditions describe different responsibilities. Delivery does not establish acceptance.
+- component: process-section
+  arguments:
+    steps: end
+  sections:
+  - component: process-introduction
+    sections:
+    - component: focus-reveal
+      arguments:
+        mode: once
+      heading:
+        level: 2
+        text: Discuss the supplied question
+      body: |
+        Keep the invitation, its short explanation and the contact action together.
+      sections:
+      - component: primary-action
+        body: |
+          [Email the specimen owner](mailto:enquiry@example.test)
+  - component: process-path
+    arguments:
+      label: Illustrative engagement stages
+    sections:
+    - component: process-step
+      heading:
+        level: 3
+        text: Examine the question
+      body: |
+        Retain its scope and the supplied evidence.
+
+        A separate detailed paragraph remains with the same stage.
+    - component: process-step
+      heading:
+        level: 3
+        text: Review the account
+      body: |
+        The responsible reader decides whether the explanation is sufficient.
+- component: project-media
+  arguments:
+    placeholder: true
+    label: 'Reserved illustration; not operational evidence'
+  body: |
+    The caption qualifies the empty field. No screenshot or recording has been supplied.
+- component: project-state
+  heading:
+    level: 2
+    text: Current limits
+  body: |
+    The specimen is paused and unavailable. Its explanatory reference remains readable.
+- component: destination-set
+  heading:
+    level: 2
+    text: Continue with the account
+  sections:
+  - component: destination
+    heading:
+      level: 3
+      text: Inspect the terms
+    body: |
+      The reference retains its own qualifications.
+    sections:
+    - component: primary-action
+      body: |
+        [Read the reference](/reference/)
+  - component: destination
+    heading:
+      level: 3
+      text: Read the evidence
+    body: |
+      [Open the first question](/first/). Its source remains independently available.
+- component: quote-deck
+  sections:
+  - component: quote-item
+    arguments:
+      attribution: Sample reader 1
+      initials: SR
+      company: Sample organisation
+      rating: 4
+      rating_label: Four out of five stars
+      detail: Placeholder copy; not an endorsement
+    body: |
+      A sample account keeps *the original text and its attribution together*.
+  - component: quote-item
+    arguments:
+      attribution: Sample reader 2
+      detail: Placeholder copy; not an endorsement
+    body: |
+      A second sample remains readable without any enhancement.
+  - component: quote-item
+    arguments:
+      attribution: Sample reader 3
+      detail: Placeholder copy; not an endorsement
+    body: |
+      A third sample can be selected using the same shared controls.
+- component: faq
+  heading:
+    level: 2
+    text: Questions about the specimen
+  sections:
+  - component: faq-item
+    arguments:
+      question: What does this specimen establish?
+    body: |
+      **Only its supplied account.** It establishes no release, completed engagement or measured outcome.
+
+      [Inspect the reference](/reference/).

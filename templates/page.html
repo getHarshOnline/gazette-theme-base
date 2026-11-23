@@ -1,0 +1,170 @@
+{% import "base/macros/search.html" as search %}
+{% import "base/macros/invitations.html" as invitations %}
+{% import "base/macros/decks.html" as decks %}
+{% import "base/macros/container-decks.html" as container_decks %}
+{% import "base/macros/carousel-controls.html" as carousel_controls %}
+{% import "base/macros/reading-metadata.html" as metadata %}
+{% import "base/macros/reading-context.html" as context %}
+{% import "base/macros/reading-items.html" as reading_items %}
+{%- import "base/macros/page_mode.html" as frame -%}
+{%- import "base/macros/links.html" as links -%}
+{% set product_entrance = project_resources is defined and project_resources %}
+<!doctype html>
+
+<html{% if content.language is defined %} lang="{{ content.language }}"{% endif %}{% if presentation.palette %} data-palette="{{ presentation.palette }}"{% endif %} data-page-mode="{% block page_mode %}{{ frame::page_mode(content=content,product_entrance=product_entrance) }}{% endblock page_mode %}" data-footer-treatment="{% block footer_treatment %}{% if product_entrance or content.structure.kind == 'page' and content.structure.family.kind == 'project' %}colophon{% else %}quiet{% endif %}{% endblock footer_treatment %}">
+<head>
+  <meta charset="utf-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <meta name="color-scheme" content="light dark">
+
+  {% if presentation.browser_theme_colors is defined %}
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="{{ presentation.browser_theme_colors.light }}">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="{{ presentation.browser_theme_colors.dark }}">
+  {% endif %}
+  <title>{{ content.title }}</title>
+  <meta property="og:title" content="{{ content.title }}">
+  <meta property="og:type" content="{% if content.structure.kind == 'page' and content.structure.family.kind == 'article' %}article{% else %}website{% endif %}">
+  {% if content.description is defined and content.description %}
+  <meta name="description" content="{{ content.description }}">
+  <meta property="og:description" content="{{ content.description }}">
+  {% endif %}
+
+  {% include "base/partials/preferences.html" %}
+  {% if route is defined %}
+  <link rel="canonical" href="{{ route.canonical_url }}">
+  <meta property="og:url" content="{{ route.canonical_url }}">
+  {% endif %}
+  {% if presentation.markdown_alternate is defined and presentation.markdown_alternate %}
+  <link rel="{{ presentation.markdown_alternate.discovery_rel }}" type="{{ presentation.markdown_alternate.media_type }}" href="{{ presentation.markdown_alternate.url }}">
+  {% endif %}
+
+  {% if presentation.feeds is defined %}
+    {% for feed in presentation.feeds %}
+  <link rel="alternate" type="{{ feed.media_type }}" title="{{ feed.title }}" href="{{ feed.url }}">
+    {% endfor %}
+  {% endif %}
+
+  {% if presentation.identity_assets is defined %}
+    {% if presentation.identity_assets.site_icon is defined and presentation.identity_assets.site_icon %}
+  <link rel="icon" href="{{ presentation.identity_assets.site_icon.url }}">
+    {% endif %}
+  {% endif %}
+  {% include "base/partials/social-preview.html" %}
+
+  {% include "base/partials/resources.html" %}
+  {% block head_extra %}{% endblock head_extra %}
+</head>
+<body>
+
+  {% if presentation.chrome is defined %}
+
+  <a class="skip-link" href="#main">{{ presentation.chrome.skip_to_content_label }}</a>
+  {% endif %}
+  {% include "base/partials/link-descriptions.html" %}
+  {% set serving_site = content.site %}
+  {% set is_search_page = presentation.search is defined and presentation.search.page is defined and presentation.search.page and presentation.search.page.content.id == content.id %}
+  {% set publication_metadata = site.metadata | default(value=false) %}
+  {% set services_link = false %}
+  {% if invitations is defined %}
+    {% set services_link = invitations | get(key="base:services", default=false) %}
+  {% endif %}
+  {% set has_services_invitation = services_link and content.id == services_link.destination.content.id %}
+    {% set reading_page = false %}
+    {% set container_page = (content.structure.kind == "collection" or content.structure.kind == "journey") and not product_entrance %}
+    {% if content.structure.kind == "page" %}
+      {% set reading_page = content.structure.family.kind == "article" or content.structure.family.kind == "documentation" %}
+    {% endif %}
+    {% set reading_surface = reading_page %}
+    {% set preferred_source_action = "" %}
+    {% if preferred_source is defined and preferred_source %}
+      {% set preferred_source_action = invitations::preferred_source(choice=preferred_source, copy=presentation.chrome.regions | default(value=false), rail=reading_surface) %}
+    {% endif %}
+    {% set selection_surface = reading_surface or container_page %}
+    {% set reading_opening = (reading_surface or container_page) and opening is defined and opening %}
+    {% set section_title = "" %}
+    {% if not reading_page and publication_metadata and publication_metadata.home is defined and publication_metadata.home.id != content.id and presentation.chrome is defined and presentation.chrome.navigation is defined %}
+      {% for item in presentation.chrome.navigation %}
+        {% if item.destination.content.id == content.id and item.destination.content.site == serving_site %}{% set_global section_title = item.label %}{% endif %}
+      {% endfor %}
+      {% if not section_title and content.structure.kind == "page" and content.structure.family.kind == "index" %}{% set section_title = content.title %}{% endif %}
+    {% endif %}
+  {% include "base/partials/header.html" %}
+  <main id="main" tabindex="-1" data-structure="{{ content.structure.kind }}"{% if section_title %} data-section-title="{{ section_title }}"{% endif %}{% if content.structure.kind == "page" %} data-family="{{ content.structure.family.kind }}"{% endif %}{% if selection_surface %} data-selection-scope{% endif %}>
+    {% if presentation.chrome is defined and presentation.chrome.regions is defined %}
+    {% set overflow_label = presentation.chrome.regions | get(key="base:reading-overflow", default="") %}
+    {% if overflow_label %}<span id="reading-overflow-label" hidden>{{ overflow_label }}</span>{% endif %}
+    {% endif %}
+
+    {% if reading_surface %}<article class="reading-document">{% endif %}
+    {% if reading_surface or container_page %}<header class="reading-page-header">{% endif %}
+    {% if container_page or reading_surface %}
+      {% include "base/partials/reading-context.html" %}
+    {% else %}
+      {% include "base/partials/browsing-context.html" %}
+    {% endif %}
+    {% set authored_titles = headings | filter(attribute="level", value=1) %}
+    {% block title_group %}
+    {% include "base/partials/title-group.html" %}
+    {% endblock title_group %}
+    {% if reading_surface or container_page %}
+    </header>
+    {% endif %}
+    {% block lead %}{% endblock lead %}
+
+    <div class="publication-layout{% if container_page %} publication-layout--framing{% endif %}">
+      {% if reading_surface %}<div class="reading-navigation">{% endif %}
+      {% block outline %}
+      {% if reading_surface %}
+      {% include "base/partials/reading-corpus.html" %}
+      {% endif %}
+      {% endblock outline %}
+      {% if reading_surface %}
+      {% include "base/partials/reading-outline.html" %}
+      </div>
+      {% endif %}
+      {% block publication_body %}{% include "base/partials/publication-body.html" %}{% endblock publication_body %}
+      {% if reading_surface %}
+      <aside class="reading-sidebar">
+      <div class="reading-metadata">
+      {{ metadata::credit(content=content,attributions=attributions,projects=projects,copy=presentation.chrome.regions | default(value=false)) }}
+      {{ metadata::classifications(entries=classifications,copy=presentation.chrome.regions | default(value=false)) }}
+      {{ metadata::keywords(entries=content.keywords | default(value=[]),copy=presentation.chrome.regions | default(value=false),search=presentation.search | default(value=false),source=serving_site) }}
+      </div>
+      {% include "base/partials/reading-related.html" %}
+      </aside>
+      {% endif %}
+    </div>
+    {% if not container_contents_placed | default(value=false) %}{% include "base/partials/container-contents.html" %}{% endif %}
+    {% block listing %}{% if is_search_page %}<div class="search-page__fallback">{% endif %}{% include "base/partials/listing.html" %}{% if is_search_page %}</div>{% endif %}{% endblock listing %}
+    {% block apparatus %}
+    {% if notes %}
+    {% set notes_label = "" %}
+    {% if presentation.chrome is defined and presentation.chrome.regions is defined %}
+      {% set notes_label = presentation.chrome.regions | get(key="base:notes", default="") %}
+    {% endif %}
+    <aside class="reading-apparatus">
+      {% if notes_label %}
+      {% if content.structure.kind != "page" or not reading_page and content.structure.family.kind != "documentation" %}<button class="control control--secondary reading-notes-trigger" type="button" data-command-trigger="notes" aria-haspopup="dialog" hidden>{{ notes_label }}</button>{% endif %}
+      <details class="reading-notes" id="article-notes">
+        <summary>{{ notes_label }}</summary>
+        <div class="reading-notes__body">{{ notes.body_html | safe }}{% include "base/partials/notebooks.html" %}</div>
+      </details>
+      {% else %}
+      <div class="reading-notes__body" id="article-notes">{{ notes.body_html | safe }}{% include "base/partials/notebooks.html" %}</div>
+      {% endif %}
+    </aside>
+    {% endif %}
+    {% endblock apparatus %}
+    {% if reading_surface %}
+    </article>
+    {% endif %}
+    {% block closing %}
+    {{ invitations::services(destination=services_link,copy=presentation.chrome.regions,source=serving_site,present=has_services_invitation,closing=true) }}
+    {% endblock closing %}
+  </main>
+  {% include "base/partials/selection-assistance.html" %}
+  {% include "base/partials/footer.html" %}
+</body>
+</html>

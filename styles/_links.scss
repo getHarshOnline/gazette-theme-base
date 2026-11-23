@@ -1,0 +1,69 @@
+// Destination identity is distinct from the native/cross-site/external relationship.
+// One recipe consumes compiler facts in prose, structured lists and action controls.
+@mixin signatures {
+  $signed: "a:is([data-gazette-destination-kind='cross-site'],[data-gazette-destination-kind='internal-native'][data-gazette-destination-theme],[data-gazette-destination-kind='external'])";
+  // Native destination facts, not enhancement classes, own the link signature.
+  a:is([data-gazette-destination-kind='cross-site'],[data-gazette-destination-kind='internal-native'][data-gazette-destination-theme]) {
+    --crossing-ink: var(--crossing-target-ink,currentColor);
+    --link-mark-image: linear-gradient(to right,var(--crossing-ink) 0% 12%,transparent 12% 88%,var(--crossing-ink) 88%),linear-gradient(var(--crossing-ink),var(--crossing-ink));
+    --link-mark-size: var(--space-3) var(--space-3),var(--space-3) var(--stroke-hair);
+    --link-mark-position: right center;
+    text-decoration-color: var(--crossing-ink);
+  }
+  a[data-gazette-destination-kind='external'] {
+    --crossing-ink: currentColor;
+    --link-mark-image: linear-gradient(to bottom,var(--crossing-ink) 0% 12%,transparent 12%),linear-gradient(to left,var(--crossing-ink) 0% 12%,transparent 12%),linear-gradient(135deg,transparent 44%,var(--crossing-ink) 44% 56%,transparent 56%);
+    --link-mark-size: var(--space-3) var(--space-3);
+    --link-mark-position: right center;
+  }
+  #{$signed}::after,
+  #{$signed} .folder-card__title::after {
+    content: '\00a0';
+    padding-inline-end: var(--space-4);
+    background-image: var(--link-mark-image);
+    background-repeat: no-repeat;
+    background-position: var(--link-mark-position);
+    background-size: var(--link-mark-size);
+    mask-image: var(--link-mark-mask,none);
+    mask-size: var(--link-mark-mask-size,var(--space-3) var(--space-3));
+    mask-position: var(--link-mark-mask-position,right center);
+    mask-repeat: no-repeat;
+    mask-composite: var(--link-mark-composite,add);
+  }
+  .world-mark[data-world-mark] {
+    --crossing-ink: var(--crossing-target-ink,currentColor);
+    display: inline-block;
+    inline-size: var(--world-mark-box,var(--space-3)); block-size: var(--world-mark-box,var(--space-3));
+    background-image: var(--link-mark-image); background-repeat: no-repeat;
+    background-size: var(--world-mark-layer-size,var(--link-mark-size)); background-position: var(--link-mark-position);
+    mask-image: var(--link-mark-mask,none); mask-repeat: no-repeat;
+    mask-size: var(--world-mark-layer-size,var(--link-mark-mask-size)); mask-position: var(--link-mark-mask-position);
+    mask-composite: var(--link-mark-composite,add);
+  }
+  // A block card signs its title, never its full clickable rectangle.
+  a.folder-card[data-gazette-destination-kind]::after,
+  #{$signed}:has(img,picture,svg,canvas,video,audio,button,div,section,figure)::after { content: none; }
+  // Destination geometry survives on an action; its own ink/face pair owns contrast.
+  #{$signed}:is(.control,.primary-action a) { --crossing-ink: currentColor; }
+  #{$signed}:is(.control,.primary-action a)::after { flex: 0 0 auto; }
+  // Local wayfinding already carries location or progression. Keep destination
+  // identity on content links without adding another signal to this chrome.
+  a[data-gazette-destination-kind='internal-native']:is(
+    [href^='#'],.frame__header a,.reading-outline a,
+    .reading-corpus a,.reading-context a,.listing-controls a,
+    .cinematic-story a,.cinematic-premise a
+  )::after { content: none; }
+  @media (forced-colors: active) {
+    #{$signed}[data-gazette-destination-theme],
+    a[data-gazette-destination-kind='cross-site'],
+    a[data-gazette-destination-kind='external'] { --crossing-ink: LinkText; text-decoration-style: double; }
+    #{$signed}::after,
+    #{$signed} .folder-card__title::after { forced-color-adjust: none; }
+  }
+  // The mark is drawn as a background, which print drops by default and leaves its reserved gap.
+  @media print {
+    #{$signed}::after,
+    #{$signed} .folder-card__title::after,
+    .world-mark[data-world-mark] { print-color-adjust: exact; }
+  }
+}

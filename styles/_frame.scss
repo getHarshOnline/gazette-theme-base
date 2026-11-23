@@ -1,0 +1,81 @@
+@use 'typography';
+@use '../tokens/scss/layout';
+
+// Keep a legible bed beneath the controls; its edge fades below the bar.
+// Only the backdrop is filtered, leaving text and hit targets sharp.
+@mixin header {
+  @media screen {
+    :root:is(:not([data-page-mode='home']),:has([data-gazette-component='ambient-hero'])) .frame__header { isolation: isolate; background: transparent; }
+    :root:is(:not([data-page-mode='home']),:has([data-gazette-component='ambient-hero'])) .frame__header::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: var(--frame-surface,var(--color-paper)); }
+    @supports (backdrop-filter: blur(1px)) {
+      :root:is(:not([data-page-mode='home']),:has([data-gazette-component='ambient-hero'])) .frame__header::before {
+        inset-block-end: calc(-1 * var(--space-3));
+        background: var(--frame-surface,var(--color-paper));
+        backdrop-filter: blur(var(--world-material-optical-blur)) Saturate(var(--world-material-optical-saturation));
+        -webkit-backdrop-filter: blur(var(--world-material-optical-blur)) Saturate(var(--world-material-optical-saturation));
+        mask-image: linear-gradient(to bottom,black calc(100% - var(--space-3)),transparent);
+        -webkit-mask-image: linear-gradient(to bottom,black calc(100% - var(--space-3)),transparent);
+      }
+    }
+    // The two-row reading header is an interactive surface, not the fading
+    // edge of the masthead. Its opaque bed prevents fragments of page text
+    // bleeding through the gaps around the compact controls.
+    :root:is(:not([data-page-mode='home']),:has([data-gazette-component='ambient-hero'])) .frame__header:has(.reading-header-row)::before {
+      inset: 0; background: var(--frame-surface,var(--color-paper));
+      backdrop-filter: none; -webkit-backdrop-filter: none;
+      mask-image: none; -webkit-mask-image: none;
+    }
+    .frame__header[data-navigation-mode='compact']:has(.frame__nav[data-collapsed='false']) .reading-header-row { display: none; }
+    @media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
+      // A film or portrait home normally leaves its header open over the scene; these preferences ask for the opaque bed there too.
+      :root[data-page-mode='home'] .frame__header { isolation: isolate; }
+      :root[data-page-mode='home'] .frame__header::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: var(--frame-surface,var(--color-paper)); backdrop-filter: none; -webkit-backdrop-filter: none; }
+      :root:is(:not([data-page-mode='home']),:has([data-gazette-component='ambient-hero'])) .frame__header::before { inset: 0; background: var(--frame-surface,var(--color-paper)); backdrop-filter: none; -webkit-backdrop-filter: none; mask-image: none; -webkit-mask-image: none; }
+    }
+    @media (forced-colors: active) { :root:is(:not([data-page-mode='home']),:has([data-gazette-component='ambient-hero'])) .frame__header::before,:root[data-page-mode='home'] .frame__header::before { background: Canvas; } }
+  }
+}
+
+@mixin footer {
+  .frame__footer { padding: var(--space-5) var(--space-6); border-block-start: 0; }
+  // Worlds mark the footer with a fill, which forced colours flattens to Canvas; a rule restores the boundary.
+  @media (forced-colors: active) { .frame__footer { border-block-start: var(--stroke-hair) solid CanvasText; } }
+  .frame__footer-main { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr); grid-template-rows: auto auto; align-items: first baseline; gap: var(--space-3) var(--space-6); max-inline-size: calc(var(--layout-field-max) - var(--space-6) * 2); margin-inline: auto; }
+  .frame__footer-profile,.frame__footer-colophon,.frame__footer-connections { display: contents; }
+  .frame__footer-main > div > * { min-inline-size: 0; }
+  .frame__footer-brand { grid-column: 1; grid-row: 1; }
+  .frame__footer-description { grid-column: 1; grid-row: 2; }
+  .frame__footer-copyright { grid-column: 2; grid-row: 1; }
+  .frame__footer-credit { grid-column: 2; grid-row: 2; }
+  .frame__footer-social { grid-column: 3; grid-row: 1; }
+  .frame__footer-supporting { grid-column: 3; grid-row: 2; }
+  .frame__footer-copyright,.frame__footer-credit { text-align: center; font-size: var(--type-size-meta); }
+  .frame__footer-colophon p { margin: 0; }
+  .frame__footer a.frame__footer-brand { @include typography.display-face(); font-size: var(--type-size-h3); line-height: var(--type-line-height-heading); max-inline-size: 100%; margin: 0; padding: 0; border: 0; }
+  .frame__footer-description { margin: 0; @include typography.reading-face(); font-size: var(--type-size-meta); line-height: var(--type-line-height-body); text-transform: none; text-wrap: pretty; }
+  .frame__footer-social a,.frame__footer-supporting a { @include typography.reading-face(); font-size: var(--type-size-meta); text-transform: none; }
+  .frame__footer .frame__footer-social,.frame__footer .frame__footer-supporting { display: flex; flex-wrap: wrap; justify-content: end; align-content: start; gap: var(--space-2) var(--space-3); margin: 0; }
+  @media (hover: hover) and (pointer: fine) { .frame__footer a:hover { color: inherit; text-decoration: underline; } }
+  .services-invitation { display: flex; flex-wrap: wrap; align-items: center; text-align: start; gap: var(--space-3) var(--space-5); margin: 0; }
+  .services-invitation h2 { @include typography.reading-face($weight: var(--type-weight-reading)); margin: 0; font-size: var(--type-size-body); line-height: var(--type-line-height-body); }
+  .services-closing { margin-block-start: var(--space-section); }
+  @media screen {
+    :root[data-footer-treatment='colophon'] main:has(> .services-closing:last-child) { padding-block-end: var(--space-5); }
+  }
+  .services-closing .services-invitation { flex-direction: column; align-items: center; text-align: center; gap: var(--space-4); }
+  .services-closing .services-invitation > h2 { @include typography.display-face(); font-size: var(--type-size-h2); line-height: var(--type-line-height-heading); }
+  @media (width < layout.$layout-breakpoint-navigation) {
+    .frame__footer { padding-inline: var(--space-5); }
+    .frame__footer-main { grid-template-columns: minmax(0,1fr); gap: var(--space-5); }
+    .frame__footer-main > div > * { grid-column: 1; grid-row: auto; }
+    .frame__footer-copyright,.frame__footer-credit { text-align: start; }
+    .frame__footer .frame__footer-social,.frame__footer .frame__footer-supporting { justify-content: start; }
+    .services-closing { margin-block-start: var(--space-7); }
+  }
+  @media (width >= layout.$layout-breakpoint-navigation) {
+    :root:not([data-page-mode='home']) .frame__header {
+      padding-inline: max(var(--space-6),calc((100% - var(--layout-field-max)) / 2 + var(--space-6)));
+    }
+    :root:not([data-page-mode='home']) main { padding-block-start: var(--space-6); }
+  }
+}

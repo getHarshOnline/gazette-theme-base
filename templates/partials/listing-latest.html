@@ -1,0 +1,8 @@
+{% set copy = presentation.chrome.regions | default(value=false) %}
+<article class="article-listing__latest">
+  {% if copy %}{% set latest_label = copy | get(key="base:listing-latest",default="") %}{% if latest_label %}<p class="article-listing__eyebrow">{{ latest_label }}</p>{% endif %}{% endif %}
+  <h2><a href="{{ latest.url }}" {{ links::attributes(copy=copy,destination=latest.destination,source=serving_site,site=latest.site,content_id=latest.id,target=latest.presentation | default(value=false)) }}>{{ latest.title }}</a></h2>
+  {{ metadata::item(item=latest,copy=copy) }}
+  {% if latest.description is defined and latest.description %}<p class="article-listing__description">{{ latest.description }}</p>{% endif %}
+  {% if copy %}{% set more_label = copy | get(key="base:listing-read-more",default="") %}{% if more_label %}<a class="control control--primary" href="{{ latest.url }}" {{ links::attributes(copy=copy,destination=latest.destination,source=serving_site,site=latest.site,content_id=latest.id,target=latest.presentation | default(value=false)) }}>{{ more_label }}</a>{% endif %}{% endif %}
+</article>

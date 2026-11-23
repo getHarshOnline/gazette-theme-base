@@ -1,0 +1,28 @@
+@use 'typography';
+@use 'optical';
+@use 'depth-carousel';
+
+@mixin recipes {
+  main:has(> .article-listing) { max-inline-size: var(--layout-field-max); }
+  main:has(> .article-listing) > .publication-layout:has(> .publication-body:empty) { display: none; }
+  .article-listing { display: grid; grid-template-columns: minmax(0,1fr); gap: var(--space-4); min-inline-size: 0; }
+  .article-listing__latest { display: grid; justify-items: center; gap: var(--space-4); inline-size: min(100%,var(--layout-measure)); margin: 0 auto var(--space-5); text-align: center; }
+  .article-listing__latest > * { margin: 0; min-inline-size: 0; }
+  .article-listing__latest > h2 { @include typography.display-face(); font-size: var(--type-size-display-2); line-height: var(--type-line-height-heading); text-wrap: balance; }
+  .article-listing__latest > h2 > a { display: inline-block; max-inline-size: 100%; text-decoration: none; }
+  .article-listing__latest > h2 > a:focus-visible { text-decoration: underline; }
+  @media (hover: hover) and (pointer: fine) { .article-listing__latest > h2 > a:hover { text-decoration: underline; } }
+  .article-listing__eyebrow { @include typography.system-face(); font-size: var(--type-size-meta); color: var(--color-muted); }
+  .article-listing__latest > .reading-list__metadata { justify-content: center; }
+  .article-listing__description { @include typography.reading-face(); font-size: var(--type-size-body); line-height: var(--type-line-height-body); text-wrap: pretty; }
+  .article-listing .listing-controls { margin: 0; }
+  @include depth-carousel.surface('.article-listing','.reading-list','.reading-list__entry', $ready: '.article-listing--depth');
+  .article-listing .reading-list > li { border: 0; }
+  .article-listing .reading-list__entry { padding: var(--space-5); @include optical.frame($radius: var(--radius-preview-frame)); align-content: start; gap: var(--space-4); }
+  .article-listing .reading-list__description { font-size: var(--type-size-meta); }
+  .article-listing__controls { margin-block-start: var(--space-2); }
+  @media print {
+    .article-listing__controls { display: none; }
+    .article-listing .reading-list__entry { break-inside: avoid; }
+  }
+}

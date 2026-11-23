@@ -1,0 +1,11 @@
+Gazette Base
+Copyright © 2026 RawThoughts Enterprises Private Limited.
+Author and originator: Harsh Joshi.
+
+Licensed under the MIT License with an attribution term; see LICENSE, which
+also lists the files that keep their own terms.
+
+scripts/vendor/gazette-search/ is Gazette's browser search module,
+https://github.com/getHarshOnline/gazette, under the Apache License,
+Version 2.0. Its LICENSE and NOTICE are kept beside it, and Elasticlunr's MIT
+licence is kept in its vendor/ folder.

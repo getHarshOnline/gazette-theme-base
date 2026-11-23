@@ -1,0 +1,15 @@
+{# One public search entry, beside the publication identity at every width. #}
+{% if presentation.chrome is defined and presentation.chrome.shell is defined %}
+{% set copy = presentation.chrome.shell %}
+  {%- if presentation.search is defined and copy.search is defined %}
+  {% if presentation.search.page is defined and presentation.search.page %}
+  {% set fallback = presentation.search.page %}
+  <a class="control control--secondary shell__trigger shell__search-page shell__search-trigger" data-search-label="{{ copy.search.trigger_label }}" aria-label="{{ copy.search.trigger_label }}, ⌘ K" aria-keyshortcuts="Meta+K Control+K" href="{{ fallback.route.url }}" {{ links::attributes(copy=presentation.chrome.regions, source=serving_site, site=fallback.content.site, content_id=fallback.content.id, target=fallback.content.presentation | default(value=false)) }}><span class="shell__icon shell__icon--search" aria-hidden="true"></span><kbd data-search-shortcut aria-hidden="true">⌘ K</kbd></a>
+  {% elif presentation.search.no_script_destination is defined and presentation.search.no_script_destination %}
+  {% set fallback = presentation.search.no_script_destination %}
+  <a class="control control--secondary shell__trigger shell__search-trigger" data-search-label="{{ copy.search.trigger_label }}" aria-label="{{ copy.search.trigger_label }}, ⌘ K" aria-keyshortcuts="Meta+K Control+K" data-command-trigger="search" aria-haspopup="dialog" href="{{ fallback.route.url }}" {{ links::attributes(copy=presentation.chrome.regions, source=serving_site, site=fallback.content.site, content_id=fallback.content.id, target=fallback.content.presentation | default(value=false)) }}><span class="shell__icon shell__icon--search" aria-hidden="true"></span><kbd data-search-shortcut aria-hidden="true">⌘ K</kbd></a>
+  {% else %}
+  <button type="button" class="control control--secondary shell__trigger shell__search-trigger" data-search-label="{{ copy.search.trigger_label }}" aria-label="{{ copy.search.trigger_label }}, ⌘ K" aria-keyshortcuts="Meta+K Control+K" data-command-trigger="search" aria-haspopup="dialog" hidden><span class="shell__icon shell__icon--search" aria-hidden="true"></span><kbd data-search-shortcut aria-hidden="true">⌘ K</kbd></button>
+  {% endif %}
+  {%- endif %}
+{% endif %}

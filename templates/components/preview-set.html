@@ -1,0 +1,6 @@
+{% set label = component.arguments.label | default(value=false) %}
+{% if label %}<fieldset class="view-set preview-set">
+  <legend>{{ label }}</legend>
+{% else %}<div class="view-set preview-set">{% endif %}
+  <div class="view-set__views">{{ component.body.html | safe }}<div class="preview-backplate" aria-hidden="true"></div><svg class="preview-contour" aria-hidden="true" focusable="false"><path></path></svg></div>
+{% if label %}</fieldset>{% else %}</div>{% endif %}

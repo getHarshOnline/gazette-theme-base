@@ -1,0 +1,9 @@
+<figure class="service-example">
+  {% if component.arguments.label is defined %}<figcaption>{{ component.arguments.label }}</figcaption>{% endif %}
+  <dl class="service-example__conditions">
+  {% for condition in component.arguments.conditions %}
+    <div class="bookmark-card" data-bookmark-card><dt>{% include "base/partials/bookmark-material.html" %}{{ condition.title }}</dt><dd>{{ condition.explanation }}</dd></div>
+  {% endfor %}
+  </dl>
+  {% if component.body.html %}<div class="group-conclusion service-example__conclusion">{{ component.body.html | safe }}</div>{% endif %}
+</figure>

@@ -1,0 +1,4 @@
+{% extends "base/page.html" %}
+{% block title_group %}
+{% if reading_surface or container_page %}{{ super() }}{% else %}{% include "base/partials/page-accessible-title.html" %}{% endif %}
+{% endblock title_group %}

@@ -1,0 +1,29 @@
+{% set analytics = presentation.capabilities | get(key="publication.analytics/v1", default=false) %}
+{% set analytics_privacy = false %}
+{% for item in presentation.chrome.footer %}
+  {% if item.key is defined and item.key == "base:privacy" %}{% set_global analytics_privacy = item %}{% endif %}
+{% endfor %}
+{% set analytics_copy_ready = true %}
+{% set analytics_copy = presentation.chrome.regions %}
+{% for key in ["title", "description", "allow", "decline", "privacy", "off", "loading", "on", "failed", "reload", "reload-action", "storage"] %}
+  {% if not analytics_copy | get(key="base:analytics-" ~ key, default="") %}{% set_global analytics_copy_ready = false %}{% endif %}
+{% endfor %}
+{% if analytics and analytics.state == "available" and analytics_privacy and analytics_copy_ready and content is defined and content.id is defined and content.site is defined and route is defined and route.canonical_url is defined %}
+<fieldset class="shell__setting" data-analytics-consent aria-describedby="analytics-description"
+  data-status-off="{{ analytics_copy["base:analytics-off"] }}"
+  data-status-loading="{{ analytics_copy["base:analytics-loading"] }}"
+  data-status-on="{{ analytics_copy["base:analytics-on"] }}"
+  data-status-failed="{{ analytics_copy["base:analytics-failed"] }}"
+  data-status-reload="{{ analytics_copy["base:analytics-reload"] }}" hidden>
+  <legend>{{ analytics_copy["base:analytics-title"] }}</legend>
+  <p id="analytics-description">{{ analytics_copy["base:analytics-description"] }} <a href="{{ analytics_privacy.destination.route.url }}">{{ analytics_copy["base:analytics-privacy"] }}</a></p>
+  <div class="shell__setting-options">
+    <label><input type="radio" name="analytics-consent" value="allow">{{ analytics_copy["base:analytics-allow"] }}</label>
+    <label><input type="radio" name="analytics-consent" value="decline" checked>{{ analytics_copy["base:analytics-decline"] }}</label>
+  </div>
+  <p class="shell__status" role="status" data-analytics-status>{{ analytics_copy["base:analytics-off"] }}</p>
+  <p class="shell__status" role="status" data-analytics-storage hidden>{{ analytics_copy["base:analytics-storage"] }}</p>
+  <button type="button" class="control control--secondary" data-analytics-reload hidden>{{ analytics_copy["base:analytics-reload-action"] }}</button>
+  <script type="application/json" data-analytics-binding>{"binding":{{ analytics.value | json_script }},"publicPageUrl":{{ route.canonical_url | json_script }},"coordinates":{"site":{{ content.site | json_script }},"content":{{ content.id | json_script }}}}</script>
+</fieldset>
+{% endif %}

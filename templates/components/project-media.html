@@ -1,0 +1,9 @@
+<figure class="project-media{% if component.arguments.kind is defined and component.arguments.kind == 'walkthrough' %} project-media--walkthrough{% endif %}{% if component.arguments.placeholder is defined and component.arguments.placeholder and component.arguments.src is not defined %} project-media--reserved{% endif %}">
+{% if component.arguments.src is defined %}
+<video controls playsinline preload="metadata" src="{{ component.arguments.src }}" poster="{{ component.arguments.poster }}" aria-label="{{ component.arguments.label }}">{% if component.arguments.captions is defined %}<track kind="captions" src="{{ component.arguments.captions }}" srclang="{{ component.arguments.caption_language }}" label="{{ component.arguments.label }}">{% endif %}</video>
+<figcaption>{{ component.body.html | safe }}<p><a href="{{ component.arguments.transcript }}">{{ component.arguments.transcript_label }}</a></p></figcaption>
+{% elif component.arguments.placeholder is defined and component.arguments.placeholder %}
+<div class="project-media__slot" role="img" aria-label="{{ component.arguments.label }}"><span>{{ component.arguments.label }}</span></div>
+{% if component.body.html %}<figcaption>{{ component.body.html | safe }}</figcaption>{% endif %}
+{% else %}{{ component.body.html | safe }}{% endif %}
+</figure>

@@ -1,0 +1,25 @@
+{% import "base/macros/links.html" as links %}
+{# Link to the supplied services destination using copy labels and source-site context; present suppresses a duplicate invitation and closing adds the page-ending wrapper. #}
+{% macro services(destination=false,copy=false,source="",present=false,closing=false) %}
+{% if destination and not present %}
+{% set invitation = copy | get(key="base:services-invitation", default="") %}
+{% set action = copy | get(key="base:services-action", default="") %}
+{% if invitation and action %}
+{% if closing %}<div class="services-closing">{% endif %}
+<section class="focus-reveal focus-reveal--centred" data-focus-reveal data-focus-mode="once">
+<div class="services-invitation focus-reveal__content">
+  <h2>{{ invitation }}</h2>
+  <a class="control control--primary" data-enquiry-button="services-invitation" href="{{ destination.destination.route.url }}" {{ links::attributes(copy=copy, source=source, site=destination.destination.content.site, content_id=destination.destination.content.id, target=destination.destination.content.presentation | default(value=false)) }}>{{ action }}</a>
+</div>
+</section>
+{% if closing %}</div>{% endif %}
+{% endif %}
+{% endif %}
+{% endmacro services %}
+
+{# Link to the supplied choice using its href, label and description; copy supplies the external-link description and rail selects the compact control form. #}
+{% macro preferred_source(choice, copy=false, rail=false) %}
+{# The description reaches every reader through aria-describedby; a hover-only title would not. #}
+{% set described = "" %}{% if choice.description is defined and choice.description %}{% set described = "preferred-source-description" %}{% endif %}
+<a class="preferred-source-link{% if rail %} control control--quiet{% endif %}" href="{{ choice.href }}" target="_blank" {{ links::attributes(kind="external", rel="noopener noreferrer", describedby=described, copy=copy) }}>{{ choice.label }}</a>{% if described %}<span id="preferred-source-description" hidden>{{ choice.description }}</span>{% endif %}
+{% endmacro preferred_source %}

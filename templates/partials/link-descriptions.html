@@ -1,0 +1,6 @@
+{% if presentation.chrome.regions is defined %}
+{% set crossing_label = presentation.chrome.regions | get(key='base:crossing', default='') %}
+{% set external_label = presentation.chrome.regions | get(key='base:external', default='') %}
+{% if crossing_label %}<span id="crossing-description" hidden>{{ crossing_label }}</span>{% endif %}
+{% if external_label %}<span id="external-description" hidden>{{ external_label }}</span>{% endif %}
+{% endif %}

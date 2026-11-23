@@ -1,0 +1,82 @@
+@use 'typography';
+@use 'carousel-controls';
+@use '../tokens/scss/layout';
+@use 'sass:list';
+@use 'sass:math';
+
+// Ease into the opaque field at both edges: a straight alpha ramp leaves
+// a visible vertical seam where its slope abruptly becomes flat.
+@function -arc-edge-mask($width) {
+  $stops: ();
+  @for $step from 0 through 16 {
+    $t: math.div($step,16);
+    $alpha: $t * $t * (3 - 2 * $t);
+    $stops: list.append($stops,rgba(0,0,0,$alpha) calc(#{$width} * #{$t}),comma);
+  }
+  @for $step from 16 through 0 {
+    $t: math.div($step,16);
+    $alpha: $t * $t * (3 - 2 * $t);
+    $stops: list.append($stops,rgba(0,0,0,$alpha) calc(100% - #{$width} * #{$t}),comma);
+  }
+  @return linear-gradient(to right,$stops);
+}
+
+@mixin recipes {
+  // Without script this is a complete, readable directory of native links.
+  .catalogue { --catalogue-share: var(--layout-arc-card-share); position: relative; isolation: isolate; container-type: inline-size; }
+  .catalogue__stage { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-6); }
+  .catalogue__stage > [data-gazette-component],.catalogue-entry .folder-card__inner > [data-gazette-component] { display: contents; }
+  .catalogue-entry { --folder-closed-share: var(--layout-arc-folder-closed); --folder-open-share: var(--layout-arc-folder-open); inline-size: min(100%,var(--layout-folder-max-width)); }
+  .catalogue-entry .folder-card__art { z-index: 0; }
+  .catalogue-entry .folder-card__panel { z-index: 1; }
+  .catalogue-entry .folder-card__copy { z-index: 2; padding: var(--space-4); }
+  .catalogue-entry .folder-card__copy > :is(h2,h3) { min-inline-size: 0; font-size: var(--type-size-h3); line-height: var(--type-line-height-heading); margin: 0; text-align: start; overflow-wrap: break-word; text-wrap: balance; }
+  .catalogue-entry .folder-card__copy > p { font-size: var(--type-size-body); line-height: var(--type-line-height-body); margin: 0; }
+  .catalogue-entry .folder-card__copy a { position: relative; text-decoration: none; }
+  .catalogue-entry .folder-card__copy > :is(h2,h3) a { display: inline-block; max-inline-size: 100%; }
+  // The identity mark occupies the trailing inset instead of creating an
+  // orphan line after a complete project name.
+  .catalogue-entry .folder-card__copy a::after { position: absolute; inset-inline-start: 100%; inset-block-end: 0; margin-inline-start: var(--space-1); inline-size: var(--space-3); padding: 0; }
+  // The selected entry is a whole-card link, as in a deck: its one title link
+  // reaches over the card, bounded by the inner's clip, while the identity
+  // mark stays anchored to the title. Other ring entries still select on click.
+  .catalogue--ready .catalogue-entry[data-active='true'] .folder-card__copy > :is(h2,h3) a::before { content: ''; position: absolute; inset: -100vmax; }
+  .catalogue__reading { position: relative; z-index: 1; align-self: start; margin-block-start: calc(-1 * var(--catalogue-copy-overlap,0px)); }
+  .catalogue__details { display: grid; inline-size: min(100%,var(--layout-measure)); margin-inline: auto; padding: var(--space-4) var(--space-5) 0; text-align: center; }
+  // Lift the description by its own line height without moving the controls
+  // or changing the measured footprint used to fit the arc to the viewport.
+  .catalogue__detail { position: relative; inset-block-start: -1lh; grid-area: 1 / 1; align-self: end; font-size: var(--type-size-body); line-height: var(--type-line-height-body); }
+  .catalogue__detail[data-active='false'] { visibility: hidden; pointer-events: none; }
+  .catalogue__detail > p { margin: 0; }
+  @container (width <= #{layout.$layout-quote-compact-width}) {
+    .catalogue__stage { --catalogue-share: var(--layout-arc-compact-card-share); }
+  }
+  main:has(.catalogue) { padding-block-start: var(--space-3); }
+  .catalogue--ready { display: grid; grid-template-columns: minmax(0,1fr); align-content: center; }
+  // Only a catalogue that ends its content group needs the viewport-sized stage.
+  @media screen {
+    [data-gazette-component='catalogue']:last-child .catalogue--ready { min-block-size: calc(100svh - var(--frame-chrome,var(--layout-sticky-chrome)) - var(--space-7)); }
+  }
+  .catalogue--ready .catalogue__stage { position: relative; display: block; inline-size: var(--catalogue-field-width); justify-self: center; left: var(--catalogue-field-offset); block-size: var(--catalogue-stage-height); overflow: clip; touch-action: pan-y; }
+  // The complete circular envelope fits vertically; only the page edges
+  // soften. Distance-based card opacity follows the arc, with no bottom strip.
+  .catalogue--ready .catalogue__stage { mask-image: -arc-edge-mask(var(--layout-arc-edge-fade)); }
+  .catalogue--ready .catalogue-entry { position: absolute; inset-inline-start: 50%; inset-block-start: var(--catalogue-origin); inline-size: var(--catalogue-card-width); transform-origin: center; }
+  .catalogue--ready .catalogue-entry[data-active='false'] { cursor: pointer; }
+  .catalogue--ready[data-dragging] .catalogue-entry { user-select: none; }
+  @include carousel-controls.dragging('.catalogue--ready[data-dragging] .catalogue__stage');
+  @media (forced-colors: active) { .catalogue--ready .catalogue__stage { mask-image: none; } }
+  @media print {
+    .catalogue--ready { display: block; min-block-size: 0; }
+    // Block layout honours justify-self, so the screen centring would shrink the stage to fit on paper.
+    .catalogue--ready .catalogue__stage { display: flex; inline-size: auto; justify-self: stretch; margin: 0; block-size: auto; overflow: visible; }
+    .catalogue--ready .catalogue-entry { position: static; inline-size: 100%; transform: none !important; opacity: 1 !important; visibility: visible !important; }
+    .catalogue__stage { mask-image: none !important; }
+    .catalogue-entry[data-catalogue-clone] { display: none; }
+    .catalogue__reading { margin-block-start: 0; }
+    .catalogue__details { display: block; }
+    .catalogue__detail { inset-block-start: auto; }
+    .catalogue__detail[data-active='false'] { visibility: visible; }
+    .catalogue__controls { display: none; }
+  }
+}

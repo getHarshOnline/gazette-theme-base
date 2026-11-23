@@ -1,0 +1,36 @@
+@use 'typography';
+
+// Every draggable carousel shares one drag carrier: the grabbing hand holds over
+// its cards and their links until release. Include it after the region's own
+// cursor rules, which it must outrank at equal specificity.
+@mixin dragging($region) {
+  #{$region},#{$region} * { cursor: grabbing; }
+}
+
+@mixin recipes {
+  .carousel-controls:not([hidden]) { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-3); padding-block: var(--space-4); }
+  .carousel-controls__arrows { display: flex; align-items: center; gap: var(--space-3); margin: 0; }
+  .carousel-controls__arrows .control { display: grid; place-items: center; padding: 0; inline-size: var(--target-project); block-size: var(--target-project); border-radius: 50%; }
+  .carousel-controls__arrows svg { inline-size: var(--layout-quote-control-icon); block-size: var(--layout-quote-control-icon); fill: none; stroke: currentColor; stroke-width: var(--stroke-lit-edge); stroke-linecap: round; stroke-linejoin: round; }
+  .carousel-controls__position { @include typography.reading-face(); font-size: var(--type-size-meta); font-variant-numeric: tabular-nums; color: var(--color-muted); }
+  .carousel-controls__playback { font-size: var(--type-size-meta); }
+  // The strip scrolls, so it clips an outset ring; its choices draw the ring inside.
+  .carousel-controls__choices { display: flex; justify-content: safe center; gap: var(--space-3); max-inline-size: 100%; min-inline-size: 0; overflow-x: auto; --focus-ring-offset: calc(-1 * var(--focus-width)); }
+  .carousel-controls .carousel-controls__choices .control { flex-shrink: 0; display: grid; place-items: center; inline-size: var(--target-project); --control-inset-block: 0; --control-inset-inline: 0; --control-border: 0; --control-face: transparent; }
+  .carousel-controls__choices button::after { content: ''; inline-size: var(--layout-quote-choice-mark); block-size: var(--layout-quote-choice-mark); border-radius: var(--layout-quote-choice-mark); background: currentColor; opacity: var(--material-quote-deck-choice-opacity); transition: inline-size var(--motion-quote-deck-choice) var(--motion-quote-deck-fade),opacity var(--motion-quote-deck-choice) var(--motion-quote-deck-fade); }
+  .carousel-controls__choices button[aria-pressed="true"]::after { inline-size: var(--layout-quote-choice-active); opacity: 1; }
+  @media (hover: hover) and (pointer: fine) {
+    .carousel-controls__choices button:not([aria-pressed="true"]):hover::after { opacity: 1; }
+  }
+  // Forced colours repaint a currentColor fill as Canvas. Keep every mark solid;
+  // the held bar keeps its width and takes Highlight.
+  @media (forced-colors: active) {
+    .carousel-controls__choices button::after { forced-color-adjust: none; background: ButtonText; opacity: 1; }
+    .carousel-controls__choices button[aria-pressed="true"]::after { background: Highlight; }
+  }
+  :root[data-motion='reduce'] .carousel-controls__choices button::after { transition: none; }
+  @media (prefers-reduced-motion: reduce) {
+    :root:not([data-motion='allow']) .carousel-controls__choices button::after { transition: none; }
+  }
+  @media print { .carousel-controls:not([hidden]) { display: none; } }
+}

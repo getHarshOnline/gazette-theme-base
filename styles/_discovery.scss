@@ -1,0 +1,88 @@
+@use 'typography';
+@use 'optical';
+@use '../tokens/scss/layout';
+
+@mixin listings {
+  .reading-list { list-style: none; padding: 0; margin: 0; }
+  .reading-list > li { padding-block: var(--space-4); border-block-end: var(--stroke-hair) solid var(--color-line); }
+  .reading-list__entry { display: grid; gap: var(--space-2); min-inline-size: 0; }
+  .reading-list__entry > * { margin: 0; min-inline-size: 0; }
+  .reading-list__title { font-size: var(--type-size-h3); line-height: var(--type-line-height-heading); text-wrap: pretty; }
+  // Reading targets keep one touch area while text and its destination mark wrap together.
+  .reading-list__title a,.reading-related__title { display: inline-block; align-content: center; min-block-size: var(--target-project); }
+  .reading-list__title a { text-decoration: none; }
+  .reading-list__title a:focus-visible { text-decoration: underline; }
+  @media (hover: hover) and (pointer: fine) { .reading-list__title a:hover { text-decoration: underline; } }
+  .reading-list__metadata { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); color: var(--color-muted); @include typography.reading-face(); font-size: var(--type-size-meta); line-height: var(--type-line-height-body); }
+  .reading-list__description { max-inline-size: var(--layout-measure); font-size: var(--type-size-body); line-height: var(--type-line-height-body); text-wrap: pretty; }
+  main:has(> .reading-list) > .publication-layout:has(> .publication-body:empty) { display: none; }
+  .listing-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-5); @include typography.reading-face(); font-size: var(--type-size-meta); line-height: var(--type-line-height-body); }
+  .listing-subject { margin-block: 0 var(--space-4); @include typography.reading-face(); font-size: var(--type-size-body); line-height: var(--type-line-height-body); }
+  .listing-subject > span,.listing-empty { color: var(--color-muted); }
+  .listing-empty { display: grid; justify-items: start; gap: var(--space-4); margin-block: var(--space-4); }
+  .listing-empty > p { margin: 0; max-inline-size: var(--layout-measure); font-size: var(--type-size-body); line-height: var(--type-line-height-body); }
+  .listing-controls--top { margin-block-end: var(--space-2); }
+  .listing-controls--bottom { margin-block-start: var(--space-4); }
+  .listing-sort { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+  .listing-sort__label { color: var(--color-muted); }
+  .listing-controls :is(ul,ol) { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); list-style: none; margin: 0; padding: 0; }
+  .listing-controls li { margin: 0; padding: 0; }
+  .listing-pagination { min-inline-size: 0; }
+  .listing-control { --control-inset-inline: var(--space-3); --control-secondary-border: transparent; min-inline-size: var(--target-project); font-variant-numeric: tabular-nums; }
+  // A world may underline secondary links; here the underline marks only the held item.
+  .listing-control:not([aria-current]) { text-decoration: none; }
+  .listing-control[aria-current] { color: var(--color-ink); background: var(--color-tint); text-decoration: underline; text-decoration-thickness: var(--stroke-underline-active); }
+  .listing-unavailable { display: inline-flex; align-items: center; justify-content: center; min-block-size: var(--target-project); padding-inline: var(--space-3); color: var(--color-muted); }
+  // An unavailable Previous or Next keeps its cell, drawn as a disabled control
+  // is, so it reads as unavailable without colour. The current-page cell shares
+  // the class but is not disabled.
+  .listing-unavailable[aria-disabled='true'] { min-inline-size: var(--target-project); border: var(--stroke-hair) solid var(--color-line); border-radius: var(--control-radius,var(--radius-control)); cursor: not-allowed; }
+  .listing-pagination__gap { color: var(--color-muted); }
+  @media (forced-colors: active) {
+    .listing-control[aria-current] { border-color: CanvasText; }
+    .listing-unavailable[aria-disabled='true'] { color: GrayText; border-color: GrayText; }
+  }
+  // Paper cannot sort or page, so these rows go with the other control sets.
+  @media print { .listing-controls { display: none; } }
+}
+
+@mixin recommendations {
+  .reading-resources { margin-block-start: var(--space-section); }
+  .reading-resources > h2 { font-size: var(--type-size-h3); margin-block-end: var(--space-5); }
+  .reading-related { margin-block-start: var(--space-5); }
+  .reading-related > ul { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,var(--layout-track-min)),1fr)); gap: var(--space-5); }
+  .reading-card { min-inline-size: 0; display: flex; flex-direction: column; align-items: start; gap: var(--space-3); padding: var(--space-5); @include optical.frame(); }
+  .reading-card > h3 { margin: 0; font-size: var(--type-size-h3); line-height: var(--type-line-height-heading); }
+  .reading-related__title { font-size: inherit; text-decoration: none; }
+  .reading-related__title:focus-visible { text-decoration: underline; }
+  @media (hover: hover) and (pointer: fine) { .reading-related__title:hover { text-decoration: underline; } }
+  .reading-card > p { margin: 0; font-size: var(--type-size-body); line-height: var(--type-line-height-body); color: var(--color-muted); }
+  .reading-card > .reading-list__metadata { font-size: var(--type-size-meta); }
+  .reading-card > .reading-classifications { margin-block-start: auto; padding-block-start: var(--space-3); }
+  .discovery-explorer--ready { display: grid; grid-template-columns: minmax(0,var(--layout-track-min)) minmax(0,1fr); align-items: center; gap: var(--space-3) var(--space-6); }
+  .discovery-explorer--ready > ul { display: grid; grid-template-columns: minmax(0,1fr); }
+  .discovery-explorer--ready .reading-card[hidden] { display: none; }
+  .discovery-map { position: relative; grid-row: 1 / span 2; aspect-ratio: 1; min-inline-size: 0; color: var(--color-muted); }
+  .discovery-map > svg { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; fill: none; stroke: currentColor; stroke-width: var(--stroke-hair); opacity: var(--world-material-optical-edge); }
+  .discovery-map__origin { position: absolute; inset-inline-start: 50%; inset-block-start: 50%; transform: translate(-50%,-50%); display: grid; place-items: center; inline-size: calc(100% - var(--target-project) * 2); padding: var(--space-3); @include optical.frame($radius: var(--radius-preview-frame)); background: var(--color-paper); text-align: center; font-size: var(--type-size-meta); line-height: var(--type-line-height-body); }
+  .discovery-map__choice { position: absolute; inset-inline-start: var(--discovery-x); inset-block-start: var(--discovery-y); transform: translate(-50%,-50%); display: grid; place-items: center; inline-size: var(--target-project); block-size: var(--target-project); border: 0; border-radius: 50%; background: transparent; color: var(--color-muted); cursor: pointer; }
+  .discovery-map__choice::after { content: ''; inline-size: var(--space-3); block-size: var(--space-3); background: currentColor; border: var(--stroke-hair) solid var(--color-paper); border-radius: 50%; }
+  .discovery-map__choice[aria-pressed='true'] { color: var(--color-accent); }
+  @media (hover: hover) and (pointer: fine) { .discovery-map__choice:hover { color: var(--color-accent); } }
+  .discovery-map__choice[aria-pressed='true']::after { outline: var(--stroke-hair) solid currentColor; outline-offset: var(--space-1); }
+  .discovery-controls { grid-column: 2; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+  .discovery-controls > output { font-size: var(--type-size-meta); font-variant-numeric: tabular-nums; color: var(--color-muted); }
+  .discovery-controls > button { min-inline-size: var(--target-project); --control-inset-block: var(--space-2); --control-inset-inline: var(--space-3); }
+  @media (width < layout.$layout-breakpoint-navigation) {
+    .discovery-explorer--ready { grid-template-columns: minmax(0,1fr); }
+    .discovery-map { display: none; }
+    .discovery-controls { grid-column: 1; }
+  }
+  @media print {
+    .discovery-explorer--ready { display: block; }
+    .discovery-explorer--ready > ul { display: grid; gap: var(--space-4); }
+    .discovery-explorer--ready .reading-card { display: block !important; break-inside: avoid; }
+    .discovery-map,.discovery-controls { display: none; }
+  }
+
+}

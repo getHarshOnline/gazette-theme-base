@@ -1,0 +1,3 @@
+{% import "base/macros/decks.html" as decks %}
+{% set copy = presentation.chrome.regions %}
+{{ decks::render(title=component.arguments.title,previous=copy | get(key="base:collection-previous",default=""),next=copy | get(key="base:collection-next",default=""),body_html=component.body.html,kind="destination",field="container",owned=true) }}

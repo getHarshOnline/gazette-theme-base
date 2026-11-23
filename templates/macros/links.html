@@ -1,0 +1,32 @@
+{# Write resolved destination or node facts, falling back to explicit kind/site/content_id/target/relationships; source distinguishes sites, rel/describedby add attributes, and copy supplies accessible crossing descriptions. #}
+{% macro attributes(source="", destination=false, kind="", site="", content_id="", target=false, node=false, relationships=false, rel="", describedby="", copy=false) %}
+{% if node %}
+  {% set site = node.site %}
+  {% set content_id = node.id %}
+  {% set target = node.presentation | default(value=target) %}
+{% endif %}
+{% if destination %}
+  {% set kind = destination.kind %}
+  {% set site = destination.site | default(value="") %}
+  {% set content_id = destination.content | default(value="") %}
+  {% set target = destination.presentation | default(value=false) %}
+  {% set relationships = destination.relationships | default(value=[]) %}
+{% elif not kind and site and source %}
+  {% if site == source %}{% set kind = "internal-native" %}{% else %}{% set kind = "cross-site" %}{% endif %}
+{% endif %}
+{% if kind %}
+ data-gazette-destination-kind="{{ kind }}"
+ data-relationship="{% if kind == 'cross-site' %}crossing{% elif kind == 'external' %}external{% else %}native{% endif %}"
+{% endif %}
+{% if site %} data-gazette-destination-site="{{ site }}"{% endif %}
+{% if content_id %} data-gazette-destination-content="{{ content_id }}"{% endif %}
+{% if relationships %} data-gazette-destination-relationships="{{ relationships | join(sep=' ') }}"{% endif %}
+{% if target %}
+ data-gazette-destination-theme="{{ target.theme }}"
+ {% if target.palette is defined and target.palette %}data-gazette-destination-palette="{{ target.palette }}"{% endif %}
+{% endif %}
+{% if rel or kind == 'external' %} rel="{{ rel }}{% if kind == 'external' %} external{% endif %}"{% endif %}
+{% set crossing = kind == 'cross-site' and copy and copy | get(key='base:crossing', default='') %}
+{% set external = kind == 'external' and copy and copy | get(key='base:external', default='') %}
+{% if describedby or crossing or external %} aria-describedby="{{ describedby }}{% if crossing %} crossing-description{% endif %}{% if external %} external-description{% endif %}"{% endif %}
+{% endmacro attributes %}

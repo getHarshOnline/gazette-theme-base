@@ -1,0 +1,33 @@
+  <header class="frame__header">
+    {% if section_title | default(value="") %}<h1 class="frame__brand"{% if opening is defined and opening %}{% set opening_heading = headings | filter(attribute="level", value=1) | first %} id="{{ opening_heading.id }}"{% endif %}>{{ section_title }}</h1>{% elif publication_metadata and publication_metadata.home is defined %}<a class="frame__brand" href="{{ publication_metadata.home.url }}" {{ links::attributes(copy=presentation.chrome.regions | default(value=false), kind="internal-native", site=serving_site) }}>{{ publication_metadata.brand.name }}</a>{% endif %}
+    {% include "base/partials/search-trigger.html" %}
+
+    {% if presentation.chrome is defined and presentation.chrome.navigation %}
+    {% set menu_label = presentation.chrome.regions | get(key="base:menu", default="") %}
+    {% if menu_label %}<button class="frame__menu" type="button" aria-controls="publication-navigation publication-tools" aria-expanded="true" hidden>{{ menu_label }}</button>{% endif %}
+    {% endif %}
+    <div class="frame__directory">
+    {% if presentation.chrome is defined and presentation.chrome.navigation %}
+    <nav class="frame__nav" id="publication-navigation" aria-label="{{ presentation.chrome.navigation_label }}">
+      <ul>
+      {% for item in presentation.chrome.navigation %}
+        {% set listing_matches = [] %}
+        {% if browsing_locations is defined %}{% set listing_matches = browsing_locations | filter(attribute="index", value=item.destination.content.id) %}{% endif %}
+        <li><a href="{{ item.destination.route.url }}" {{ links::attributes(copy=presentation.chrome.regions | default(value=false), source=serving_site, site=item.destination.content.site, content_id=item.destination.content.id, target=item.destination.content.presentation | default(value=false)) }}{% if content.id is defined and item.destination.content.id == content.id %} aria-current="page"{% elif listing_matches %} aria-current="location"{% endif %}>{{ item.label }}</a>{% if item.destination.content.description is defined and item.destination.content.description %}<p class="frame__destination-description">{{ item.destination.content.description }}</p>{% endif %}</li>
+      {% endfor %}
+      </ul>
+    </nav>
+    {% endif %}
+
+    {% include "base/partials/shell.html" %}
+    </div>
+    {% if reading_page | default(value=false) and presentation.chrome is defined and presentation.chrome %}
+    {% set section_label = presentation.chrome.regions | get(key="base:outline", default="") %}
+    {% set reading_sections = headings | filter(attribute="level", value=2) | concat(with=headings | filter(attribute="level", value=3)) %}
+    {% if section_label and reading_sections | length > 0 %}
+    <div class="reading-header-row" data-reading-initial><a class="reading-header-fallback" href="#gazette-reading-outline">{{ section_label }}</a></div>
+    {% endif %}
+    {% endif %}
+  </header>
+  {# Apply the shell module's initial navigation state and measured clearance before paint. CSS chooses the form; the shell continues measuring after fonts or layout change. Without scripts the full navigation stays in flow. #}
+  <script>try{var h=document.currentScript.previousElementSibling,u=h&&h.querySelector(".frame__menu"),n=h&&h.querySelector(".frame__nav");if(u&&n){u.hidden=false;var c=getComputedStyle(u).display!=="none";h.setAttribute("data-navigation-mode",c?"compact":"direct");u.setAttribute("aria-expanded",String(!c));n.setAttribute("data-collapsed",String(c))}if(h){var s=h.getBoundingClientRect().height,d=document.documentElement;d.style.setProperty("--frame-header-height",s+"px");d.style.setProperty("--frame-chrome",(["fixed","sticky"].includes(getComputedStyle(h).position)?s:0)+"px")}}catch(x){}</script>

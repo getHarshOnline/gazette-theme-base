@@ -1,0 +1,11 @@
+{# Draw initially hidden navigation and playback controls: prefix names their classes, action names their data attributes, previous/next/pause/resume supply button text, and label names the group. #}
+{% macro render(prefix,action,previous="",next="",pause="",resume="",label="") %}
+<nav class="carousel-controls {{ prefix }}__controls"{% if label %} aria-label="{{ label }}"{% endif %} hidden>
+  {% if previous and next %}<div class="carousel-controls__arrows {{ prefix }}__arrows">
+    <button class="control control--navigation" type="button" data-{{ action }}-previous aria-label="{{ previous }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H6m5-6-6 6 6 6" /></svg></button>
+    <button class="control control--navigation" type="button" data-{{ action }}-next aria-label="{{ next }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-6 6 6-6 6" /></svg></button>
+  </div>{% endif %}
+  {% if pause and resume %}<button class="control control--navigation control--compact carousel-controls__playback {{ prefix }}__playback" type="button" data-{{ action }}-playback data-pause-label="{{ pause }}" data-resume-label="{{ resume }}" hidden>{{ pause }}</button>{% endif %}
+  <output class="carousel-controls__position {{ prefix }}__position" aria-live="polite" aria-atomic="true"></output>
+</nav>
+{% endmacro render %}

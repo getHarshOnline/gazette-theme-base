@@ -1,0 +1,79 @@
+// Shared contour for optical planes; callers own padding, type and contextual depth.
+// Commands use the world's dark register. Media keeps the page's selected
+// palette so moving a live drawing does not change its colours.
+@mixin command-register {
+  &:not(:has(> [data-tenant='media']:not([hidden]))) {
+    color-scheme: dark;
+    --color-paper: var(--world-dark-metal); --color-ink: var(--world-dark-on-metal);
+    --color-sheet: var(--world-dark-sheet); --color-tint: var(--world-dark-tint);
+    --color-muted: var(--world-dark-muted); --color-line: var(--world-dark-line);
+    --color-strong-line: var(--world-dark-strong-line); --color-accent: var(--world-dark-accent); --color-focus: var(--world-dark-focus);
+    background: var(--color-paper); color: var(--color-ink);
+  }
+}
+
+// Moving strips soften their owned field edges without masking labels or controls.
+@mixin horizontal-fade($edge: var(--space-5)) {
+  mask-image: linear-gradient(to right,transparent,black #{$edge},black calc(100% - #{$edge}),transparent);
+  @media (forced-colors: active), print { mask-image: none; }
+}
+
+// Keep light reading ink distinct from bright moving scenery without adding a panel.
+@mixin ink-support($paper: var(--color-paper)) {
+  text-shadow: 0 var(--stroke-hair) var(--space-1) $paper,
+    0 var(--elevation-shell-contact-offset-y) var(--elevation-shell-contact-blur) $paper;
+}
+
+@mixin frame($depth: null, $ink: var(--color-ink), $reflection: var(--color-sheet), $edge: var(--world-material-optical-edge), $highlight: var(--world-material-optical-highlight), $radius: var(--world-material-optical-radius)) {
+  border: var(--stroke-hair) solid color-mix(in srgb,#{$ink} calc(#{$edge} * 100%),transparent);
+  border-radius: $radius;
+  $inset: inset 0 var(--stroke-hair) 0 color-mix(in srgb,#{$reflection} calc(#{$highlight} * 100%),transparent);
+  @if $depth == null { box-shadow: $inset; }
+  @else { box-shadow: $inset, $depth; }
+}
+
+// One optical material capability. Callers retain geometry and bind their own
+// authored face, filter and opaque bed; preferences never invent another surface.
+@mixin layer($face, $filter, $solid) {
+  background: $face;
+  backdrop-filter: $filter;
+  @supports not (backdrop-filter: blur(1px)) {
+    background: $solid;
+  }
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
+    background: $solid;
+    backdrop-filter: none;
+  }
+}
+
+// Shared material for card surfaces selected by Base templates. Receding planes
+// and painted cut-outs keep the fill without sampling a live backdrop.
+@mixin card-surfaces {
+  $surface: ':where(.card-surface,.article-listing .card-surface--listing)';
+  $direct: ':where(.card-surface--moving,.card-surface--paint,.card-surface--listing)';
+  $bed: var(--card-surface-bed,var(--color-sheet));
+  $fill: var(--card-surface-fill,var(--material-discovery-glass-fill));
+
+  #{$surface} {
+    background-color: $bed;
+    background-color: color-mix(in srgb,$bed calc($fill * 100%),transparent);
+    backdrop-filter: var(--card-surface-filter,blur(var(--world-material-optical-blur)));
+  }
+  #{$surface}#{$direct} { backdrop-filter: none; }
+  // Only the selected reading face filters the deck behind it. Neighbouring
+  // titles remain visible beside the face, never through its reading text.
+  #{$surface}:where([data-depth-active],[data-search-active]) {
+    backdrop-filter: var(--card-surface-filter,blur(var(--world-material-optical-blur)));
+  }
+  @supports not (backdrop-filter: blur(1px)) {
+    #{$surface}:not(#{$direct}),#{$surface}:where([data-depth-active],[data-search-active]) { background-color: $bed; }
+  }
+  #{$surface}:where(.card-surface--paint) {
+    // Tint the complete decorative layer, including its bloom, once.
+    background-color: $bed;
+    opacity: $fill;
+  }
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
+    #{$surface} { background-color: $bed; backdrop-filter: none; opacity: 1; }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "gazette-theme-base",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"fixtures/*.test.mjs\"",
+    "capture": "node fixtures/capture.mjs",
+    "test:capture": "node --test fixtures/capture.test.mjs",
+    "profile": "node fixtures/profile.mjs",
+    "test:profile": "node --test fixtures/profile.test.mjs fixtures/profile-browser.test.mjs",
+    "journeys": "node fixtures/journeys.mjs",
+    "test:journeys": "node --test fixtures/journeys.test.mjs fixtures/journeys-browser.test.mjs",
+    "pond": "node fixtures/pond-capture.mjs",
+    "test:pond": "node --test fixtures/search-pond.test.mjs fixtures/pond-browser.test.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

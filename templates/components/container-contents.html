@@ -1,0 +1,3 @@
+{% import "base/macros/container-decks.html" as container_decks %}
+{% set contents = component.container_contents %}
+{{ container_decks::render(kind=contents.kind,documentation=contents.documentation,entries=contents.entries,events=contents.outline | default(value=false),copy=presentation.chrome.regions | default(value=false),source=component.context.host.site) }}

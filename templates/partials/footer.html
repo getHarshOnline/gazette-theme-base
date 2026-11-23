@@ -1,0 +1,87 @@
+{% set generator_credit = false %}
+{% set footer_is_reading = reading_surface | default(value=false) %}
+{% set footer_preferred_source = preferred_source_action is defined and preferred_source_action and not footer_is_reading %}
+{% if presentation.chrome is defined %}
+{% for item in presentation.chrome.footer %}
+{% if item.key is defined and item.key == "base:generator-credit" %}{% set_global generator_credit = item %}{% endif %}
+{% endfor %}
+{% endif %}
+  <footer class="frame__footer"{% if presentation.chrome is defined %} aria-label="{{ presentation.chrome.footer_label }}"{% endif %}>
+    <div class="frame__footer-main">
+      <div class="frame__footer-profile">
+              {% if publication_metadata and publication_metadata.home is defined %}
+      {% set footer_description = "" %}
+      {% if presentation.chrome is defined %}
+        {% for item in presentation.chrome.navigation %}
+          {% if item.destination.content.site == serving_site and item.destination.route.url == publication_metadata.home.url and item.destination.content.description is defined %}
+            {% set_global footer_description = item.destination.content.description %}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+        <a class="frame__brand frame__footer-brand" href="{{ publication_metadata.home.url }}" {{ links::attributes(copy=presentation.chrome.regions | default(value=false), kind="internal-native", site=serving_site) }}>{{ publication_metadata.brand.name }}</a>
+        {% if footer_description %}<p class="frame__footer-description">{{ footer_description }}</p>{% endif %}
+      {% endif %}
+      </div>
+      {% if publication_metadata and presentation.chrome is defined %}
+      {% if publication_metadata.rights_holder is defined or generator_credit %}
+      <div class="frame__footer-colophon">
+        {% if publication_metadata.rights_holder is defined and publication_metadata.render_year is defined %}<p class="frame__footer-copyright">© {{ publication_metadata.render_year }} {{ publication_metadata.rights_holder.name }}</p>{% endif %}
+        {% if generator_credit %}
+        <p class="frame__footer-credit">{{ presentation.chrome.regions | get(key="base:made-with", default="") }} <span{% if presentation.chrome.regions["base:credit-heart-label"] is defined %} role="img" aria-label="{{ presentation.chrome.regions["base:credit-heart-label"] }}"{% endif %}>{{ presentation.chrome.regions | get(key="base:credit-heart", default="") }}</span> {{ presentation.chrome.regions | get(key="base:using", default="") }} <a href="{{ generator_credit.destination.route.url }}" {{ links::attributes(copy=presentation.chrome.regions, source=serving_site, site=generator_credit.destination.content.site, content_id=generator_credit.destination.content.id, target=generator_credit.destination.content.presentation | default(value=false)) }}>{{ generator_credit.label }}</a>{% set theme_credit = presentation.chrome.regions | get(key="base:theme-credit", default="") %}{% set theme_repository = presentation.chrome.regions | get(key="base:theme-repository", default="") %}{% if theme_credit and theme_repository %} · <a class="frame__footer-theme" href="{{ theme_repository }}" {{ links::attributes(copy=presentation.chrome.regions, kind="external") }}>{{ theme_credit }}</a>{% endif %}</p>
+        {% endif %}
+      </div>
+      {% endif %}
+      <div class="frame__footer-connections">
+        {% set contact_label = presentation.chrome.regions | get(key="base:contact", default="") %}
+        <ul class="frame__footer-social">
+        {% set footer_email = "" %}
+        {% if publication_metadata.contacts.discovery is defined and publication_metadata.contacts.discovery %}
+          {% set footer_email = publication_metadata.contacts.discovery %}
+        {% elif publication_metadata.contacts.correspondence is defined and publication_metadata.contacts.correspondence %}
+          {% set footer_email = publication_metadata.contacts.correspondence %}
+        {% endif %}
+        {% if contact_label and footer_email %}
+          <li><a href="mailto:{{ footer_email }}" {{ links::attributes(copy=presentation.chrome.regions | default(value=false), kind="external") }}>{{ contact_label }}</a></li>
+        {% endif %}
+        {% if publication_metadata.social is defined %}
+          {% for platform, account in publication_metadata.social %}
+          {% set platform_label = presentation.chrome.regions | get(key="base:social-" ~ platform, default="") %}
+          {% if platform_label and account.url is defined and account.url %}
+          <li><a href="{{ account.url }}" {{ links::attributes(copy=presentation.chrome.regions | default(value=false), kind="external") }}>{{ platform_label }}</a></li>
+          {% endif %}
+          {% endfor %}
+        {% endif %}
+        </ul>
+        {% set feed_choices = [] %}
+    {% if presentation.chrome is defined and presentation.feeds is defined %}
+      {% for feed in presentation.feeds %}
+        {% if presentation.chrome.regions | get(key="base:feed-" ~ feed.format, default="") %}{% set_global feed_choices = feed_choices | concat(with=feed) %}{% endif %}
+      {% endfor %}
+    {% endif %}
+    {% set discovery_choices = [] %}
+    {% if presentation.chrome is defined and presentation.discovery is defined %}
+      {% for entry in presentation.discovery %}
+        {% if presentation.chrome.regions | get(key="base:discovery-" ~ entry.kind, default="") %}{% set_global discovery_choices = discovery_choices | concat(with=entry) %}{% endif %}
+      {% endfor %}
+    {% endif %}
+    {% if presentation.chrome is defined and (presentation.chrome.footer or feed_choices or discovery_choices or footer_preferred_source) %}
+    <ul class="frame__footer-supporting">
+    {% for item in presentation.chrome.footer %}
+      {% if item.key is not defined or item.key != "base:generator-credit" %}<li><a{% if item.key is defined and item.key == "base:services" %} data-enquiry-button="services-footer"{% endif %} href="{{ item.destination.route.url }}" {{ links::attributes(copy=presentation.chrome.regions | default(value=false), source=serving_site, site=item.destination.content.site, content_id=item.destination.content.id, target=item.destination.content.presentation | default(value=false)) }}{% if content.id is defined and item.destination.content.id == content.id %} aria-current="page"{% endif %}>{{ item.label }}</a></li>{% endif %}
+    {% endfor %}
+    {% for entry in discovery_choices %}
+      <li><a href="{{ entry.url }}" {{ links::attributes(kind="internal-native", site=serving_site) }} type="{{ entry.media_type }}">{{ presentation.chrome.regions | get(key="base:discovery-" ~ entry.kind) }}</a></li>
+    {% endfor %}
+    {% set feed_channels = feed_choices | group_by(attribute="channel") %}
+    {% for feed in feed_choices %}
+      <li><a href="{{ feed.url }}" {{ links::attributes(kind="internal-native", site=serving_site) }} type="{{ feed.media_type }}" rel="alternate">{% if feed_channels | length > 1 %}{{ feed.title }} · {% endif %}{{ presentation.chrome.regions | get(key="base:feed-" ~ feed.format) }}</a></li>
+    {% endfor %}
+    {% if footer_preferred_source %}
+      <li>{{ preferred_source_action | safe }}</li>
+    {% endif %}
+    </ul>
+    {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </footer>

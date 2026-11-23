@@ -1,0 +1,109 @@
+@use 'typography';
+@use '../tokens/scss/layout';
+
+// One process anatomy: a readable ordered account without script, and an
+// interruptible one-open disclosure when enhanced. Supplied media is optional.
+@mixin reduced {
+  .process-path__panel,.process-path__figure,.process-path__frame,.process-path__indicator,
+  .process-path--accordion .process-step { transition: none; }
+  .process-path__figure { scale: var(--motion-reduced-process-accordion-media-scale); }
+}
+
+@mixin recipes {
+  .process-section { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-areas: 'steps introduction'; align-items: start; gap: var(--space-5) var(--space-7); min-inline-size: 0; }
+  .process-section--steps-end { grid-template-areas: 'introduction steps'; }
+  .process-section:has(> .project-walkthrough) { grid-template-areas: 'walkthrough walkthrough' 'steps introduction'; }
+  .process-section--steps-end:has(> .project-walkthrough) { grid-template-areas: 'walkthrough walkthrough' 'introduction steps'; }
+  .process-section > .project-walkthrough { grid-area: walkthrough; inline-size: 100%; }
+  .process-section > * { margin: 0; min-inline-size: 0; }
+  .process-introduction { grid-area: introduction; @include typography.text(var(--type-family-reading),var(--type-size-reading),var(--type-line-height-reading)); }
+  .process-introduction > :is(h2,h3):first-child { font-size: var(--type-size-h2); line-height: var(--type-line-height-heading); }
+  .process-introduction > p { max-inline-size: var(--layout-measure); }
+  // Keep a paired invitation together; the adjacent accordion owns its height.
+  .process-introduction:has(.focus-reveal),
+  .process-introduction > [data-gazette-component='focus-reveal'],
+  .process-introduction > [data-gazette-component='focus-reveal'] > [data-gazette-fallback],
+  .process-introduction .focus-reveal { display: grid; }
+  .process-introduction > [data-gazette-component='focus-reveal'] > [data-gazette-mount]:empty { display: none; }
+  .process-introduction .focus-reveal__content { padding: var(--space-4); gap: var(--space-4); align-content: start; }
+  .process-introduction .focus-reveal__content > :is(h2,h3,p) { margin: 0; }
+  .process-introduction .focus-reveal__content > .primary-action { margin-block-start: 0; }
+  .process-section > :is(.process-path,[data-gazette-component='process-path']) { grid-area: steps; }
+  .process-section > :not(.process-introduction,.process-path,[data-gazette-component='process-path']) { grid-column: 1 / -1; }
+  .process-section .process-path__steps { max-inline-size: none; }
+  .publication-body--product > .process-section { margin-block-start: var(--space-section); }
+  @media (width < layout.$layout-breakpoint-navigation) {
+    .process-section { grid-template-columns: minmax(0,1fr); grid-template-areas: 'introduction' 'steps'; }
+    .process-section:has(> .project-walkthrough),
+    .process-section--steps-end:has(> .project-walkthrough) { grid-template-areas: 'walkthrough' 'introduction' 'steps'; }
+    .process-introduction { font-size: var(--type-size-body); }
+    .publication-body--product > .process-section { margin-block-start: var(--space-7); }
+  }
+  .process-path { container-type: inline-size; position: relative; min-inline-size: 0; }
+  .process-path__steps { --process-stacked: 0; display: grid; gap: var(--space-3); list-style: none; counter-reset: process-step; margin: 0 auto; padding: 0; max-inline-size: var(--layout-measure); }
+  .process-step { position: relative; counter-increment: process-step; min-inline-size: 0; margin: 0; padding: 0; border-radius: var(--radius-preview-frame); }
+  .process-path__copy > :is(h1,h2,h3,h4,h5,h6):first-child { margin-block-start: 0; font-size: var(--type-size-h3); }
+  .process-path__copy > :is(h1,h2,h3,h4,h5,h6):first-child:not(:has(.process-path__button))::before { content: counter(process-step,decimal-leading-zero) ' '; color: var(--color-muted); }
+  .process-path__copy figure { margin: 0; }
+  .process-path__copy :is(img,video) { display: block; max-inline-size: 100%; block-size: auto; border-radius: var(--radius-preview-frame); }
+  .process-path--accordion .process-step { overflow: clip; transition: background-color var(--duration-preview-select) var(--easing-productive); }
+  .process-path--accordion .process-step.is-open { background: var(--color-sheet); }
+  .process-path--accordion .process-path__copy > :is(h1,h2,h3,h4,h5,h6):first-child { margin: 0; }
+  .process-path__button {
+    --control-font-family: var(--type-family-display);
+    --control-font-size: var(--type-size-h3);
+    --control-line-height: var(--type-line-height-heading);
+    --control-radius: var(--radius-preview-frame);
+    --control-border: 0;
+    --control-secondary-background: transparent;
+    --control-hover-transform: none;
+    // The step clips its button flush on every side; draw the ring inside it.
+    --focus-ring-offset: calc(-1 * var(--focus-width));
+    display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center;
+    gap: var(--space-4); inline-size: 100%; padding: var(--space-4); text-align: start;
+    font-weight: var(--type-weight-display); cursor: pointer;
+  }
+  .process-path__number { display: grid; place-items: center; min-inline-size: var(--target-project); block-size: var(--target-project); border-radius: var(--radius-control); background: var(--color-tint); color: var(--color-ink); @include typography.system-face(); font-size: var(--type-size-meta); }
+  .process-path__button[aria-expanded='true'] .process-path__number { color: var(--control-primary-ink,var(--color-paper)); background: var(--control-primary-face,var(--color-ink)); }
+  .process-path__title { min-inline-size: 0; overflow-wrap: anywhere; }
+  .process-path__indicator { inline-size: var(--space-3); block-size: var(--space-3); border-inline-end: var(--stroke-hair) solid currentColor; border-block-end: var(--stroke-hair) solid currentColor; rotate: 45deg; transition: rotate var(--duration-preview-select) var(--easing-productive); }
+  .process-path__button[aria-expanded='true'] .process-path__indicator { rotate: 225deg; }
+  .process-path__panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows var(--duration-preview-select) var(--easing-productive); }
+  .process-step.is-open .process-path__panel { grid-template-rows: 1fr; }
+  .process-path__inner { min-block-size: 0; overflow: hidden; padding-inline: calc(var(--space-4) + var(--target-project) + var(--space-4)) var(--space-4); }
+  .process-path__inner > :first-child { margin-block-start: 0; }
+  .process-path__inner > :last-child { margin-block-end: var(--space-5); }
+  .process-path__inner p { text-align: start; max-inline-size: var(--layout-measure); }
+  .process-path__pause { display: flex; margin: var(--space-4) auto 0; }
+  .process-path--media.process-path--accordion .process-path__layout { display: grid; grid-template-columns: minmax(0,calc(var(--layout-process-accordion-list-share) * 100%)) minmax(0,1fr); gap: var(--space-6); align-items: start; }
+  .process-path--media.process-path--accordion .process-path__steps { inline-size: 100%; max-inline-size: none; }
+  .process-path--media .process-path__pause { grid-column: 1 / -1; }
+  .process-path__media { position: relative; align-self: stretch; grid-column: 2; grid-row: 1; min-inline-size: 0; }
+  .process-path__frame { position: relative; aspect-ratio: calc(1 / var(--layout-process-accordion-media-ratio)); transition: translate var(--duration-preview-art) var(--easing-move); }
+  .process-path__media .process-path__figure { position: absolute; inset: 0; margin: 0; overflow: clip; border-radius: var(--radius-control); opacity: 0; scale: var(--motion-process-accordion-media-scale); pointer-events: none; transition: opacity var(--duration-preview-select) var(--easing-productive),scale var(--duration-preview-art) var(--easing-move),border-radius var(--duration-preview-art) var(--easing-move); }
+  .process-path__media .process-path__figure.is-active { border-radius: var(--radius-preview-frame); opacity: 1; scale: 1; pointer-events: auto; }
+  .process-path__media .process-path__figure :is(img,video) { inline-size: 100%; block-size: 100%; object-fit: cover; }
+  .process-path__media .process-path__figure figcaption { position: absolute; inset-inline: var(--space-3); inset-block-end: var(--space-3); margin: 0; padding: var(--space-2); background: var(--color-paper); border-radius: var(--radius-control); font-size: var(--type-size-meta); }
+  @container (width < #{layout.$layout-process-accordion-stack-below}) {
+    .process-path__steps { --process-stacked: 1; }
+    .process-path--media.process-path--accordion .process-path__layout { grid-template-columns: minmax(0,1fr); }
+    .process-path__button { gap: var(--space-3); padding: var(--space-3); }
+    .process-path__inner { padding-inline: var(--space-4); }
+    .process-path__inner .process-path__figure { margin-block-end: var(--space-4); }
+  }
+  :root[data-motion='reduce'] { @include reduced; }
+  @media (prefers-reduced-motion: reduce) { :root:not([data-motion='allow']) { @include reduced; } }
+  @media print {
+    .process-section { display: block; }
+    .process-section > * + * { margin-block-start: var(--space-5); }
+    .process-path--media.process-path--accordion .process-path__layout { display: block; }
+    .process-path__pause,.process-path__indicator { display: none !important; }
+    .process-path--accordion .process-step { break-inside: avoid; overflow: visible; margin-block-end: var(--space-5); }
+    .process-path__panel { display: block; }
+    .process-path__inner { overflow: visible; padding: var(--space-4); }
+    // Every step is open on paper, so none keeps the screen's open emphasis; headers read as headings.
+    .process-path--accordion .process-step.is-open { background: none; }
+    .process-path__button[aria-expanded='true'] .process-path__number { color: var(--color-ink); background: var(--color-tint); }
+    .process-path__button { --control-print-border: 0; }
+  }
+}

@@ -1,0 +1,128 @@
+@use 'typography';
+@use 'focus';
+@use 'depth-carousel';
+@use 'optical';
+@use '../tokens/scss/layout';
+
+@mixin controls {
+  .shell__label { display: block; margin-block-end: var(--space-2); }
+  .shell__tenant input[type='search'] { border-radius: var(--control-radius,var(--radius-control)); inline-size: 100%; min-block-size: var(--target-project); padding: var(--space-3); color: var(--color-ink); background: var(--color-paper); border: var(--stroke-hair) solid var(--color-strong-line); }
+  .shell__tenant[data-tenant='search']:not([hidden]) { display: flex; flex-direction: column; overflow: hidden; }
+  .shell__tenant[data-tenant='search'] > :not(.shell__results) { flex: none; }
+  .shell__results { flex: 1 1 auto; min-block-size: 0; list-style: none; margin: var(--space-4) 0; padding: 0; overflow-y: auto; overscroll-behavior: contain; }
+  // The separator sits on the row, not the option, so the option's rounded
+  // corners (kept for the selection ring) cannot bend it.
+  .shell__results > li { border-block-end: var(--stroke-hair) solid var(--color-line); }
+  .shell__results [role='option'] { display: block; padding: var(--space-3); min-block-size: var(--target-project); cursor: pointer; overflow-wrap: anywhere; }
+  .shell__results [aria-selected='true'] { --focus-ring-offset: calc(-1 * var(--focus-width)); @include focus.ring; }
+  // Pointer movement already selects an option, so the selected one is the only
+  // active result; a resting pointer must not keep a second, hovered accent.
+  .shell__results [role='option']:hover:not([aria-selected='true']) { color: inherit; }
+  .shell__result-title { display: block; font-weight: var(--type-weight-display); }
+  .shell__result-description { margin-block: var(--space-2) 0; font-size: var(--type-size-meta); }
+  .result-context { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin: var(--space-2) 0 0; @include typography.text(var(--type-family-reading), var(--type-size-meta)); }
+  .result-context > div { display: flex; flex-wrap: wrap; gap: var(--space-1); min-inline-size: 0; }
+  .result-context dt { color: var(--color-muted); }
+  .result-context dd { margin: 0; }
+  // The comma follows its value, so the gap never opens before it or starts a wrapped line.
+  .result-context dd:not(:last-child)::after { content: ","; }
+  main:has(.search-page) { max-inline-size: var(--layout-field-max); }
+  .search-page { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0,1fr); gap: var(--space-4); min-inline-size: 0; }
+  .search-page__discovery { position: relative; min-inline-size: 0; }
+  .search-page > :not(.search-page__field) { position: relative; }
+  .search-page__discovery:has(form:not([hidden])) { display: grid; place-items: center; min-block-size: min(calc(var(--layout-search-viewport-share) * 100svh),var(--layout-search-frame-max)); padding: var(--space-6) var(--space-4); }
+  .search-page__center { position: relative; z-index: 1; inline-size: min(100%,var(--layout-search-center-width)); display: grid; gap: var(--space-4); }
+  .search-page__center:not(:has(> form:not([hidden]))) { display: none; }
+  .search-page__center:has(form:not([hidden])) { --card-surface-bed: var(--color-paper); padding: var(--space-5); @include optical.frame($radius: var(--radius-preview-frame)); }
+  .search-page__field { position: absolute; z-index: -1; inset: 0; overflow: hidden; pointer-events: none;
+    mask-image: linear-gradient(to right,transparent,black var(--space-5),black calc(100% - var(--space-5)),transparent),linear-gradient(to bottom,transparent,black var(--space-5),black calc(100% - var(--space-5)),transparent);
+    mask-composite: intersect;
+  }
+  .search-page__field canvas { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; display: block; opacity: var(--material-discovery-field-opacity); }
+  .search-page__matches { min-inline-size: 0; }
+  .search-page__context { display: grid; gap: var(--space-3); }
+  .search-page__context > * { margin: 0; }
+  .search-page__context > h2 { font-size: var(--type-size-h2); line-height: var(--type-line-height-heading); }
+  .search-page__context-label,.search-page__reset { font-size: var(--type-size-meta); color: var(--color-muted); }
+  .search-page__reset { justify-self: start; min-block-size: var(--target-project); align-content: center; }
+  // Keep the count and pagination readable over the decorative field.
+  .search-page__summary { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-3) var(--space-5); font-size: var(--type-size-meta); background: var(--color-paper); }
+  // While loading or unavailable, the status reports on the full-width fallback catalogue.
+  .search-page:has(.search-page__form:not([hidden])) .search-page__summary { inline-size: min(100%,var(--layout-search-center-width)); margin-inline: auto; }
+  .search-page__summary > p,.search-page__pagination > p { margin: 0; }
+  // The retry is the next action for the status it follows.
+  .search-page__retry { margin-inline-end: auto; }
+  .search-page__form { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; gap: var(--space-3); }
+  .search-page__query > span { text-align: center; }
+  .search-page label { display: grid; gap: var(--space-2); min-inline-size: 0; font-size: var(--type-size-meta); }
+  .search-page input,.search-page select { font: inherit; min-inline-size: 0; inline-size: 100%; min-block-size: var(--target-project); border: var(--stroke-hair) solid var(--color-line); border-radius: var(--control-radius,var(--radius-control)); padding: var(--space-2) var(--space-3); background: var(--color-sheet); color: var(--color-ink); }
+  // The browser's clear button keeps its one-tap clear and its own show and hide
+  // rules, but draws in the field's muted ink instead of the browser's colour.
+  :is(.shell__tenant,.search-page) input[type='search']::-webkit-search-cancel-button {
+    appearance: none;
+    inline-size: var(--space-3); block-size: var(--space-3);
+    margin-inline-start: var(--space-2);
+    background: var(--color-muted);
+    cursor: pointer;
+    mask-image:
+      linear-gradient(45deg,transparent calc(50% - var(--stroke-underline-active) / 2),black 0 calc(50% + var(--stroke-underline-active) / 2),transparent 0),
+      linear-gradient(-45deg,transparent calc(50% - var(--stroke-underline-active) / 2),black 0 calc(50% + var(--stroke-underline-active) / 2),transparent 0);
+  }
+  :is(.shell__tenant,.search-page) input[type='search']::-webkit-search-cancel-button:hover { background: var(--color-ink); }
+  // The error keeps its own carrier, distinct from the focus ring a typing reader sees.
+  .search-page input[aria-invalid='true'] { border-color: var(--color-critical); }
+  .search-page__query-message { grid-column: 1; margin: 0; color: var(--color-critical); font-size: var(--type-size-meta); line-height: var(--type-line-height-body); }
+  @supports (appearance: base-select) {
+    .search-page select,.search-page select::picker(select) { appearance: base-select; }
+    .search-page select::picker(select) { inset: auto; inset-block-start: calc(anchor(bottom) + var(--space-2)); inset-inline-start: anchor(left); min-inline-size: anchor-size(width); max-inline-size: calc(100vw - var(--space-5) * 2); max-block-size: calc(100svh - var(--frame-chrome,var(--layout-sticky-chrome)) - var(--space-7)); position-try-fallbacks: flip-block; overflow: auto; overscroll-behavior: contain; padding: var(--space-2); background: var(--color-sheet); color: var(--color-ink); font: inherit; @include optical.frame($radius: var(--radius-preview-frame)); }
+    .search-page select option { min-block-size: var(--target-project); padding: var(--space-2) var(--space-3); border-radius: var(--control-radius,var(--radius-control)); }
+    .search-page select option:is(:hover,:checked) { color: var(--color-ink); background: var(--color-tint); }
+    // Options sit edge to edge in the picker, so focus draws inside them and the tint keeps the held choice.
+    .search-page select option:focus-visible { --focus-ring-offset: calc(-1 * var(--focus-width)); @include focus.ring; }
+    .search-page select::picker-icon { color: var(--color-muted); }
+  }
+  .search-page__refine { grid-column: 1 / -1; }
+  .search-page__refine > summary { padding-block: var(--space-2); font-size: var(--type-size-meta); }
+  .search-page__filters { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: var(--space-3); padding-block: var(--space-3); }
+  .search-page__results { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+  @include depth-carousel.surface('.search-page', '.search-page__results', '.search-result', 'data-search-active', '.search-page--depth');
+  .search-depth__controls { margin-block-start: var(--space-2); }
+  .search-result { position: relative; gap: var(--space-2); padding: var(--space-4); border: var(--stroke-hair) solid var(--color-line); border-radius: var(--radius-preview-frame); }
+  .search-result:has(details[open]) { --card-surface-bed: var(--color-tint); }
+  .search-result h2 { margin: 0; padding-inline-end: var(--target-project); @include typography.reading-face(); font-size: var(--type-size-body); font-weight: var(--type-weight-reading); line-height: var(--type-line-height-body); }
+  .search-result:has(details[open]) h2 { font-weight: var(--type-weight-display); }
+  .search-result h2 a { display: block; text-decoration: none; }
+  .search-result > .result-context { margin-block-start: 0; padding-inline-end: var(--target-project); color: var(--color-muted); }
+  .search-result > .result-context dt { position: absolute; inline-size: var(--stroke-hair); block-size: var(--stroke-hair); clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
+  .search-result__description { margin-block: var(--space-3) 0; font-size: var(--type-size-meta); line-height: var(--type-line-height-body); }
+  .search-result details { inline-size: 100%; }
+  .search-result summary { position: absolute; inset-block-start: var(--space-3); inset-inline-end: var(--space-3); display: grid; place-items: center; inline-size: var(--target-project); block-size: var(--target-project); cursor: pointer; list-style: none; color: var(--color-muted); }
+  .search-result summary::-webkit-details-marker { display: none; }
+  .search-result summary > span { position: absolute; inline-size: var(--stroke-hair); block-size: var(--stroke-hair); overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .search-result summary::before { content: '…'; font-size: var(--type-size-body); }
+  .search-result details[open] > summary::before { content: '×'; }
+  .search-result details > :not(summary) { margin-block: var(--space-3) 0; font-size: var(--type-size-meta); }
+  .search-page__pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); inline-size: min(100%,var(--layout-search-center-width)); margin-inline: auto; font-size: var(--type-size-meta); }
+  .search-page__summary .search-page__pagination { inline-size: auto; margin-inline: 0; }
+  @media (width < layout.$layout-breakpoint-navigation) {
+    .search-page__discovery:has(form:not([hidden])) { padding-inline: 0; }
+    .search-page__center { padding-inline: var(--space-3); }
+    .search-page__filters { grid-template-columns: minmax(0,1fr); }
+  }
+  @media print {
+    .search-page__field,.search-page__form,.search-depth__controls { display: none; }
+    .search-page__discovery:has(form:not([hidden])) { min-block-size: 0; padding: 0; }
+    // The form does not print, so its frame would print empty.
+    .search-page__center:has(form:not([hidden])) { padding: 0; border: 0; box-shadow: none; }
+    // Every result prints its context on one surface; the screen's held choice, its toggle and its repeated link stay on screen.
+    .search-result:has(details[open]) { --card-surface-bed: var(--color-sheet); }
+    .search-result:has(details[open]) h2 { font-weight: var(--type-weight-reading); }
+    .search-result summary,.search-result details > p:has(> .control) { display: none; }
+    .search-result details::details-content { display: block !important; content-visibility: visible !important; }
+  }
+  @media (forced-colors: active) {
+    .search-page__field { display: none; }
+    // A forced Canvas fill would erase the masked glyph; draw it in ButtonText.
+    :is(.shell__tenant,.search-page) input[type='search']::-webkit-search-cancel-button { forced-color-adjust: none; background: ButtonText; }
+  }
+}

@@ -1,0 +1,24 @@
+{% import "base/macros/links.html" as links %}
+
+{# Draw nested reading links in the order of events, retaining current-page and ancestor markers; source and copy describe crossings. #}
+{% macro items(events, source, copy) %}
+<ul class="reading-siblings">
+{% for item in events %}
+  {% if item.kind == "group-open" %}
+  <li class="reading-group">
+    <p class="reading-orientation__label">{{ item.title }}</p>
+    <ul class="reading-siblings">
+  {% elif item.kind == "group-close" %}
+    </ul></li>
+  {% elif item.kind == "page-open" %}
+  <li{% if item.ancestor %} class="reading-item--ancestor"{% endif %}>
+    {% if item.destination.route %}
+    <a href="{{ item.destination.route.url }}"{% if item.current %} aria-current="page"{% endif %} {{ links::attributes(source=source,copy=copy,node=item.destination.node,target=item.destination.presentation | default(value=false)) }}>{{ item.destination.node.title }}</a>
+    {% else %}<span{% if item.current %} aria-current="page"{% endif %}>{{ item.destination.node.title }}</span>{% endif %}
+    {% if item.has_children %}<ul class="reading-siblings">{% endif %}
+  {% elif item.kind == "page-close" %}
+    {% if item.has_children %}</ul>{% endif %}</li>
+  {% endif %}
+{% endfor %}
+</ul>
+{% endmacro items %}

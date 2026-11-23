@@ -1,0 +1,24 @@
+{% import "base/macros/links.html" as links %}
+{% set folder_url = item.url | default(value="") %}
+{% if item.resolved_route is defined and item.resolved_route %}{% set folder_url = item.resolved_route.url %}{% endif %}
+{% set folder_index = loop.index %}
+{% if card_id_prefix is defined and card_id_prefix %}{% set folder_index = card_id_prefix ~ loop.index %}{% endif %}
+{% set folder_has_art = item.artwork is defined and item.artwork %}
+{% set folder_description = "" %}
+{% if item.description is defined and item.description %}{% set folder_description = "folder-description-" ~ folder_index %}{% endif %}
+{% if folder_url %}<a class="folder-card{% if not folder_has_art %} folder-card--text{% endif %}"{% if folder_has_art %} data-folder-card{% endif %} href="{{ folder_url }}" aria-labelledby="folder-title-{{ folder_index }}" {{ links::attributes(copy=copy, destination=item.destination | default(value=false), describedby=folder_description, source=source, site=item.site, content_id=item.id, target=item.presentation | default(value=false)) }}>{% else %}<div class="folder-card{% if not folder_has_art %} folder-card--text{% endif %}"{% if folder_has_art %} data-folder-card{% endif %}>{% endif %}
+  <span class="folder-card__inner">
+    {% if folder_has_art %}
+    <span class="folder-card__art" aria-hidden="true">
+      <img class="folder-card__image folder-card__image--default" src="{{ item.artwork.default }}" alt="" loading="lazy">
+      {% if item.artwork.light is defined %}<img class="folder-card__image folder-card__image--light" src="{{ item.artwork.light }}" alt="" loading="lazy">{% endif %}
+      {% if item.artwork.dark is defined %}<img class="folder-card__image folder-card__image--dark" src="{{ item.artwork.dark }}" alt="" loading="lazy">{% endif %}
+    </span>
+    {% include "base/partials/folder-panel.html" %}
+    {% endif %}
+    <span class="folder-card__copy">
+      <span class="folder-card__title" id="folder-title-{{ folder_index }}">{{ item.title }}</span>
+      {% if item.description is defined and item.description %}<span class="folder-card__description" id="folder-description-{{ folder_index }}">{{ item.description }}</span>{% endif %}
+    </span>
+  </span>
+{% if folder_url %}</a>{% else %}</div>{% endif %}

@@ -1,0 +1,63 @@
+format: gazette-landing/v1
+template: base/product-listing.html
+content:
+  id: page:canonical-product-listing-populated
+  site: site:reading
+  title: Project directory specimen
+  lifecycle: draft
+  language: en
+  route:
+    path: /canonical-product-listing-populated/
+  structure:
+    kind: page
+    family:
+      kind: index
+sections:
+- component: directory-context
+  body: |
+    Independent destinations retain their own purpose and present limits.
+- component: project-media
+  arguments:
+    placeholder: true
+    label: 'Reserved illustration; not operational evidence'
+  body: |
+    The caption qualifies the empty field. No screenshot or recording has been supplied.
+- component: project-state
+  heading:
+    level: 2
+    text: Current limits
+  body: |
+    The specimen is paused and unavailable. Its explanatory reference remains readable.
+- component: destination-set
+  heading:
+    level: 2
+    text: Continue with the account
+  sections:
+  - component: destination
+    heading:
+      level: 3
+      text: Inspect the terms
+    body: |
+      The reference retains its own qualifications.
+    sections:
+    - component: primary-action
+      body: |
+        [Read the reference](/reference/)
+  - component: destination
+    heading:
+      level: 3
+      text: Read the evidence
+    body: |
+      [Open the first question](/first/). Its source remains independently available.
+- component: faq
+  heading:
+    level: 2
+    text: Questions about the specimen
+  sections:
+  - component: faq-item
+    arguments:
+      question: What does this specimen establish?
+    body: |
+      **Only its supplied account.** It establishes no release, completed engagement or measured outcome.
+
+      [Inspect the reference](/reference/).

@@ -1,0 +1,13 @@
+{% import "base/macros/links.html" as links %}
+{# Look up id in nodes/routes or references and draw its link or text; missing supplies the fallback label, scope distinguishes element IDs, and source/copy describe crossings. #}
+{% macro link(id, nodes, routes, references, missing, scope, source="", copy=false) %}
+{% set node = nodes | get(key=id, default=false) %}
+{% set route = routes | get(key=id, default=false) %}
+{% set reference = references | get(key=id, default=false) %}
+{% if node %}{% if route %}<a id="{{ scope }}:{{ id | replace(from="%", to="%25") | replace(from=":", to="%3A") }}" href="{{ route.url }}" {{ links::attributes(copy=copy, source=source, site=node.site, content_id=node.id, target=node.presentation | default(value=false)) }}>{{ node.title }}</a>{% else %}<span>{{ node.title }}</span>{% endif %}
+{% elif reference %}
+{% set label = reference.canonical_url | default(value=missing) %}
+{% if reference.title is defined %}{% set label = reference.title %}{% endif %}
+{% if reference.canonical_url is defined %}<a id="{{ scope }}:{{ id | replace(from="%", to="%25") | replace(from=":", to="%3A") }}" href="{{ reference.canonical_url }}" {{ links::attributes(copy=copy, kind="cross-site", target=reference.presentation | default(value=false)) }}>{{ label }}</a>{% else %}<span>{{ label }}</span>{% endif %}
+{% else %}<span>{{ missing }}</span>{% endif %}
+{% endmacro link %}

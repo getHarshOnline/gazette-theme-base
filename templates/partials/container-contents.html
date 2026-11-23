@@ -1,0 +1,10 @@
+{% import "base/macros/container-decks.html" as container_decks %}
+{% set entries = children %}
+{% set ordered = content.structure.kind == "journey" %}
+{% if ordered %}{% set entries = steps %}{% endif %}
+{% if (content.structure.kind == "collection" or ordered) and entries %}
+{% set authored_outline = not ordered and content.structure.navigation is defined and content.structure.navigation and documentation_navigation is defined and documentation_navigation and documentation_navigation.current and documentation_navigation.root.node.id == content.id %}
+{% set events = false %}
+{% if authored_outline %}{% set events = documentation_navigation.events %}{% endif %}
+{{ container_decks::render(kind=content.structure.kind,documentation=content.documentation | default(value=false),entries=entries,events=events,copy=presentation.chrome.regions | default(value=false),source=serving_site) }}
+{% endif %}

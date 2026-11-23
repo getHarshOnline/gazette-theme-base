@@ -1,0 +1,4 @@
+{% extends "base/page.html" %}
+{% block footer_treatment %}colophon{% endblock footer_treatment %}
+{% block page_mode %}decision{% endblock page_mode %}
+{% block publication_body %}{% set account_layout = "services" %}{% include "base/partials/publication-body.html" %}{% endblock publication_body %}

@@ -1,0 +1,70 @@
+@use 'typography';
+@use 'carousel-controls';
+@use 'optical';
+@use '../tokens/scss/layout';
+
+@mixin recipes {
+  main[data-family='utility']:has(.quote-deck) { max-inline-size: var(--layout-field-max); }
+  .quote-deck { display: grid; grid-template-columns: minmax(0,1fr); gap: var(--space-5); container: quote / inline-size; --quote-card-width: calc(100cqw * var(--layout-quote-card-share)); }
+  .quote-deck__header { display: grid; justify-items: center; align-items: center; gap: var(--space-4); }
+  .quote-deck__header:empty { display: none; }
+  // Inset destination decks share motion and controls with the full field,
+  // but keep a bounded card even when only one destination is supplied.
+  .quote-deck[data-deck-field='container'] { --quote-card-width: min(var(--layout-preview-width),calc(100cqw - var(--space-7))); gap: var(--space-2); }
+  .quote-deck[data-deck-field='container'] .quote-deck__stage { justify-items: center; align-items: end; }
+  .quote-deck[data-deck-field='container'] .quote-deck__card { inline-size: var(--quote-card-width); max-inline-size: 100%; min-block-size: 0; padding: var(--space-5); gap: var(--space-4); border-radius: var(--radius-preview-frame); }
+  .quote-deck--ready[data-deck-field='container'] .quote-deck__stage { padding-block: var(--space-4) var(--quote-clearance,0px); @include optical.horizontal-fade; }
+  .quote-deck[data-deck-field='container'] .quote-deck__controls { padding-block: var(--space-2); }
+  .quote-deck[data-deck-field='container'] .quote-deck__header h2 { font-size: var(--type-size-h2); }
+  .quote-deck__header :is(h2,h3) { max-inline-size: var(--layout-measure); margin: 0; font-size: var(--type-size-h3); text-align: center; }
+  .container-contents,.container-contents__group { display: grid; gap: var(--space-5); }
+  .quote-deck__stage { display: grid; gap: var(--space-5); isolation: isolate; list-style: none; padding: 0; margin: 0; }
+  .quote-deck .quote-deck__card { margin: 0; padding: var(--space-6); box-shadow: 0 var(--elevation-quote-offset-y) var(--elevation-quote-blur) var(--elevation-quote-spread) color-mix(in srgb,var(--color-shadow) calc(var(--elevation-quote-opacity) * var(--color-lift-shadow) * 100%),transparent); border-radius: var(--radius-preview-frame); display: flex; flex-direction: column; gap: var(--space-6); min-inline-size: 0; }
+  .quote-deck .quote-deck__card blockquote { border: 0; padding: 0; margin: 0; @include typography.reading-face(); font-size: var(--type-size-reading); line-height: var(--type-line-height-body); }
+  .quote-deck__card blockquote > :first-child { margin-block-start: 0; }
+  .quote-deck__card blockquote > :last-child { margin-block-end: 0; }
+  .quote-deck__card figcaption { margin-block-start: auto; padding-block-start: var(--space-4); border-block-start: var(--stroke-hair) solid var(--color-line); font-size: var(--type-size-body); }
+  .quote-deck__card .quote-deck__person > span { display: block; color: var(--color-muted); margin-block-start: var(--space-2); }
+  .quote-deck--ready .quote-deck__stage { position: relative; display: grid; justify-items: center; align-items: stretch; gap: 0; padding-block: var(--quote-clearance,var(--space-7)); touch-action: pan-y; }
+  // The fan occupies the page field; its heading, controls and card scale keep
+  // the content grid. Clip only the moving stage, at the viewport's edges.
+  @media screen {
+    .quote-deck--ready .quote-deck__stage { inline-size: var(--quote-field-width,100%); justify-self: center; left: var(--quote-field-offset,0px); overflow: clip; }
+  }
+  .quote-deck--ready .quote-deck__card { grid-area: 1 / 1; inline-size: var(--quote-card-width); min-block-size: calc(var(--quote-card-width) * var(--layout-quote-card-ratio)); padding: calc(var(--quote-card-width) * var(--layout-quote-card-padding)); gap: calc(var(--quote-card-width) * var(--layout-quote-card-gap)); border-radius: calc(var(--quote-card-width) * var(--layout-quote-card-radius)); transform-origin: center; transition: transform var(--motion-quote-deck-select) var(--motion-quote-deck-easing),opacity var(--motion-quote-deck-select) var(--motion-quote-deck-fade),z-index var(--motion-quote-deck-select) var(--motion-quote-deck-easing); }
+  .quote-deck--ready .quote-deck__card blockquote { font-size: clamp(var(--type-size-reading),calc(var(--quote-card-width) * var(--layout-quote-copy-scale)),var(--type-size-h3)); line-height: var(--type-line-height-quote); }
+  .quote-deck__card[data-quote-clone] { pointer-events: none; user-select: none; }
+  // Cards behind the front one keep only their caption, so the fan reads cleanly at rest.
+  @media screen {
+    .quote-deck--ready .quote-deck__card blockquote { transition: opacity var(--deck-body-duration,var(--duration-result)) var(--easing-productive); }
+    .quote-deck--ready .quote-deck__card[data-active='false'] blockquote { opacity: 0; }
+  }
+  .quote-deck[data-dragging="true"] { user-select: none; }
+  @include carousel-controls.dragging(".quote-deck[data-dragging='true'] .quote-deck__stage");
+  .quote-deck[data-dragging='true'] .quote-deck__card,.quote-deck[data-reduced='true'] .quote-deck__card { transition: none; }
+  @container quote (width <= #{layout.$layout-quote-compact-width}) {
+    .quote-deck--ready:not(.quote-deck--folder):not([data-deck-field='container']) .quote-deck__stage { --quote-card-width: calc(100cqw - var(--space-7)); }
+  }
+  @media print {
+    .quote-deck { container-type: normal; overflow: visible; }
+    .quote-deck.quote-deck--ready .quote-deck__stage { display: block; padding: 0; }
+    .quote-deck.quote-deck--ready .quote-deck__card { visibility: visible !important; opacity: 1 !important; inline-size: 100%; min-block-size: 0; transform: none !important; transition: none; margin-block: var(--space-5); padding: var(--space-5); border-radius: 0; box-shadow: none; break-inside: avoid; background: transparent; }
+    .quote-deck.quote-deck--ready .quote-deck__card blockquote { font-size: var(--type-size-reading); }
+    .quote-deck.quote-deck--ready .quote-deck__card[data-quote-clone],.quote-deck__controls:not([hidden]),.quote-deck__arrows:not([hidden]) { display: none; }
+  }
+  .quote-deck--testimonial .quote-deck__card { border: var(--stroke-hair) solid var(--color-line); }
+  .quote-deck__top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); font-size: var(--type-size-meta); }
+  .quote-deck__company { font-weight: var(--type-weight-display); }
+  .quote-deck__rating { display: flex; margin-inline-start: auto; }
+  .quote-deck__rating svg { inline-size: var(--type-size-meta); block-size: var(--type-size-meta); fill: currentColor; }
+  .quote-deck__star--empty { opacity: var(--material-quote-deck-choice-opacity); }
+  .quote-deck--testimonial .quote-deck__card blockquote { flex: 1; text-align: center; text-wrap: pretty; }
+  .quote-deck--testimonial .quote-deck__card blockquote :is(em,mark) { color: var(--world-light-ink); background: var(--color-signal); font-style: normal; border-radius: var(--radius-control); box-decoration-break: clone; }
+  .quote-deck--testimonial .quote-deck__card figcaption { display: flex; align-items: center; gap: var(--space-3); }
+  .quote-deck__avatar { display: grid; place-items: center; flex: none; inline-size: var(--target-project); block-size: var(--target-project); border-radius: 50%; color: var(--world-light-ink); background: var(--color-signal); font-size: var(--type-size-meta); }
+  .quote-deck__person { min-inline-size: 0; }
+  .quote-deck--testimonial.quote-deck--ready .quote-deck__top { font-size: max(var(--type-size-meta),calc(var(--quote-card-width) * var(--layout-quote-company-scale))); }
+  .quote-deck--testimonial.quote-deck--ready .quote-deck__rating svg { inline-size: max(var(--type-size-meta),calc(var(--quote-card-width) * var(--layout-quote-rating-scale))); block-size: auto; }
+  .quote-deck--testimonial.quote-deck--ready .quote-deck__card figcaption { gap: max(var(--space-2),calc(var(--quote-card-width) * var(--layout-quote-person-gap))); padding-block-start: max(var(--space-3),calc(var(--quote-card-width) * var(--layout-quote-person-inset))); font-size: max(var(--type-size-meta),calc(var(--quote-card-width) * var(--layout-quote-person-scale))); }
+  .quote-deck--testimonial.quote-deck--ready .quote-deck__avatar { inline-size: max(var(--target-project),calc(var(--quote-card-width) * var(--layout-quote-avatar-scale))); block-size: max(var(--target-project),calc(var(--quote-card-width) * var(--layout-quote-avatar-scale))); }
+}

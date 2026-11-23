@@ -1,0 +1,47 @@
+@use 'typography';
+@use 'optical';
+@use 'controls';
+
+// The native fieldset and radio relationships stay intact. Equal option cells
+// make the two short preference groups readable without a full-width form.
+@mixin anatomy {
+  .shell__dialog:has(> [data-tenant='settings']:not([hidden])) {
+    inline-size: min(var(--layout-container-narrow),calc(100% - var(--space-5) * 2));
+    max-block-size: calc(100svh - var(--space-5) * 2);
+    padding: var(--space-5);
+  }
+  .shell__dialog:has(> [data-tenant='settings']:not([hidden])) .shell__heading { align-items: center; gap: var(--space-4); }
+  .shell__tenant[data-tenant='settings'] { margin-block-start: var(--space-4); }
+  .shell__setting { min-inline-size: 0; margin: 0; padding: 0; border: 0; }
+  .shell__setting + .shell__setting { margin-block-start: var(--space-5); }
+  .shell__setting legend { padding: 0; margin-block-end: var(--space-2); @include typography.reading-face($weight: var(--type-weight-display)); font-size: var(--type-size-body); line-height: var(--type-line-height-body); }
+  .shell__setting-options { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: var(--space-2); }
+  .shell__setting-options label { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-1); min-inline-size: 0; min-block-size: var(--target-project); padding: var(--space-2); border: var(--stroke-hair) solid var(--color-line); border-radius: var(--control-radius,var(--radius-control)); @include typography.reading-face(); font-size: var(--type-size-meta); line-height: var(--type-line-height-body); overflow-wrap: anywhere; cursor: pointer; }
+  .shell__setting-options label:has(input:checked) { color: var(--color-ink); background: var(--color-tint); border-color: var(--color-focus); }
+  @media (hover: hover) and (pointer: fine) { .shell__setting-options label:hover { background: var(--color-tint); } }
+  // A press deepens the tile's tone beyond hover, with no scale, so the tile
+  // keeps its hit area; the held choice keeps its edge.
+  .shell__setting-options label:active,.shell__setting-options label:has(input:checked):active { background: controls.pressed(var(--color-tint)); }
+  .shell__setting-options input { flex: none; margin: 0; accent-color: var(--color-accent); }
+  // The visible native radio keeps its own focus ring. The tenant's inset offset
+  // would draw it inside the small glyph, so place it outside as other controls do.
+  .shell__setting-options input:focus-visible { --focus-ring-offset: var(--focus-offset); }
+  .shell__tenant[data-tenant='settings'] .shell__status { margin-block: var(--space-3) 0; font-size: var(--type-size-meta); }
+  .shell__tenant[data-tenant='settings'] .shell__status:empty { display: none; }
+}
+
+// World defaults style every dialog. This narrowly scoped shared material rule
+// follows those defaults in their layer, using their resolved colour roles, so
+// Settings has one translucent treatment without changing any other tenant.
+@mixin surface {
+  .shell__dialog:has(> [data-tenant='settings']:not([hidden])) {
+    @include optical.layer(
+      $face: color-mix(in srgb,var(--color-paper) calc(var(--world-material-optical-fill) * 100%),transparent),
+      $filter: blur(var(--world-material-optical-blur)) Saturate(var(--world-material-optical-saturation)),
+      $solid: var(--color-paper));
+  }
+  @media (forced-colors: active) {
+    .shell__dialog:has(> [data-tenant='settings']:not([hidden])) { color: CanvasText; background: Canvas; border-color: ButtonText; backdrop-filter: none; }
+    .shell__setting-options label:has(input:checked) { border-color: Highlight; }
+  }
+}

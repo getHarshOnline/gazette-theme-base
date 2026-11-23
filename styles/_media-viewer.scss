@@ -1,0 +1,69 @@
+@use 'typography';
+
+@mixin recipes {
+  .media-inspection-control[data-media-standalone] {
+    display: flex;
+    inline-size: fit-content;
+    max-inline-size: 100%;
+    margin-inline: auto;
+  }
+  .media-inspection-control[data-media-pending] { visibility: hidden; }
+  .shell__dialog:has(> [data-tenant='media']:not([hidden])) {
+    inline-size: min(var(--layout-field-max),calc(100% - var(--space-3)));
+    max-inline-size: none;
+    block-size: calc(100% - var(--space-5));
+    max-block-size: calc(100% - var(--space-5));
+    padding-block: var(--shell-padding,var(--space-5));
+    padding-inline: var(--space-3);
+  }
+  .shell__tenant[data-tenant='media']:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: var(--space-3);
+  }
+  .media-viewer__tools { display: flex; flex-wrap: wrap; gap: var(--space-2); flex: none; }
+  .media-viewer {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-block-size: 0;
+    gap: var(--space-4);
+    margin: 0;
+  }
+  .media-viewer__viewport {
+    flex: 1;
+    min-block-size: var(--space-section);
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  .media-viewer__image {
+    display: block;
+    inline-size: var(--media-width, 100%);
+    max-inline-size: var(--media-width, 100%);
+    block-size: auto;
+    max-block-size: var(--media-fit-height, none);
+    object-fit: contain;
+    margin-inline: auto;
+  }
+  .media-viewer__viewport > [data-media-expanded] {
+    display: flow-root;
+    inline-size: var(--media-width, 100%);
+    max-inline-size: var(--media-width, 100%);
+    min-inline-size: 0;
+    margin: 0;
+  }
+  .media-viewer__viewport > [data-media-expanded] > svg {
+    inline-size: 100% !important;
+    max-inline-size: 100% !important;
+    block-size: auto;
+    max-block-size: var(--media-fit-height, none);
+    object-fit: contain;
+  }
+  .media-viewer figcaption {
+    flex: none;
+    @include typography.reading-face();
+    font-size: var(--type-size-body);
+    text-align: center;
+  }
+}

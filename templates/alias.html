@@ -1,0 +1,10 @@
+{% import "base/macros/links.html" as links %}
+<!doctype html>
+<html data-page-mode="utility"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+{% set redirect_title = presentation.chrome.regions | get(key="base:redirect-title", default="") %}
+<title>{{ redirect_title }}</title><link rel="canonical" href="{{ route.canonical_url }}">
+<meta http-equiv="refresh" content="0; url={{ route.canonical_url }}">
+{% include "base/partials/preferences.html" %}
+{% include "base/partials/resources.html" %}
+{% block head_extra %}{% endblock head_extra %}
+</head><body>{% include "base/partials/link-descriptions.html" %}<main id="main"><h1>{{ redirect_title }}</h1><p><a href="{{ route.canonical_url }}" {{ links::attributes(copy=presentation.chrome.regions | default(value=false), destination=presentation.redirect_destination | default(value=false)) }}>{{ presentation.chrome.regions | get(key="base:redirect-link", default=route.canonical_url) }}</a></p></main></body></html>

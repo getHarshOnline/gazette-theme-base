@@ -1,0 +1,46 @@
+{% if presentation.chrome is defined and presentation.chrome %}
+{% set outline_label = presentation.chrome.regions | get(key="base:outline", default="") %}
+{% set sections = headings | filter(attribute="level", value=2) %}
+{% set compact_outline = false %}
+{% if outline_compact is defined %}{% set compact_outline = outline_compact %}{% endif %}
+{% set local_sections = sections | concat(with=headings | filter(attribute="level", value=3)) %}
+{% set has_outline = outline_label and sections | length > 1 %}
+{% if not compact_outline %}{% set has_outline = outline_label and local_sections | length > 0 %}{% endif %}
+{% set notes_label = presentation.chrome.regions | get(key="base:notes", default="") %}
+{% set has_notes = notes and notes_label %}
+{% set citation_label = presentation.chrome.regions | get(key="base:citation", default="") %}
+{% set has_citation = citation_label and citation is defined and citation %}
+{% set has_tools = reading_page and not compact_outline and has_citation %}
+{% set focus_enter = presentation.chrome.regions | get(key="base:reader-focus-enter", default="") %}
+{% set focus_exit = presentation.chrome.regions | get(key="base:reader-focus-exit", default="") %}
+{% set has_focus = not compact_outline and focus_enter and focus_exit %}
+{% if has_outline or has_notes or has_tools or has_focus %}
+{% if not compact_outline %}<div class="reading-margin">{% endif %}
+<aside class="reading-outline{% if compact_outline %} reading-outline--compact{% else %} reading-outline--local{% endif %}"{% if not compact_outline %} id="gazette-reading-outline"{% endif %}>
+  {% if has_outline %}
+  <details{% if not compact_outline %} class="reading-tools reading-section-control"{% endif %}>
+    <summary><span>{{ outline_label }}</span>{% if not compact_outline %}<span class="reading-section-current" hidden></span>{% endif %}</summary>
+    <div class="reading-tools__body">
+    <nav class="reading-sections" aria-label="{{ outline_label }}">
+      <ol>
+      {% for heading in headings %}
+        {% if heading.level == 2 or heading.level == 3 and not compact_outline %}
+        <li data-heading-level="{{ heading.level }}"><a href="{{ heading.fragment }}" {{ links::attributes(kind="internal-native", site=serving_site, content_id=content.id, target=content.presentation | default(value=false)) }}>{{ heading.text }}</a></li>
+        {% endif %}
+      {% endfor %}
+      </ol>
+    </nav>
+    </div>
+  </details>
+  {% endif %}
+  {% if has_focus %}<button class="control control--quiet reading-focus-toggle" type="button" data-reader-focus-enter="{{ focus_enter }}" data-reader-focus-exit="{{ focus_exit }}" hidden>{{ focus_enter }}</button>{% endif %}
+  {% if has_tools %}
+{{ metadata::citation(item=citation,copy=presentation.chrome.regions) }}
+  {% endif %}
+</aside>
+  {% if has_notes %}<button class="control control--secondary reading-notes-trigger" type="button" data-command-trigger="notes" aria-haspopup="dialog" hidden>{{ notes_label }}</button>{% endif %}
+{% if not compact_outline %}
+</div>
+{% endif %}
+{% endif %}
+{% endif %}

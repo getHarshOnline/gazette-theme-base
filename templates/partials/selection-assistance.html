@@ -1,0 +1,12 @@
+{# Reading assistance belongs to the shared frame, never to an authored article component. #}
+{% if presentation.chrome is defined and presentation.chrome.reading_assistance is defined and presentation.chrome.reading_assistance and publication_metadata and publication_metadata.home is defined and route is defined %}
+{% if selection_surface %}
+{% set assistance = presentation.chrome.reading_assistance %}
+<div class="selection-assistance" data-selection-assistance popover="manual" role="group" aria-label="{{ assistance.label }}" data-article-title="{{ content.title }}" data-article-url="{{ route.canonical_url }}" data-site-name="{{ publication_metadata.brand.name }}" data-site-url="{{ publication_metadata.home.url }}" hidden>
+  <script type="application/json" data-selection-configuration>{{ assistance | json_script }}</script>
+  {% for provider in assistance.providers %}
+  <a class="control control--primary control--compact selection-assistance__action" data-selection-provider="{{ provider.id }}" href="{{ provider.endpoint }}" target="_blank" rel="noopener noreferrer">{{ provider.label }}</a>
+  {% endfor %}
+</div>
+{% endif %}
+{% endif %}

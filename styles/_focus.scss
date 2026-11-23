@@ -1,0 +1,29 @@
+// Keyboard indication has one paint owner. The actual interactive surface owns
+// its contour; components bind clipping offsets and worlds bind contrast.
+@mixin ring {
+  outline: var(--focus-ring-width,var(--focus-width)) var(--focus-ring-style,solid) var(--focus-ring-color,var(--color-focus));
+  outline-offset: var(--focus-ring-offset,var(--focus-offset));
+}
+
+@mixin recipes {
+  :where(a,button,summary,input,select,textarea,[tabindex],[data-gazette-table],table,pre,p:has(> math[display='block'])):focus-visible,
+  .view-set--text > .view-set__views > .view > .view__choice:has(> input:focus-visible),
+  .preview-set--ready > .view-set__views > .view > .view__choice:has(> input:focus-visible),
+  .focus-proxy:has(> h3 > a:focus-visible),
+  .catalogue--ready .catalogue-entry[data-active='true']:has(.folder-card__copy > :is(h2,h3) > a:focus-visible) { @include ring; }
+
+  // A clipped native input or deliberately stretched link delegates to exactly
+  // one visible owner. Ordinary links and visible native radios keep their ring.
+  .view-set--text > .view-set__views > .view > .view__choice > input:focus-visible,
+  .preview-set--ready > .view-set__views > .view > .view__choice > input:focus-visible,
+  .focus-proxy > h3 > a:focus-visible,
+  .catalogue--ready .catalogue-entry[data-active='true'] .folder-card__copy > :is(h2,h3) > a:focus-visible { outline: none; }
+
+  @media print {
+    :where(a,button,summary,input,select,textarea,[tabindex],[data-gazette-table],table,pre,p:has(> math[display='block'])):focus-visible,
+    .view-set--text > .view-set__views > .view > .view__choice:has(> input:focus-visible),
+    .preview-set--ready > .view-set__views > .view > .view__choice:has(> input:focus-visible),
+    .focus-proxy:has(> h3 > a:focus-visible),
+    .catalogue--ready .catalogue-entry[data-active='true']:has(.folder-card__copy > :is(h2,h3) > a:focus-visible) { outline: none; }
+  }
+}

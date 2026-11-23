@@ -1,0 +1,21 @@
+{#- Each notebook the page selects joins its Notes after notes.md, one cell at a time, in the markup the engine wrote before it handed the cells to the Theme. A download appears only when the page offers the file, the pre-public scan passed and the workspace supplies its label. -#}
+{%- if notes.notebooks is defined -%}
+{%- set download_label = "" -%}
+{%- if presentation.chrome is defined and presentation.chrome.regions is defined -%}
+  {%- set download_label = presentation.chrome.regions | get(key="base:notebook-download", default="") -%}
+{%- endif -%}
+{%- for notebook in notes.notebooks -%}
+<section class="gazette-notebook" id="{{ notebook.id }}">
+  {%- for cell in notebook.cells -%}
+  {%- if cell.kind == "markdown" -%}
+  <div class="notebook-markdown" data-cell-id="{{ cell.cell_id }}">{{ cell.html | safe }}</div>
+  {%- else -%}
+  <div class="notebook-code" data-cell-id="{{ cell.cell_id }}" data-execution-count="{% if cell.execution_count is number %}{{ cell.execution_count }}{% else %}null{% endif %}">{{ cell.source_html | safe }}{{ cell.outputs_html | safe }}</div>
+  {%- endif -%}
+  {%- endfor -%}
+  {%- if notebook.download and download_label -%}
+  <p class="gazette-notebook__download"><a class="control control--secondary" href="{{ notebook.download.url }}" type="{{ notebook.download.media_type }}" download>{{ download_label }}</a></p>
+  {%- endif -%}
+</section>
+{%- endfor -%}
+{%- endif -%}

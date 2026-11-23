@@ -1,0 +1,8 @@
+<section class="process-path" aria-label="{{ component.arguments.label }}"{% if component.arguments.autoplay is defined and component.arguments.autoplay %} data-process-autoplay="true"{% endif %}{% if component.arguments.collapsible is defined and component.arguments.collapsible %} data-process-collapsible="true"{% endif %}>
+  <div class="process-path__layout">
+  <ol role="list" class="process-path__steps">{{ component.body.html | safe }}</ol>
+  </div>
+  {% if component.arguments.pause is defined and component.arguments.resume is defined %}
+  <button class="control control--quiet process-path__pause" type="button" data-resume="{{ component.arguments.resume }}" hidden>{{ component.arguments.pause }}</button>
+  {% endif %}
+</section>

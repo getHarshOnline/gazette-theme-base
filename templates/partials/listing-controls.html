@@ -1,0 +1,31 @@
+{% set copy = presentation.chrome.regions | default(value=false) %}
+{% if listing.total_items > 0 and copy and (listing.page_count > 1 or controls_position == 'top' and listing.sorts is defined and listing.sorts) %}
+<div class="listing-controls listing-controls--{{ controls_position }}">
+{% if controls_position == 'top' and listing.sorts is defined and listing.sorts %}
+  <nav class="listing-sort" aria-label="{{ copy | get(key='base:sort-order', default='') }}">
+    <span class="listing-sort__label">{{ copy | get(key='base:sort-order', default='') }}</span>
+    <ul>
+    {% for option in listing.sorts %}
+      <li><a class="control control--secondary listing-control" href="{{ option.url }}"{% if option.current %} aria-current="true"{% endif %} {{ links::attributes(copy=copy, kind='internal-native', site=serving_site, content_id=listing.content) }}>{% if option.direction == 'descending' %}{{ copy | get(key='base:sort-latest', default='') }}{% else %}{{ copy | get(key='base:sort-oldest', default='') }}{% endif %}</a></li>
+    {% endfor %}
+    </ul>
+  </nav>
+{% endif %}
+{% if listing.page_count > 1 %}
+  <nav class="listing-pagination" aria-label="{{ copy | get(key='base:pagination', default='') }}">
+    <ol>
+      <li>{% if listing.previous %}<a class="control control--secondary listing-control" href="{{ listing.previous }}" aria-label="{{ copy | get(key='base:previous', default='') }}" {{ links::attributes(copy=copy, kind='internal-native', site=serving_site, rel='prev') }}>{{ copy | get(key='base:list-previous', default='') }}</a>{% else %}<span class="listing-unavailable" aria-disabled="true">{{ copy | get(key='base:list-previous', default='') }}</span>{% endif %}</li>
+      {% if listing.pages is defined %}
+      {% for page in listing.pages %}
+      {% if page.gap_before %}<li class="listing-pagination__gap" aria-hidden="true">…</li>{% endif %}
+      <li><a class="control control--secondary listing-control" href="{{ page.url }}" aria-label="{{ copy | get(key='base:list-page', default='') }} {{ page.number }}"{% if page.current %} aria-current="page"{% endif %} {{ links::attributes(copy=copy, kind='internal-native', site=serving_site, content_id=listing.content) }}>{{ page.number }}</a></li>
+      {% endfor %}
+      {% else %}
+      <li><span class="listing-unavailable" aria-current="page">{{ listing.page_number }} / {{ listing.page_count }}</span></li>
+      {% endif %}
+      <li>{% if listing.next %}<a class="control control--secondary listing-control" href="{{ listing.next }}" aria-label="{{ copy | get(key='base:next', default='') }}" {{ links::attributes(copy=copy, kind='internal-native', site=serving_site, rel='next') }}>{{ copy | get(key='base:list-next', default='') }}</a>{% else %}<span class="listing-unavailable" aria-disabled="true">{{ copy | get(key='base:list-next', default='') }}</span>{% endif %}</li>
+    </ol>
+  </nav>
+{% endif %}
+</div>
+{% endif %}

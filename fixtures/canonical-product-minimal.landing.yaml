@@ -1,0 +1,21 @@
+format: gazette-landing/v1
+template: base/product.html
+content:
+  id: page:canonical-product-minimal
+  site: site:reading
+  title: Minimal product specimen
+  lifecycle: draft
+  language: en
+  route:
+    path: /canonical-product-minimal/
+  structure:
+    kind: page
+    family:
+      kind: project
+sections:
+- component: page-opening
+  heading:
+    level: 1
+    text: Minimal product specimen
+  body: |
+    This complete minimal account supplies no media, action or optional questions.

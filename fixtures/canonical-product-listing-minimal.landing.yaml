@@ -1,0 +1,18 @@
+format: gazette-landing/v1
+template: base/product-listing.html
+content:
+  id: page:canonical-product-listing-minimal
+  site: site:reading
+  title: Minimal directory specimen
+  lifecycle: draft
+  language: en
+  route:
+    path: /canonical-product-listing-minimal/
+  structure:
+    kind: page
+    family:
+      kind: index
+sections:
+- component: directory-context
+  body: |
+    This complete minimal account supplies no media, action or optional questions.

@@ -1,0 +1,41 @@
+@use 'typography';
+@use 'optical';
+
+@mixin recipes {
+  code {
+    @include typography.code-face();
+    font-size: max(var(--type-size-micro),calc(1em * var(--type-code-inline-scale)));
+    padding: var(--stroke-hair) var(--space-1);
+    border-radius: var(--radius-control);
+    background: var(--material-code-surface);
+    box-decoration-break: clone;
+  }
+  pre {
+    @include typography.code-face($weight: var(--type-weight-system));
+    font-size: var(--type-code-block-size);
+    line-height: var(--type-line-height-system);
+    max-inline-size: 100%; min-inline-size: 0;
+    overflow-x: auto; padding: var(--space-5);
+    @include optical.frame();
+    background: var(--material-code-surface); color: var(--material-code-ink);
+    --reading-scroll-ink: var(--material-code-ink);
+    white-space: pre; text-wrap: nowrap; overflow-wrap: normal; word-break: normal;
+  }
+  pre code {
+    font-size: inherit; font-weight: inherit; line-height: inherit;
+    padding: 0; border-radius: 0; background: none;
+  }
+  // Gazette supplies syntax scopes; unknown languages keep ordinary code ink.
+  pre :is(.syntax-keyword,.syntax-storage) { color: var(--material-code-keyword); }
+  pre :is(.syntax-entity.syntax-name,.syntax-support,.syntax-variable.syntax-function) { color: var(--material-code-name); }
+  pre :is(.syntax-string,.syntax-constant) { color: var(--material-code-literal); }
+  pre .syntax-punctuation { color: var(--material-code-punctuation); }
+  pre .syntax-comment,pre .syntax-comment * { color: var(--material-code-comment); }
+  @media print {
+    pre {
+      color: var(--color-ink); background: var(--color-sheet);
+      border: var(--stroke-hair) solid var(--color-line);
+      white-space: pre-wrap; overflow-wrap: anywhere; overflow: visible;
+    }
+  }
+}

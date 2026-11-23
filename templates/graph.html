@@ -1,0 +1,82 @@
+{% import "base/macros/search.html" as search %}
+{% import "base/macros/connection-destination.html" as destination %}
+{% import "base/macros/links.html" as links %}
+{% import "base/macros/connections.html" as connections %}
+{% set publication_metadata = presentation.publication | default(value=false) %}
+<!doctype html>
+<html{% if publication_metadata.language is defined %} lang="{{ publication_metadata.language }}"{% endif %}{% if presentation.palette %} data-palette="{{ presentation.palette }}"{% endif %} data-page-mode="index"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+{% set graph_title = presentation.chrome.regions | get(key="base:graph-title", default="") %}
+<title>{{ graph_title }}</title>
+{% include "base/partials/preferences.html" %}
+{% include "base/partials/resources.html" %}
+{% block head_extra %}{% endblock head_extra %}
+</head><body>
+{% include "base/partials/link-descriptions.html" %}
+{% set serving_site = site %}
+<a class="skip-link" href="#main">{{ presentation.chrome.skip_to_content_label }}</a>
+{% include "base/partials/header.html" %}
+<main id="main" class="connection-directory" tabindex="-1">
+{% set copy = presentation.chrome.regions %}
+<hgroup class="title-group">
+<h1>{{ graph_title }}</h1>
+{% if copy["base:graph-description"] is defined %}<p class="title-group__description">{{ copy["base:graph-description"] }}</p>{% endif %}
+</hgroup>
+{% set directory_labels = ["base:graph-groups", "base:graph-parent", "base:graph-nested", "base:graph-members", "base:graph-steps", "base:graph-elsewhere", "base:graph-related", "base:graph-other", "base:graph-unrouted"] %}
+{% set directory_ready = true %}
+{% for label in directory_labels %}{% if not copy | get(key=label, default="") %}{% set_global directory_ready = false %}{% endif %}{% endfor %}
+{% if directory_ready %}
+{% set local_groups = [] %}
+{% for id, node in nodes %}{% if node.structure.kind == "collection" or node.structure.kind == "journey" %}{% set_global local_groups = local_groups | concat(with=node) %}{% endif %}{% endfor %}
+{% set other_pages = [] %}
+{% for id, node in nodes %}
+{% set member = memberships | filter(attribute="content", value=id) %}
+{% set step = journeys | filter(attribute="content", value=id) %}
+{% set source = related | filter(attribute="source", value=id) %}
+{% if node.structure.kind == "page" and not member and not step and not source %}{% set_global other_pages = other_pages | concat(with=node) %}{% endif %}
+{% endfor %}
+<nav class="connection-shortcuts" aria-label="{{ graph_title }}"><ul>
+{% if local_groups %}<li><a href="#connection-groups" {{ links::attributes(kind="internal-native", site=serving_site) }}>{{ copy["base:graph-groups"] }}</a></li>{% endif %}
+{% if related %}<li><a href="#connection-related" {{ links::attributes(kind="internal-native", site=serving_site) }}>{{ copy["base:graph-related"] }}</a></li>{% endif %}
+{% if other_pages %}<li><a href="#connection-other" {{ links::attributes(kind="internal-native", site=serving_site) }}>{{ copy["base:graph-other"] }}</a></li>{% endif %}
+</ul></nav>
+{% if local_groups %}
+<section class="connection-section" aria-labelledby="connection-groups">
+<h2 id="connection-groups">{{ copy["base:graph-groups"] }}</h2>
+{% for node in local_groups %}{{ connections::group(id=node.id,nodes=nodes,routes=routes,references=references,memberships=memberships,containers=containers,journeys=journeys,copy=copy,source=serving_site) }}{% endfor %}
+</section>
+{% endif %}
+{% for id, reference in references %}
+{% set members = memberships | filter(attribute="collection", value=id) %}
+{% set children = containers | filter(attribute="parent", value=id) %}
+{% set steps = journeys | filter(attribute="journey", value=id) %}
+{% if members or children or steps %}
+<section class="connection-section"><h2>{{ copy["base:graph-elsewhere"] }}</h2>
+{{ connections::group(id=id,nodes=nodes,routes=routes,references=references,memberships=memberships,containers=containers,journeys=journeys,copy=copy,source=serving_site) }}
+</section>
+{% endif %}
+{% endfor %}
+{% if related %}
+<section class="connection-section" aria-labelledby="connection-related">
+<h2 id="connection-related">{{ copy["base:graph-related"] }}</h2>
+{% for id, node in nodes %}
+{% set targets = related | filter(attribute="source", value=id) %}
+{% set source_key = id | replace(from="%", to="%25") | replace(from=":", to="%3A") %}
+{% if targets %}
+<div class="connection-group connection-group--related">
+<h3>{{ destination::link(id=id,scope="connection-related-source",nodes=nodes,routes=routes,references=references,missing=copy["base:graph-unrouted"],source=serving_site,copy=copy) }}</h3>
+<ul>{% for target in targets %}<li>{{ destination::link(id=target.target,scope="connection-related-target:" ~ source_key,nodes=nodes,routes=routes,references=references,missing=copy["base:graph-unrouted"],source=serving_site,copy=copy) }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+{% endfor %}
+</section>
+{% endif %}
+{% if other_pages %}<section class="connection-section" aria-labelledby="connection-other"><h2 id="connection-other">{{ copy["base:graph-other"] }}</h2><ul class="connection-other">{% for node in other_pages %}<li>{{ destination::link(id=node.id,scope="connection-other",nodes=nodes,routes=routes,references=references,missing=copy["base:graph-unrouted"],source=serving_site,copy=copy) }}</li>{% endfor %}</ul></section>{% endif %}
+{% else %}
+<ul class="publication-index">
+{% for id, node in nodes %}{% set destination = routes | get(key=id, default=false) %}<li>{% if destination %}<a id="connection-fallback:{{ id | replace(from="%", to="%25") | replace(from=":", to="%3A") }}" href="{{ destination.url }}" {{ links::attributes(copy=presentation.chrome.regions | default(value=false), source=serving_site, site=node.site, content_id=node.id, target=node.presentation | default(value=false)) }}>{{ node.title }}</a>{% else %}{{ node.title }}{% endif %}</li>{% endfor %}
+</ul>
+{% endif %}
+</main>
+{% include "base/partials/footer.html" %}
+</body></html>

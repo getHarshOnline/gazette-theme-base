@@ -1,0 +1,8 @@
+<div class="work-proposal">
+  <aside class="work-proposal__choices" aria-label="{{ component.arguments.choices_label }}">
+    <p class="work-proposal__label">{{ component.arguments.choices_label }}</p>
+    <dl>{% for choice in component.arguments.choices %}<div><dt>{{ choice.name }}</dt><dd>{{ choice.remit }}</dd></div>{% endfor %}</dl>
+  </aside>
+  <div class="work-proposal__returns">{{ component.body.html | safe }}</div>
+  <div class="work-proposal__decision"><p class="work-proposal__label">{{ component.arguments.decision_label }}</p><p>{{ component.arguments.decision }}</p></div>
+</div>

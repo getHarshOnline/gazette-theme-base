@@ -1,0 +1,90 @@
+{% import "base/macros/carousel-controls.html" as carousel_controls %}
+{# Write the supplied copy labels as attributes for search-result metadata and content kinds. #}
+{% macro labels(copy=false) %}
+{% if copy %}
+data-search-kind="{{ copy | get(key="base:search-kind", default="") }}"
+data-search-author="{{ copy | get(key="base:search-author", default="") }}"
+data-search-rights-holder="{{ copy | get(key="base:search-rights-holder", default="") }}"
+data-search-published="{{ copy | get(key="base:search-published", default="") }}"
+data-search-written="{{ copy | get(key="base:written", default="") }}"
+data-search-date-format="{{ copy | get(key="base:date-format", default="%-d %B %Y") }}"
+{% set calendar_months = ["2000-01-01", "2000-02-01", "2000-03-01", "2000-04-01", "2000-05-01", "2000-06-01", "2000-07-01", "2000-08-01", "2000-09-01", "2000-10-01", "2000-11-01", "2000-12-01"] %}
+data-search-date-months="{% for month in calendar_months %}{{ month | editorial_date(format="%B") }}{% if not loop.last %}|{% endif %}{% endfor %}"
+data-search-date-months-short="{% for month in calendar_months %}{{ month | editorial_date(format="%b") }}{% if not loop.last %}|{% endif %}{% endfor %}"
+data-search-modified="{{ copy | get(key="base:search-modified", default="") }}"
+data-search-language="{{ copy | get(key="base:search-language", default="") }}"
+data-search-about="{{ copy | get(key="base:search-about", default="") }}"
+data-search-mentions="{{ copy | get(key="base:search-mentions", default="") }}"
+data-search-kind-article="{{ copy | get(key="base:search-kind-article", default="") }}"
+data-search-kind-documentation="{{ copy | get(key="base:search-kind-documentation", default="") }}"
+data-search-kind-project="{{ copy | get(key="base:search-kind-project", default="") }}"
+data-search-kind-index="{{ copy | get(key="base:search-kind-index", default="") }}"
+data-search-kind-utility="{{ copy | get(key="base:search-kind-utility", default="") }}"
+data-search-kind-extension="{{ copy | get(key="base:search-kind-extension", default="") }}"
+data-search-kind-collection="{{ copy | get(key="base:search-kind-collection", default="") }}"
+data-search-kind-journey="{{ copy | get(key="base:search-kind-journey", default="") }}"
+{% endif %}
+{% endmacro labels %}
+
+{# Draw initially hidden previous/next search-page links with labels from copy, as the listing pagination draws them: a control cell, or its text when that boundary is unavailable. #}
+{% macro pagination(copy) %}
+<nav class="search-page__pagination" aria-label="{{ copy["base:pagination"] }}" hidden>
+  <a class="search-page__previous control control--secondary listing-control">{{ copy["base:list-previous"] }}</a>
+  <span class="search-page__previous-unavailable listing-unavailable" aria-disabled="true" hidden>{{ copy["base:list-previous"] }}</span>
+  <p></p>
+  <a class="search-page__next control control--secondary listing-control">{{ copy["base:list-next"] }}</a>
+  <span class="search-page__next-unavailable listing-unavailable" aria-disabled="true" hidden>{{ copy["base:list-next"] }}</span>
+</nav>
+{% endmacro pagination %}
+
+{# Draw the search form and results region from binding routes, copy labels, control messages, listing pagination and the source site. #}
+{% macro page(binding,copy,control,listing,site) %}
+<div class="search-page" data-source-site="{{ site }}" data-search-initial-page="{{ listing.page_number | default(value=1) }}"{% if listing.page_size is defined %} data-search-page-size="{{ listing.page_size }}"{% endif %}
+  {{ self::labels(copy=copy) }}
+  data-search-query-limit="{{ copy["base:search-query-limit"] }}"
+  data-search-count="{{ copy["base:search-results-count"] }}"
+  data-search-count-one="{{ copy["base:search-result-count"] }}"
+  data-search-pagination="{{ copy["base:search-page-status"] }}"
+  data-search-any="{{ copy["base:search-any"] }}"
+  data-search-keyword="{{ copy["base:search-keyword"] }}"
+  data-search-view-page="{{ copy["base:search-view-page"] }}"
+  data-search-context="{{ copy["base:search-more-context"] }}">
+  <div class="search-page__field" aria-hidden="true" hidden></div>
+  <div class="search-page__discovery">
+  <div class="search-page__center card-surface">
+  <header class="search-page__context" hidden>
+    <p class="search-page__context-label"></p>
+    <a class="search-page__reset" href="{{ binding.page.route.url }}">{{ copy["base:search-clear"] }}</a>
+  </header>
+  <form role="search" aria-label="{{ control.title }}" class="search-page__form" action="{{ binding.page.route.url }}" method="get" hidden>
+    <label class="search-page__query"><span>{{ control.field_label }}</span><input type="search" name="q" maxlength="1024" autocomplete="off"></label>
+    <button class="control control--primary" type="submit">{{ control.trigger_label }}</button>
+    <p class="search-page__query-message" id="search-page-query-message" hidden></p>
+    <details class="search-page__refine"><summary>{{ copy["base:search-refine"] }}</summary>
+    <div class="search-page__filters">
+      <label>{{ copy["base:search-kind"] }}<select name="kind"></select></label>
+      <label>{{ copy["base:search-author"] }}<select name="author"></select></label>
+      <label>{{ copy["base:search-about"] }}<select name="project"></select></label>
+      <label>{{ copy["base:search-keyword"] }}<select name="keyword"></select></label>
+      <label>{{ copy["base:search-classification"] }}<select name="classification"></select></label>
+      <label>{{ copy["base:search-sort"] }}<select name="sort">
+        <option value="relevance">{{ copy["base:search-relevance"] }}</option>
+        <option value="latest">{{ copy["base:sort-latest"] }}</option>
+        <option value="oldest">{{ copy["base:sort-oldest"] }}</option>
+      </select></label>
+    </div>
+    </details>
+  </form>
+  </div>
+  </div>
+  <div class="search-page__summary">
+    <p class="search-page__status" role="status" data-status-loading="{{ control.loading_message }}" data-status-unavailable="{{ control.unavailable_message }}" data-status-empty="{{ control.empty_message }}"></p>
+    {% set retry_label = copy | get(key="base:search-retry", default="") %}{% if retry_label %}<button type="button" class="control control--primary control--compact search-page__retry" data-search-retry hidden>{{ retry_label }}</button>{% endif %}
+    {{ self::pagination(copy=copy) }}
+  </div>
+  <section class="search-page__matches" aria-label="{{ copy["base:search-field"] }}">
+    <ul class="search-page__results" hidden></ul>
+    {{ carousel_controls::render(prefix="search-depth",action="search-depth",previous=copy["base:list-previous"],next=copy["base:list-next"],label=copy["base:search-field"]) }}
+  </section>
+</div>
+{% endmacro page %}

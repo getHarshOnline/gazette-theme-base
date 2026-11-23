@@ -1,0 +1,41 @@
+format: gazette-landing/v1
+template: base/product.html
+content:
+  id: page:process-compact
+  site: site:reading
+  title: Short process specimen
+  lifecycle: draft
+  language: en
+  route: {path: /process-compact/}
+  structure: {kind: page, family: {kind: project}}
+sections:
+- component: page-opening
+  heading: {level: 1, text: Short process specimen}
+  body: |
+    Four complete stages retain their order when a heading wraps or motion is unavailable.
+- component: process-path
+  arguments: {label: Short four-stage account}
+  sections:
+  - component: process-step
+    heading: {level: 3, text: A proposed task is authorised}
+  - component: process-step
+    heading: {level: 3, text: A person accepts responsibility}
+    body: |
+      The person and the accepted task remain distinguishable.
+  - component: process-step
+    heading: {level: 3, text: A result is supplied}
+  - component: process-step
+    heading: {level: 3, text: The entitled reviewer decides whether the supplied result satisfies the obligation}
+    body: |
+      The longest heading stays complete, including without scripts or travel.
+- component: process-path
+  arguments: {label: Another account in the same product context}
+  sections:
+  - component: process-step
+    heading: {level: 2, text: Establish the question}
+    body: |
+      The product template supplies the same density without a local presentation flag.
+  - component: process-step
+    heading: {level: 2, text: Examine the account}
+    body: |
+      The heading rank preserves the outline; it does not choose the geometry.

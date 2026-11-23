@@ -1,0 +1,10 @@
+<figure class="quote-deck__card card-surface card-surface--moving" data-deck-label="{{ component.arguments.attribution }}{% if component.arguments.detail %}: {{ component.arguments.detail }}{% endif %}">
+  {% if component.arguments.company or component.arguments.rating %}
+  <header class="quote-deck__top">
+    {% if component.arguments.company %}<span class="quote-deck__company">{{ component.arguments.company }}</span>{% endif %}
+    {% if component.arguments.rating %}<span class="quote-deck__rating" role="img" aria-label="{{ component.arguments.rating_label }}">{% set stars = [1,2,3,4,5] %}{% for star in stars %}<svg viewBox="0 0 24 24" aria-hidden="true"{% if star > component.arguments.rating %} class="quote-deck__star--empty"{% endif %}><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.2-6.2 3.2L7 14.2 2 9.3l6.9-1z"/></svg>{% endfor %}</span>{% endif %}
+  </header>
+  {% endif %}
+  <blockquote>{{ component.body.html | safe }}</blockquote>
+  <figcaption><span class="quote-deck__avatar" aria-hidden="true">{{ component.arguments.initials | default(value=component.arguments.attribution | truncate(length=1,end="")) }}</span><span class="quote-deck__person"><strong>{{ component.arguments.attribution }}</strong>{% if component.arguments.detail %}<span>{{ component.arguments.detail }}</span>{% endif %}</span></figcaption>
+</figure>

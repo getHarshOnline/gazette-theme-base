@@ -1,0 +1,9 @@
+Gazette browser search module
+Copyright © 2026 RawThoughts Enterprises Private Limited.
+Author and originator: Harsh Joshi.
+
+This module is part of Gazette, https://github.com/getHarshOnline/gazette.
+It is licensed under the Apache License, Version 2.0 (LICENSE). The rest of
+Gazette is licensed under AGPL-3.0-or-later.
+
+vendor/ holds Elasticlunr, which keeps its own MIT licence and notice there.

@@ -1,0 +1,51 @@
+{% import "base/macros/search.html" as search %}
+{% import "base/macros/links.html" as links %}
+{% set publication_metadata = presentation.publication | default(value=false) %}
+{% set serving_site = site %}
+{% set not_found_copy = presentation.chrome.regions %}
+{% set not_found_title = not_found_copy["base:not-found-title"] %}
+{% set recovery_home = publication_metadata.home | default(value=false) %}
+{% set recovery_search = not_found.search_url | default(value=false) %}
+<!doctype html>
+<html{% if publication_metadata.language is defined %} lang="{{ publication_metadata.language }}"{% endif %}{% if presentation.palette %} data-palette="{{ presentation.palette }}"{% endif %} data-page-mode="utility" data-footer-treatment="quiet">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="robots" content="noindex">
+  <title>{{ not_found_title }}</title>
+  <meta name="description" content="{{ not_found_copy["base:not-found-description"] }}">
+  {% if presentation.browser_theme_colors is defined %}
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="{{ presentation.browser_theme_colors.light }}">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="{{ presentation.browser_theme_colors.dark }}">
+  {% endif %}
+  {% if presentation.identity_assets.site_icon is defined and presentation.identity_assets.site_icon %}
+  <link rel="icon" href="{{ presentation.identity_assets.site_icon.url }}">
+  {% endif %}
+  {% include "base/partials/preferences.html" %}
+  {% include "base/partials/resources.html" %}
+  {% block head_extra %}{% endblock head_extra %}
+</head>
+<body>
+  <a class="skip-link" href="#main">{{ presentation.chrome.skip_to_content_label }}</a>
+  {% include "base/partials/link-descriptions.html" %}
+  {% include "base/partials/header.html" %}
+  <main id="main" tabindex="-1" data-surface="not-found">
+    <hgroup class="title-group">
+      <h1>{{ not_found_title }}</h1>
+      <p class="title-group__description">{{ not_found_copy["base:not-found-description"] }}</p>
+    </hgroup>
+    {% if recovery_home or recovery_search %}
+    <p>
+      {% if recovery_home %}
+      <a class="control control--primary" href="{{ not_found.home_url }}" {{ links::attributes(kind="internal-native", site=serving_site) }}>{{ not_found_copy["base:not-found-home"] }}</a>
+      {% endif %}
+      {% if recovery_search %}
+      <a class="control control--secondary" href="{{ not_found.search_url }}" {{ links::attributes(kind="internal-native", site=serving_site) }}>{{ not_found_copy["base:not-found-search"] }}</a>
+      {% endif %}
+    </p>
+    {% endif %}
+  </main>
+  {% include "base/partials/footer.html" %}
+</body>
+</html>

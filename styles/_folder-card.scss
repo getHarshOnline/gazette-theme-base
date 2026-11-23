@@ -1,0 +1,68 @@
+@use 'typography';
+@use '../tokens/scss/layout';
+
+@mixin rendition($mode) {
+  .folder-card__art:has(.folder-card__image--#{$mode}) .folder-card__image { display: none; }
+  .folder-card__art:has(.folder-card__image--#{$mode}) .folder-card__image--#{$mode} { display: block; }
+}
+
+@mixin open {
+  .folder-card__panel { transform: translate3d(0,var(--folder-open),0); }
+  .folder-card__art { transform: scale(var(--scale-bookmark-art)); }
+}
+
+@mixin moving { .folder-card { --folder-duration: var(--duration-bookmark); } }
+
+@mixin recipes {
+  .folder-card:not([data-folder-ready]) .folder-card__panel { display: none; }
+  .folder-card:not([data-folder-ready]) .folder-card__copy { background: var(--color-sheet); }
+  .quote-deck--folder { margin-block: var(--space-5) var(--space-section); }
+  .publication-layout--framing + .quote-deck--folder { margin-block-start: var(--space-section); }
+  .quote-deck--folder .quote-deck__stage { --quote-card-width: min(calc(100cqw * var(--layout-quote-card-share)),calc(100svh * var(--layout-folder-viewport-share) * var(--layout-folder-aspect))); }
+  @container quote (width <= #{layout.$layout-quote-compact-width}) {
+    .quote-deck--folder .quote-deck__stage { --quote-card-width: min(calc(100cqw - var(--space-7)),calc(100svh * var(--layout-folder-viewport-share) * var(--layout-folder-aspect))); }
+  }
+  .quote-deck--folder .quote-deck__card { padding: 0; background: none; box-shadow: none; }
+  .quote-deck--folder.quote-deck--ready .quote-deck__card { padding: 0; min-block-size: 0; }
+  .quote-deck--folder:not(.quote-deck--ready) .quote-deck__card { inline-size: min(100%,var(--layout-folder-max-width),calc(100svh * var(--layout-folder-viewport-share) * var(--layout-folder-aspect))); margin-inline: auto; }
+  // Keep every native link in a scrollable row before enhancement. Using the
+  // same card width avoids collapsing a long stack when the fan starts.
+  @media screen {
+    .quote-deck--folder:not(.quote-deck--ready):has(.quote-deck__card + .quote-deck__card) {
+      .quote-deck__stage { grid-auto-flow: column; grid-auto-columns: var(--quote-card-width); justify-content: start; overflow-x: auto; padding-block: var(--quote-clearance,var(--space-7)); padding-inline: max(0px,calc((100% - var(--quote-card-width)) / 2)); scroll-padding-inline: max(0px,calc((100% - var(--quote-card-width)) / 2)); }
+      .quote-deck__card { inline-size: var(--quote-card-width); }
+      &:not([data-deck-field='container']) .quote-deck__stage { position: relative; inline-size: 100vw; left: calc(50% - 50vw); padding-inline: max(0px,calc((100vw - var(--quote-card-width)) / 2)); }
+      &::after { content: ''; block-size: calc(var(--target-project) + 2 * var(--space-4)); }
+    }
+  }
+  main:has(> .quote-deck--folder) { max-inline-size: var(--layout-field-max); }
+  .folder-card { --folder-duration: var(--motion-reduced-bookmark); --folder-easing: var(--easing-bookmark); --folder-closed: 0%; --folder-open: 0%; display: block; inline-size: 100%; container-type: inline-size; color: var(--color-ink); text-decoration: none; border-radius: var(--radius-preview-frame); background: var(--color-tint); isolation: isolate; }
+  .folder-card__inner { position: relative; display: grid; grid-template-rows: minmax(calc(100cqw * var(--layout-folder-peek)),1fr) auto; min-block-size: calc(100cqw / var(--layout-folder-aspect)); overflow: hidden; border-radius: inherit; }
+  .folder-card__art { position: absolute; inset: 0; display: block; background: radial-gradient(ellipse at top,var(--world-illumination-emission),var(--color-tint)); transform: scale(1); transition: transform var(--folder-duration) var(--folder-easing); }
+  .folder-card__art :is([data-gazette-image-block],p,picture) { margin: 0; display: contents; }
+  .folder-card__art img { display: block; position: absolute; inset: 0; inline-size: 100%; block-size: 100%; object-fit: cover; }
+  .folder-card__image:not(.folder-card__image--default) { display: none; }
+  :root[data-mode='light'] { @include rendition(light); }
+  :root[data-mode='dark'] { @include rendition(dark); }
+  @media (prefers-color-scheme: light) { :root:not([data-mode='light']):not([data-mode='dark']) { @include rendition(light); } }
+  @media (prefers-color-scheme: dark) { :root:not([data-mode='light']):not([data-mode='dark']) { @include rendition(dark); } }
+  // The panel stops at the measured copy boundary. Only the artwork may spring past its target.
+  .folder-card__panel { position: absolute; inset: 0; pointer-events: none; transform: translate3d(0,var(--folder-closed),0); transition: transform var(--folder-duration) var(--easing-bookmark); }
+  .folder-card__face { position: absolute; inset: 0; display: block; mask-repeat: no-repeat; mask-size: 100% 100%; }
+  .folder-card__edge { position: absolute; inline-size: 100%; block-size: 100%; inset: 0; fill: none; stroke: var(--color-line); stroke-width: var(--stroke-hair); }
+  .folder-card__copy { position: relative; grid-row: 2; display: grid; align-content: end; gap: var(--space-3); padding: var(--space-6); }
+  .folder-card__title { @include typography.display-face(); font-size: var(--type-size-h3); line-height: var(--type-line-height-heading); text-wrap: balance; hyphens: auto; overflow-wrap: anywhere; }
+  .folder-card__description { @include typography.reading-face(); font-size: var(--type-size-body); line-height: var(--type-line-height-body); }
+  .folder-card--text { background: var(--color-sheet); border: var(--stroke-hair) solid var(--color-line); }
+  .folder-card--text .folder-card__inner { display: block; min-block-size: 0; }
+  .folder-card--text .folder-card__copy { align-content: start; }
+  .folder-card:is(:focus-visible,:focus-within) { @include open; }
+  @media (hover: hover) and (pointer: fine) { .folder-card:hover { @include open; } }
+  @media (hover: none) { .folder-card { @include open; } }
+  @media (prefers-reduced-motion: no-preference) { :root:not([data-motion='reduce']) { @include moving; } }
+  :root[data-motion='allow'] { @include moving; }
+  @supports (transition-timing-function: linear(0,1)) { .folder-card { --folder-easing: var(--motion-bookmark-easing); } }
+  @media (forced-colors: active) { .folder-card { border: var(--stroke-hair) solid CanvasText; } .folder-card__art,.folder-card__panel { display: none; } }
+  // Print keeps the bookmark card's inset: the rounded, clipping inner would cut flush copy.
+  @media print { .folder-card__inner { display: block; min-block-size: 0; } .folder-card__art,.folder-card__panel { display: none; } .folder-card__copy { padding: var(--space-3); } }
+}

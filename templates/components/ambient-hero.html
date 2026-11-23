@@ -1,0 +1,10 @@
+<section class="ambient-hero" data-amplitude="4">
+{{ component.body.html | safe }}
+{% if presentation.chrome is defined and presentation.chrome.regions is defined %}
+{% set pause = presentation.chrome.regions | get(key="base:ambient-pause", default="") %}
+{% set play = presentation.chrome.regions | get(key="base:ambient-play", default="") %}
+{% if pause and play %}
+<button class="control control--primary control--compact ambient-hero__playback" type="button" data-ambient-toggle hidden><span data-ambient-pause>{{ pause }}</span><span data-ambient-play hidden>{{ play }}</span></button>
+{% endif %}
+{% endif %}
+</section>

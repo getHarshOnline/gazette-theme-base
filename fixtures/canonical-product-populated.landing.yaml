@@ -1,0 +1,194 @@
+format: gazette-landing/v1
+template: base/product.html
+projects:
+- project: project:resources
+  kind: about
+content:
+  id: page:canonical-product-populated
+  site: site:reading
+  title: Product specimen
+  lifecycle: draft
+  language: en
+  route:
+    path: /canonical-product-populated/
+  structure:
+    kind: page
+    family:
+      kind: project
+sections:
+- component: project-overview
+  sections:
+  - component: page-opening
+    heading:
+      level: 1
+      text: Product specimen
+    body: |
+      The intended use remains distinct from an operating service.
+  - component: project-summary
+    heading:
+      level: 2
+      text: A bounded explanation
+    body: |
+      The example keeps its claim, evidence and unresolved decision together.
+  - component: project-links
+
+- component: project-media
+  arguments:
+    placeholder: true
+    label: Reserved illustration; not operational evidence
+  body: |
+    The caption qualifies the empty field. No screenshot or recording has been supplied.
+- component: project-state
+  heading:
+    level: 2
+    text: Current limits
+  body: |
+    The specimen is paused and unavailable. Its explanatory reference remains readable.
+- component: project-explanation
+  sections:
+  - component: project-summary
+    heading:
+      level: 2
+      text: Capabilities in the account
+  - component: feature-set
+    body: |
+      These complementary capabilities describe one specimen.
+
+      - The introduction stays together before the capabilities.
+      - Each explanation retains its own heading and complete body.
+    sections:
+    - component: feature
+      heading:
+        level: 3
+        text: Keep the question explicit
+      body: |
+        **The stated question** gives the supplied account its scope.
+    - component: feature
+      heading:
+        level: 3
+        text: Preserve the supplied context
+      body: |
+        The original context and its `reference` remain available together.
+
+        A second paragraph keeps a longer explanation readable.
+    - component: feature
+      heading:
+        level: 3
+        text: Follow the explanation
+      body: |
+        The reader can [inspect the reference](/reference/) without treating these capabilities as alternative choices.
+- component: process-section
+  sections:
+  - component: project-walkthrough
+    sections:
+    - component: project-media
+      arguments:
+        kind: walkthrough
+        placeholder: true
+        label: Supplied sequence walkthrough
+      body: |
+        A recording would illustrate the sequence without replacing its explanation.
+  - component: process-introduction
+    heading:
+      level: 2
+      text: Follow the supplied stages
+    body: |
+      This explanation uses an ordered process; the other account describes complementary capabilities.
+  - component: process-path
+    arguments:
+      label: A supplied sequence
+    sections:
+    - component: process-step
+      heading:
+        level: 3
+        text: Record the question
+      body: |
+        Keep the source context available.
+    - component: process-step
+      heading:
+        level: 3
+        text: Examine the response
+      body: |
+        Use the retained reference to check the response.
+
+- component: destination-set
+  heading:
+    level: 2
+    text: Continue with the account
+  sections:
+  - component: destination
+    heading:
+      level: 3
+      text: Inspect the terms
+    body: |
+      The reference retains its own qualifications.
+    sections:
+    - component: primary-action
+      body: |
+        [Read the reference](/reference/)
+  - component: destination
+    heading:
+      level: 3
+      text: Read the evidence
+    body: |
+      [Open the first question](/first/). Its source remains independently available.
+- component: work-proposal
+  arguments:
+    choices_label: Eligible reviewers
+    choices:
+    - name: Request team
+      remit: Request context
+    - name: Delivery team
+      remit: Supplied result
+    decision_label: Decision owner
+    decision: The authorised reviewer decides whether the supplied result answers the request.
+  sections:
+  - component: view-set
+    arguments:
+      label: Compare the supplied evidence
+    sections:
+    - component: view
+      arguments:
+        group: neutral-proposal
+        label: Evidence present
+        selected: true
+      body: |
+        The supplied record distinguishes the two alternatives.
+    - component: view
+      arguments:
+        group: neutral-proposal
+        label: Evidence missing
+      body: |
+        A further question remains before a recommendation can be made.
+- component: quote-deck
+  sections:
+  - component: quote-item
+    arguments:
+      attribution: Sample reader 1
+      detail: Placeholder copy; not an endorsement
+    body: |
+      A sample account keeps the original text and its attribution together.
+  - component: quote-item
+    arguments:
+      attribution: Sample reader 2
+      detail: Placeholder copy; not an endorsement
+    body: |
+      A second sample remains readable without any enhancement.
+  - component: quote-item
+    arguments:
+      attribution: Sample reader 3
+      detail: Placeholder copy; not an endorsement
+    body: |
+      A third sample can be selected using the same shared controls.
+- component: faq
+  heading:
+    level: 2
+    text: Questions about the specimen
+  sections:
+  - component: faq-item
+    arguments:
+      question: What does this specimen establish?
+    body: |
+      **Only its supplied account.** It establishes no release, completed engagement or measured outcome.
+
+      [Inspect the reference](/reference/).

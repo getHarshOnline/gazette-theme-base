@@ -1,0 +1,10 @@
+{% import "base/macros/decks.html" as decks %}
+{% if listing is defined and listing %}
+{% set copy = presentation.chrome.regions | default(value=false) %}
+{% set controls_position = 'top' %}
+{% include "base/partials/listing-controls.html" %}
+{% set autoplay = listing.items | length > 3 %}
+{{ decks::render(entries=listing.items,kind="folder",owned=true,source=serving_site,copy=copy,aria_label=copy | get(key="base:collection-directory",default=""),previous=copy | get(key="base:collection-previous",default=""),next=copy | get(key="base:collection-next",default=""),pause=copy | get(key="base:catalogue-pause",default=""),resume=copy | get(key="base:catalogue-resume",default=""),autoplay=autoplay) }}
+{% set controls_position = 'bottom' %}
+{% include "base/partials/listing-controls.html" %}
+{% endif %}

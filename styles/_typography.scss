@@ -1,0 +1,44 @@
+// Faces are complete role bindings. Scale and rhythm remain with the caller.
+@mixin axes($stretch: normal, $variation: normal, $optical: auto) {
+  font-stretch: $stretch;
+  font-variation-settings: $variation;
+  font-optical-sizing: $optical;
+}
+
+@mixin face($family, $weight: null, $stretch: normal, $variation: normal, $optical: auto) {
+  font-family: $family;
+  // Null keeps deliberate emphasis owned by the caller's semantic role.
+  @if $weight != null { font-weight: $weight; }
+  @include axes($stretch, $variation, $optical);
+}
+
+// Preserve the native shorthand's style/weight/variant resets where it is used.
+@mixin text($family, $size, $leading: null) {
+  @if $leading == null { font: #{$size} #{$family}; }
+  @else { font: #{$size}/#{$leading} #{$family}; }
+  @include axes;
+}
+
+@mixin display-face($weight: var(--world-type-display-weight,var(--type-weight-display))) {
+  @include face(var(--world-type-display-family,var(--type-family-display)), $weight,
+    calc(var(--world-type-display-width) * 1%), 'wdth' var(--world-type-display-width));
+}
+
+@mixin reading-face($weight: var(--type-weight-reading)) {
+  @include face(var(--type-family-reading), $weight);
+}
+
+@mixin system-face($weight: null) {
+  @include face(var(--type-family-system), $weight);
+}
+
+@mixin code-face($weight: null) {
+  @include face(var(--type-family-code), $weight);
+}
+
+// Opt in only when the world's recorded numeric voice uses its display axes.
+@mixin display-figures {
+  @include face(var(--world-type-numeric-family), var(--world-type-display-weight),
+    calc(var(--world-type-display-width) * 1%), 'wdth' var(--world-type-display-width));
+  font-variant-numeric: tabular-nums;
+}

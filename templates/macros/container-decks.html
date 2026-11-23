@@ -1,0 +1,56 @@
+{% import "base/macros/decks.html" as decks %}
+
+{# Both the default page closing and an authored slot use the same resolved contents. #}
+{% macro render(kind, documentation, entries, copy, source, events=false) %}
+{% if entries %}
+{% set ordered = kind == "journey" %}
+{% set title = copy | get(key="base:collection-contents",default="") %}
+{% if ordered %}{% set title = copy | get(key="base:sequence-contents",default="") %}{% elif documentation %}{% set title = copy | get(key="base:documentation-contents",default=title) %}{% endif %}
+{% if events %}
+<section class="container-contents" aria-label="{{ title }}">
+  {% if title %}<header class="quote-deck__header"><h2>{{ title }}</h2></header>{% endif %}
+  {% set_global outline_batch = [] %}
+  {% set_global outline_page_depth = 0 %}
+  {% set_global outline_groups = [] %}
+  {% for event in events %}
+    {% if outline_page_depth == 0 and (event.kind == "group-open" or event.kind == "group-close") %}
+      {% if outline_batch %}
+        {% set batch_label = title %}
+        {% if outline_groups %}{% set batch_label = outline_groups | last %}{% endif %}
+        {% set autoplay = outline_batch | length > 3 %}
+        {{ decks::render(entries=outline_batch,copy=copy,source=source,kind="folder",owned=true,aria_label=batch_label,previous=copy | get(key="base:collection-previous",default=""),next=copy | get(key="base:collection-next",default=""),pause=copy | get(key="base:catalogue-pause",default=""),resume=copy | get(key="base:catalogue-resume",default=""),autoplay=autoplay,card_id_prefix="container-" ~ loop.index ~ "-") }}
+        {% set_global outline_batch = [] %}
+      {% endif %}
+      {% if event.kind == "group-open" %}
+        <section class="container-contents__group" aria-label="{{ event.title }}">
+          <header class="quote-deck__header"><h3 class="container-contents__group-title" aria-level="{{ outline_groups | length + 3 }}">{{ event.title }}</h3></header>
+        {% set_global outline_groups = outline_groups | concat(with=[event.title]) %}
+      {% else %}
+        </section>
+        {% set remaining = outline_groups | length - 1 %}
+        {% set_global outline_groups = outline_groups | slice(end=remaining) %}
+      {% endif %}
+    {% elif event.kind == "entry" %}
+      {% set cards = entries | filter(attribute="id",value=event.content) %}
+      {% set_global outline_batch = outline_batch | concat(with=cards) %}
+    {% elif event.kind == "page-open" %}
+      {% if outline_page_depth == 0 %}
+        {% set cards = entries | filter(attribute="id",value=event.destination.node.id) %}
+        {% set_global outline_batch = outline_batch | concat(with=cards) %}
+      {% endif %}
+      {% set_global outline_page_depth = outline_page_depth + 1 %}
+    {% elif event.kind == "page-close" %}
+      {% set_global outline_page_depth = outline_page_depth - 1 %}
+    {% endif %}
+  {% endfor %}
+  {% if outline_batch %}
+    {% set autoplay = outline_batch | length > 3 %}
+    {{ decks::render(entries=outline_batch,copy=copy,source=source,kind="folder",owned=true,aria_label=title,previous=copy | get(key="base:collection-previous",default=""),next=copy | get(key="base:collection-next",default=""),pause=copy | get(key="base:catalogue-pause",default=""),resume=copy | get(key="base:catalogue-resume",default=""),autoplay=autoplay,card_id_prefix="container-final-") }}
+  {% endif %}
+</section>
+{% else %}
+{% set autoplay = entries | length > 3 %}
+{{ decks::render(title=title,previous=copy | get(key="base:collection-previous",default=""),next=copy | get(key="base:collection-next",default=""),entries=entries,copy=copy,source=source,kind="folder",owned=true,ordered=ordered,pause=copy | get(key="base:catalogue-pause",default=""),resume=copy | get(key="base:catalogue-resume",default=""),autoplay=autoplay) }}
+{% endif %}
+{% endif %}
+{% endmacro render %}

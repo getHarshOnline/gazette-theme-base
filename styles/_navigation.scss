@@ -1,0 +1,163 @@
+@use 'typography';
+@use "../tokens/scss/layout";
+@use "optical";
+
+// The surrounding masthead stays transparent; only ink over the film needs support.
+@mixin film-legibility($paper: var(--world-dark-paper)) {
+  .frame__header > .frame__brand,
+  .frame__header[data-navigation-mode='direct'] :is(.shell__trigger,.frame__nav a:not([aria-current])) {
+    @include optical.ink-support($paper: $paper);
+    @media print { text-shadow: none; }
+  }
+}
+
+// Opt-in capsule navigation. Worlds supply contextual ink, paper and focus;
+// shared markup and the Base navigation controller retain all behaviour.
+@mixin capsule($ink: var(--color-ink), $paper: var(--color-paper), $focus: var(--color-focus)) {
+  .frame__header { --frame-surface: #{$paper}; --navigation-control-radius: calc(var(--target-project) / 2); --focus-ring-color: #{$focus}; color: $ink; border: 0; gap: var(--space-5); }
+  // The identity meets the shared target like its neighbours. Padding grows the
+  // hit box and focus ring to the target; the equal negative margin and the
+  // plate's reduced inset keep the brand's placement and its plate unchanged.
+  .frame__header > .frame__brand { --frame-brand-inset: max(0px,(var(--target-project) - 1lh) / 2); border: 0; padding: var(--frame-brand-inset) 0; margin-block: calc(-1 * var(--frame-brand-inset)); border-radius: var(--navigation-control-radius); font-size: var(--type-size-h3); letter-spacing: var(--type-tracking-heading); }
+  .frame__header > :is(.frame__brand,.shell__search-trigger),
+  .frame__header[data-navigation-mode='direct'] .shell__tools {
+    position: relative; isolation: isolate;
+    &::before {
+      content: ''; position: absolute; z-index: -1;
+      inset: calc(-1 * var(--space-2)) calc(-1 * var(--space-3));
+      border-radius: var(--navigation-control-radius);
+      @include optical.layer($face: color-mix(in srgb,$paper calc(var(--world-material-optical-fill) * 100%),transparent), $filter: blur(var(--world-material-optical-blur)) Saturate(var(--world-material-optical-saturation)), $solid: $paper);
+      @media print { display: none; }
+    }
+  }
+  .frame__header > .frame__brand::before { inset-block: calc(var(--frame-brand-inset) - var(--space-2)); }
+  .frame__header[data-navigation-mode='direct'] { display: flex; justify-content: space-between; padding-block: var(--space-3); }
+  .frame__header[data-navigation-mode='direct'] > .frame__brand { margin-inline: 0; }
+  .frame__header[data-navigation-mode='direct'] .frame__directory { display: flex; align-items: center; margin-inline-start: auto; gap: var(--space-3); }
+  // Without scripts the native row keeps the same tray; below the navigation
+  // breakpoint Base recomposes it as a grid of destinations instead.
+  @media (width >= layout.$layout-breakpoint-navigation) {
+    .frame__header[data-navigation-mode='direct'] .frame__nav ul,
+    .frame__header:not([data-navigation-mode]) .frame__nav ul { display: flex; gap: 0; padding: var(--space-1); border: var(--stroke-hair) solid color-mix(in srgb,$ink calc(var(--world-material-optical-edge) * 100%),transparent); border-radius: calc(var(--target-project) / 2 + var(--space-1)); @include optical.layer($face: color-mix(in srgb,$paper calc(var(--material-discovery-fill) * 100%),transparent), $filter: blur(var(--world-material-optical-blur)) Saturate(var(--world-material-optical-saturation)), $solid: $paper); }
+  }
+  .frame__header .frame__nav a { display: inline-flex; @include typography.reading-face(); font-size: var(--type-size-body); padding: var(--space-2) var(--space-4); min-block-size: var(--target-project); border: 0; border-radius: var(--navigation-control-radius); text-decoration: none; }
+  .frame__header .frame__nav a[aria-current] { color: $paper; background: $ink; }
+  .frame__header :is(.frame__brand,.frame__nav a,.shell__trigger) { color: inherit; }
+  .frame__header .frame__menu { border-radius: var(--navigation-control-radius); padding-inline: var(--navigation-menu-padding,var(--space-5)); background: $ink; color: $paper; }
+  .frame__header .shell__trigger { border-radius: var(--navigation-control-radius); padding-inline: var(--space-3); border-color: transparent; background: transparent; }
+  .frame__header .shell__tools { gap: var(--space-2); background: transparent; }
+  // Destinations and commands share one tint where a pointer can hover. A pressed
+  // destination keeps that tint, so it never reads as the current page's ink pill.
+  @media (hover: hover) and (pointer: fine) {
+    .frame__header a.frame__brand:hover { text-decoration: underline; text-underline-offset: var(--space-1); }
+    .frame__header :is(.shell__search-trigger,.shell__settings-trigger,.frame__nav a:not([aria-current])):hover { color: $ink; background: color-mix(in srgb,$ink calc(var(--world-material-optical-edge) * 100%),transparent); text-decoration: none; }
+  }
+  .frame__header .frame__nav a:not([aria-current]):active { color: $ink; background: color-mix(in srgb,$ink calc(var(--world-material-optical-edge) * 100%),transparent); }
+  .frame__header :is(.shell__search-trigger,.shell__settings-trigger):active { color: $paper; background: $ink; }
+  .frame__header[data-navigation-mode='compact'] .frame__directory:has(.frame__nav[data-collapsed='false']) { display: grid; grid-template-columns: minmax(0,1fr); gap: var(--space-5); padding: var(--space-5); margin: var(--space-2) var(--space-5); inset-inline: 0; inline-size: auto; max-block-size: calc(100svh - var(--frame-header-height,var(--layout-sticky-chrome)) - var(--space-2) * 2); border: var(--stroke-hair) solid color-mix(in srgb,$ink calc(var(--world-material-optical-edge) * 100%),transparent); border-radius: var(--world-material-optical-radius); color: $ink; @include optical.layer($face: color-mix(in srgb,$paper calc(var(--world-material-optical-fill) * 100%),transparent), $filter: blur(var(--world-material-optical-blur)) Saturate(var(--world-material-optical-saturation)), $solid: $paper); box-shadow: 0 var(--elevation-shell-offset-y) var(--elevation-shell-blur) color-mix(in srgb,var(--color-shadow) calc(var(--elevation-shell-opacity) * 100%),transparent); }
+  .frame__header[data-navigation-mode='compact'] .frame__nav ul { display: grid; grid-template-columns: minmax(0,1fr); align-items: start; gap: var(--space-2); padding: 0; }
+  .frame__header[data-navigation-mode='compact'] .frame__nav li { min-inline-size: 0; }
+  .frame__header[data-navigation-mode='compact'] .frame__destination-description { display: block; margin: var(--space-2) var(--space-4) var(--space-4); max-inline-size: var(--layout-measure); @include typography.reading-face(); font-size: var(--type-size-meta); line-height: var(--type-line-height-body); }
+  .frame__header[data-navigation-mode='compact'] .shell__tools { flex-direction: row; align-items: center; justify-content: start; padding: 0; border: 0; }
+  // Destination links and command buttons occupy the same control box. Native
+  // button padding must not push its label below the neighbouring link.
+  .frame__header[data-navigation-mode='compact'] .shell__trigger { display: inline-flex; align-items: center; justify-content: center; min-block-size: var(--target-project); padding-block: var(--space-2); border: var(--stroke-hair) solid transparent; line-height: var(--type-line-height-body); }
+  // Inside the open directory a command's glyph starts on the destinations' label edge.
+  .frame__header[data-navigation-mode='compact'] .frame__directory .shell__trigger { padding-inline: calc(var(--space-4) - var(--stroke-hair)); }
+  @media (width >= layout.$layout-breakpoint-navigation) { .frame__header[data-navigation-mode='compact'] .frame__directory:has(.frame__nav[data-collapsed='false']) { inset-inline-start: auto; inline-size: min(var(--layout-shell-width),calc(100% - var(--space-6))); } }
+  @media (forced-colors: active) {
+    .frame__header[data-navigation-mode='direct'] .frame__nav ul,
+    .frame__header:not([data-navigation-mode]) .frame__nav ul,
+    .frame__header[data-navigation-mode='compact'] .frame__directory:has(.frame__nav[data-collapsed='false']) {
+      background: Canvas;
+      color: CanvasText;
+      border-color: CanvasText;
+      backdrop-filter: none;
+      box-shadow: none;
+    }
+    .frame__header > :is(.frame__brand,.shell__search-trigger)::before,
+    .frame__header[data-navigation-mode='direct'] .shell__tools::before {
+      background: Canvas;
+      backdrop-filter: none;
+    }
+    // The trays carry CanvasText; every destination still takes the link colour.
+    .frame__header .frame__nav a { color: LinkText; }
+    .frame__header .frame__nav a[aria-current] {
+      text-decoration-line: underline;
+      text-decoration-thickness: var(--stroke-underline-active);
+    }
+  }
+}
+
+// One icon vocabulary for public Search and Settings. The accessible names stay
+// on the native controls; a platform shortcut is a hint, never the only entry.
+@mixin commands {
+  .frame__header > .frame__brand { margin-inline-end: 0; }
+  .frame__header > .shell__search-trigger { margin-inline-end: auto; flex: none; }
+  .shell__search-trigger,.shell__settings-trigger {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: var(--space-2); min-block-size: var(--target-project);
+    min-inline-size: var(--target-project); padding: var(--space-2) var(--space-3);
+    border-radius: var(--control-radius,var(--radius-control));
+    font-size: var(--type-size-meta); line-height: var(--type-line-height-body);
+  }
+  // Reserve the existing command box only after navigation has initialized.
+  // It stays invisible and unreachable until the shell can open Settings.
+  .frame__header[data-navigation-mode='direct'] .shell__settings-trigger[hidden] { display: inline-flex !important; visibility: hidden; }
+  .frame__header[data-navigation-mode='direct'] .shell__tools:has(.shell__settings-trigger[hidden]) { visibility: hidden; }
+  .shell__search-trigger kbd { font: inherit; white-space: nowrap; }
+  .shell__icon { position: relative; display: block; flex: none; inline-size: var(--space-5); block-size: var(--space-5); pointer-events: none; }
+  .shell__icon--search::before { content: ''; position: absolute; inset: 0 var(--space-1) var(--space-1) 0; border: var(--stroke-underline-active) solid currentColor; border-radius: 50%; }
+  .shell__icon--search::after { content: ''; position: absolute; inset-inline-end: 0; inset-block-end: 0; inline-size: var(--space-2); border-block-start: var(--stroke-underline-active) solid currentColor; rotate: 45deg; transform-origin: right center; }
+  .shell__icon--settings {
+    background: currentColor;
+    clip-path: polygon(40% 0,60% 0,64% 15%,73% 19%,86% 12%,100% 28%,91% 40%,92% 50%,100% 62%,88% 79%,73% 75%,65% 83%,61% 100%,40% 100%,36% 84%,26% 79%,12% 86%,0 70%,9% 58%,8% 47%,0 34%,13% 17%,27% 22%,36% 15%);
+    mask-image: radial-gradient(circle,transparent 23%,currentColor 26%);
+  }
+  // Forced colours would reset the gear's fill to Canvas under its mask.
+  @media (forced-colors: active) { .shell__icon--settings { forced-color-adjust: none; background: ButtonText; } }
+  // Icon commands show hover by tint and focus by the ring. Neither the text
+  // trigger's underline nor a world's secondary-link decoration applies to them.
+  .shell__trigger:is(.shell__search-trigger,.shell__settings-trigger),
+  .shell__trigger:is(.shell__search-trigger,.shell__settings-trigger):is(:hover,:focus-visible) { text-decoration: none; }
+  @media (hover: hover) and (pointer: fine) {
+    .frame__header :is(.shell__search-trigger,.shell__settings-trigger):hover { color: var(--color-ink); background: var(--color-tint); text-decoration: none; }
+  }
+  .frame__header :is(.shell__search-trigger,.shell__settings-trigger):active { color: var(--color-ink); background: var(--color-tint); }
+  // Compact navigation has one row of destinations: identity, Search, Menu.
+  // Longer identities may wrap within their own cell rather than displacing
+  // either touch target or forcing the Menu onto a second row.
+  .frame__header[data-navigation-mode='compact'] {
+    display: grid;
+    grid-template-columns: minmax(0,max-content) max-content minmax(max-content,1fr);
+    gap: var(--space-2);
+    padding-inline: var(--space-3);
+  }
+  .frame__header[data-navigation-mode='compact'] > .frame__brand {
+    grid-column: 1;
+    grid-row: 1;
+    flex: 0 1 auto;
+    min-inline-size: 0;
+    font-size: var(--type-size-reading);
+    overflow-wrap: anywhere;
+  }
+  .frame__header[data-navigation-mode='compact'] > .frame__menu {
+    --navigation-menu-padding: var(--space-3);
+    grid-column: 3;
+    grid-row: 1;
+    flex: none;
+    justify-self: end;
+    min-block-size: var(--target-project);
+    min-inline-size: var(--target-project);
+    padding-inline: var(--navigation-menu-padding);
+    gap: var(--space-2);
+  }
+  .frame__header[data-navigation-mode='compact'] > .shell__search-trigger { grid-column: 2; grid-row: 1; }
+  // The current section fills the compact row without sizing the controls above it.
+  .frame__header[data-navigation-mode='compact'] > .reading-header-row { grid-column: 1 / -1; contain: inline-size; }
+  @media (width < layout.$layout-breakpoint-navigation) {
+    .shell__search-trigger kbd { display: none; }
+    .frame__header > .shell__search-trigger { padding-inline: var(--space-2); }
+  }
+  @media print { .shell__search-trigger { display: none !important; } }
+}

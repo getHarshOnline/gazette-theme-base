@@ -1,0 +1,4 @@
+<div class="view">
+  <label class="view__choice"><input type="radio" name="{{ component.arguments.group }}" aria-label="{{ component.arguments.label }}"{% if component.arguments.selected %} checked{% endif %}> <span class="view__title">{{ component.arguments.label }}</span>{% if component.arguments.description %}<span class="view__more"><span>{{ component.arguments.description }}</span></span>{% endif %}</label>
+  <section class="view__panel" aria-label="{{ component.arguments.label }}">{{ component.body.html | safe }}</section>
+</div>

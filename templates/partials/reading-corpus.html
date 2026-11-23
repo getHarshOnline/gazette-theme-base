@@ -1,0 +1,77 @@
+{% if presentation.chrome is defined and presentation.chrome %}
+{% set sequence_label = presentation.chrome.regions | get(key="base:reading-sequence", default="") %}
+{% set overview_label = presentation.chrome.regions | get(key="base:sequence-overview", default="") %}
+{% set compact_outline = false %}
+{% if outline_compact is defined %}{% set compact_outline = outline_compact %}{% endif %}
+{% set collection_label = presentation.chrome.regions | get(key="base:reading-collection", default="") %}
+{% set collection_overview = presentation.chrome.regions | get(key="base:collection-overview", default="") %}
+{% set has_collection = collection_navigation is defined and collection_navigation | length > 0 and collection_label and collection_overview and not compact_outline %}
+{% set has_journey = sequence_label and journeys | length > 0 and not compact_outline %}
+{% set has_documentation_navigation = not compact_outline and documentation_navigation is defined and documentation_navigation and documentation_navigation.events %}
+{% if has_documentation_navigation or has_journey or has_collection %}
+<aside class="reading-corpus">
+  {% if has_documentation_navigation %}
+  <div class="reading-orientation">
+    <details class="reading-orientation__collection">
+      <summary>{{ documentation_navigation.root.node.title }}</summary>
+      <nav aria-label="{{ documentation_navigation.root.node.title }}">
+        {% if documentation_navigation.root.route %}<a class="reading-orientation__overview" href="{{ documentation_navigation.root.route.url }}"{% if documentation_navigation.current %} aria-current="page"{% endif %} {{ links::attributes(source=serving_site,copy=presentation.chrome.regions,node=documentation_navigation.root.node,target=documentation_navigation.root.presentation | default(value=false)) }}>{{ collection_overview }}</a>{% endif %}
+        {{ reading_items::items(events=documentation_navigation.events,source=serving_site,copy=presentation.chrome.regions) }}
+      </nav>
+    </details>
+  </div>
+  {% else %}
+  {% if has_journey %}
+  <div class="reading-orientation">
+    {% for is_primary in [true, false] %}
+    {% for membership in journeys | filter(attribute="primary", value=is_primary) %}
+    {% if membership.members is defined and membership.members and overview_label %}
+    <details class="reading-orientation__journey">
+      <summary><span>{{ membership.journey.title }}</span> <span class="reading-orientation__position">{{ membership.position + 1 }} / {{ membership.total }}</span></summary>
+      <nav aria-label="{{ sequence_label }}: {{ membership.journey.title }}">
+        <ol class="reading-chapters">
+        {% for member in membership.members %}
+          {% set member_rel = "" %}
+          {% if membership.previous and membership.previous.node.id == member.node.id %}{% set member_rel = "prev" %}{% elif membership.next and membership.next.node.id == member.node.id %}{% set member_rel = "next" %}{% endif %}
+          <li>{% if member.node.id == content.id %}<span aria-current="page">{{ member.node.title }}</span>{% elif member.route %}<a href="{{ member.route.url }}" {{ links::attributes(copy=presentation.chrome.regions | default(value=false), source=serving_site, node=member.node, target=member.presentation | default(value=false), rel=member_rel) }}>{{ member.node.title }}</a>{% else %}<span>{{ member.node.title }}</span>{% endif %}</li>
+        {% endfor %}
+        </ol>
+        {% if membership.route %}<a class="reading-orientation__overview" href="{{ membership.route.url }}" {{ links::attributes(copy=presentation.chrome.regions | default(value=false), source=serving_site, node=membership.journey) }}>{{ overview_label }}</a>{% endif %}
+      </nav>
+    </details>
+    {% else %}
+    <div class="reading-orientation__journey">
+      <p class="reading-orientation__label">{{ sequence_label }}</p>
+      <p>{% if membership.route %}<a href="{{ membership.route.url }}" {{ links::attributes(copy=presentation.chrome.regions | default(value=false), source=serving_site, node=membership.journey) }}>{{ membership.journey.title }}</a>{% else %}<span>{{ membership.journey.title }}</span>{% endif %}</p>
+      <p class="reading-orientation__position">{{ membership.position + 1 }} / {{ membership.total }}</p>
+    </div>
+    {% endif %}
+    {% endfor %}
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if has_collection and not has_journey %}
+  <div class="reading-orientation">
+    {% for membership in collection_navigation %}
+    {% if membership.members | length > 1 %}
+    <details class="reading-orientation__collection">
+      <summary>{{ membership.collection.node.title }}</summary>
+      <nav aria-label="{{ collection_label }}: {{ membership.collection.node.title }}">
+        <ul class="reading-siblings">
+        {% for member in membership.members %}
+          <li>{% if member.node.id == content.id %}<span aria-current="page">{{ member.node.title }}</span>{% elif member.route %}<a href="{{ member.route.url }}" {{ links::attributes(copy=presentation.chrome.regions | default(value=false), source=serving_site, node=member.node, target=member.presentation | default(value=false)) }}>{{ member.node.title }}</a>{% else %}<span>{{ member.node.title }}</span>{% endif %}</li>
+        {% endfor %}
+        </ul>
+        {% if membership.collection.route %}<a class="reading-orientation__overview" href="{{ membership.collection.route.url }}" {{ links::attributes(copy=presentation.chrome.regions | default(value=false), source=serving_site, node=membership.collection.node, target=membership.collection.presentation | default(value=false)) }}>{{ collection_overview }}</a>{% endif %}
+      </nav>
+    </details>
+    {% else %}
+    <nav class="reading-orientation__collection" aria-label="{{ collection_label }}">{% if membership.collection.route %}<a class="reading-orientation__overview" href="{{ membership.collection.route.url }}" {{ links::attributes(copy=presentation.chrome.regions | default(value=false), source=serving_site, node=membership.collection.node, target=membership.collection.presentation | default(value=false)) }}>{{ membership.collection.node.title }}</a>{% else %}<p>{{ membership.collection.node.title }}</p>{% endif %}</nav>
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endif %}
+</aside>
+{% endif %}
+{% endif %}

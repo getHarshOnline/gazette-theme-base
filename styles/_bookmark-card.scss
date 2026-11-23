@@ -1,0 +1,45 @@
+@mixin held {
+  transform: translateY(calc(-1 * var(--bookmark-lift)));
+  .bookmark-card__material { filter: drop-shadow(0 var(--elevation-bookmark-held-offset-y) var(--elevation-bookmark-held-blur) color-mix(in srgb,var(--color-shadow) calc(var(--elevation-bookmark-held-opacity) * 100%),transparent)); }
+  .bookmark-card__bloom { opacity: 1; }
+}
+
+@mixin moving {
+  .bookmark-card { --bookmark-duration: var(--duration-bookmark); --bookmark-lift: var(--motion-bookmark-lift); }
+}
+
+@mixin recipes {
+  .bookmark-card {
+    --bookmark-duration: var(--motion-reduced-bookmark);
+    --bookmark-lift: var(--motion-reduced-bookmark-lift);
+    --bookmark-easing: var(--easing-bookmark);
+    position: relative; isolation: isolate; min-inline-size: 0;
+    padding: var(--space-5); color: var(--color-ink);
+    transition: transform var(--bookmark-duration) var(--bookmark-easing);
+  }
+  .bookmark-card[data-bookmark-ready] {
+    padding-block-end: calc(var(--space-5) + var(--layout-bookmark-bottom-notch) * 100%);
+  }
+  .bookmark-card[data-bookmark-ready] > [data-bookmark-title] {
+    display: flex; align-items: center; justify-content: end; align-self: end; justify-self: end;
+    inline-size: var(--bookmark-title-width); max-inline-size: 100%; min-block-size: var(--bookmark-title-min-height);
+    margin: 0 0 var(--space-5) auto; text-align: end; overflow-wrap: anywhere; text-wrap: balance;
+  }
+  .bookmark-card.about-choice--full[data-bookmark-ready] { display: flex; flex-direction: column; }
+  .bookmark-card__material { position: absolute; inset: 0; z-index: -1; pointer-events: none; filter: drop-shadow(0 var(--elevation-bookmark-offset-y) var(--elevation-bookmark-blur) color-mix(in srgb,var(--color-shadow) calc(var(--elevation-bookmark-opacity) * 100%),transparent)); transition: filter var(--bookmark-duration) var(--bookmark-easing); }
+  .bookmark-card__surface { display: block; position: absolute; inset: 0; overflow: hidden; border-radius: var(--radius-preview-frame); mask-repeat: no-repeat; mask-size: 100% 100%; }
+  .bookmark-card[data-bookmark-ready] .bookmark-card__surface { border-radius: 0; }
+  .bookmark-card__bloom { display: block; position: absolute; inset: 0; opacity: 0; background: radial-gradient(ellipse calc(var(--material-bookmark-bloom-width) * 100%) calc(var(--material-bookmark-bloom-height) * 100%) at calc(var(--material-bookmark-bloom-origin-x) * 100%) calc(var(--material-bookmark-bloom-origin-y) * 100%),var(--color-tint),color-mix(in srgb,var(--color-tint) calc(var(--material-bookmark-bloom-mid-strength) * 100%),var(--color-sheet)) calc(var(--material-bookmark-bloom-mid-stop) * 100%),var(--color-sheet) calc(var(--material-bookmark-bloom-end-stop) * 100%)); transition: opacity var(--bookmark-duration) var(--bookmark-easing); }
+  .bookmark-card:is(:focus-within,:focus-visible) { @include held; }
+  @media (hover: hover) and (pointer: fine) { .bookmark-card:hover { @include held; } }
+  @media (prefers-reduced-motion: no-preference) { :root:not([data-motion='reduce']) { @include moving; } }
+  :root[data-motion='allow'] { @include moving; }
+  @supports (transition-timing-function: linear(0,1)) { .bookmark-card { --bookmark-easing: var(--motion-bookmark-easing); } }
+  // Without the painted silhouette the border carries the contour, so it takes
+  // the unenhanced surface radius and drops the notch room the mask needed.
+  @media (forced-colors: active) { .bookmark-card { border: var(--stroke-hair) solid CanvasText; border-radius: var(--radius-preview-frame); } .bookmark-card[data-bookmark-ready] { padding-block: var(--space-5); } .bookmark-card__material { display: none; } }
+  @media print { .bookmark-card { padding: var(--space-3); break-inside: avoid; transform: none; } .bookmark-card[data-bookmark-ready] { padding-block: var(--space-3); } .bookmark-card__material { display: none; } }
+  @media print, (forced-colors: active) {
+    .bookmark-card[data-bookmark-ready] > [data-bookmark-title] { inline-size: auto; min-block-size: 0; justify-content: start; align-self: stretch; text-align: start; margin: 0; }
+  }
+}

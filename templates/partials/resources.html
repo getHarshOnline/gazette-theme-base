@@ -1,0 +1,90 @@
+  {% if presentation.discovery is defined %}
+    {% for entry in presentation.discovery %}
+      {% if entry.kind == "web-manifest" %}
+  <link rel="manifest" href="{{ entry.url }}">
+      {% elif entry.kind == "tdm-policy" %}
+  <meta name="tdm-reservation" content="1">
+  <meta name="tdm-policy" content="{{ entry.url }}">
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  {# Fetch the upright faces with the document, so text is first laid out in them rather than reflowing when they arrive. Italic stays lazy. #}
+  {% for resource in presentation.theme_resources %}
+    {% if resource.id in ["font:reading", "font:display", "font:system"] %}
+  <link rel="preload" href="{{ resource.url }}" as="font" type="font/woff2" crossorigin>
+    {% endif %}
+  {% endfor %}
+  {% for resource in presentation.theme_resources %}
+    {% if resource.kind == "stylesheet" %}
+  <link rel="stylesheet" href="{{ resource.url }}">
+    {% endif %}
+  {% endfor %}
+  {% for resource in presentation.resources %}
+    {% if resource.kind == "stylesheet" %}
+  <link rel="stylesheet" href="{{ resource.url }}">
+    {% endif %}
+  {% endfor %}
+
+  {% if presentation.browser_modules is defined %}
+  <script type="importmap">{{ presentation.browser_modules.import_map | json_script }}</script>
+    {# Modules no reader sees at first paint wait behind page images, text and the scene modules that reveal them. #}
+    {% set background_modules = ["/analytics-consent.js", "/analytics-sdk.js", "/enquiry-context.js", "/webmcp.js", "/webmcp-sdk.js"] %}
+    {% for preload in presentation.browser_modules.preloads %}
+      {% set_global background = false %}
+      {% for ending in background_modules %}{% if preload.url is ending_with(ending) %}{% set_global background = true %}{% endif %}{% endfor %}
+  <link rel="modulepreload" href="{{ preload.url }}"{% if background %} fetchpriority="low"{% endif %}>
+    {% endfor %}
+  {% endif %}
+
+  {% if presentation.search is defined %}
+  <script type="application/json" id="search-corpus">{{ presentation.search | json_script }}</script>
+  {% endif %}
+
+  {% set enquiry_destination = false %}
+  {% if content.id is defined and route.canonical_url is defined and presentation.chrome is defined %}
+    {% if invitations is defined %}
+      {% set enquiry_selection = invitations | get(key="base:services", default=false) %}
+      {% if enquiry_selection %}{% set_global enquiry_destination = enquiry_selection.destination %}{% endif %}
+    {% endif %}
+    {% if not enquiry_destination and presentation.chrome.invitation_destinations is defined %}
+      {% set enquiry_destination = presentation.chrome.invitation_destinations | get(key="base:services", default=false) %}
+    {% endif %}
+    {% if not enquiry_destination %}
+      {% for item in presentation.chrome.footer %}
+        {% if item.key is defined and item.key == "base:services" %}{% set_global enquiry_destination = item.destination %}{% endif %}
+      {% endfor %}
+    {% endif %}
+  {% endif %}
+  {% include "base/partials/enquiry-context.html" %}
+  {% include "base/partials/webmcp.html" %}
+  {% set every_page_modules = ["module:shell"] %}
+  {% if enquiry_destination is defined and enquiry_destination %}{% set_global every_page_modules = every_page_modules | concat(with="module:enquiry-context") %}{% endif %}
+  {% if presentation.webmcp is defined and presentation.webmcp %}
+    {% set_global every_page_modules = every_page_modules | concat(with="module:webmcp") %}
+  {% endif %}
+  {% if presentation.capabilities is defined %}
+    {% set analytics = presentation.capabilities | get(key="publication.analytics/v1", default=false) %}
+    {% if analytics and analytics.state == "available" and content.id is defined and route.canonical_url is defined %}{% set_global every_page_modules = every_page_modules | concat(with="module:analytics-consent") %}{% endif %}
+  {% endif %}
+  {# The shell keeps its place in the module queue. The others run whenever they arrive, so a late one never holds back the scene modules after it; each waits for the document itself or reads a binding written above. #}
+  {% for resource in presentation.theme_resources %}
+    {% if resource.kind == "browser-module" and resource.id in every_page_modules %}
+  <script type="module" src="{{ resource.url }}"{% if resource.id != "module:shell" %} async fetchpriority="low"{% endif %}></script>
+    {% endif %}
+  {% endfor %}
+  {% for resource in presentation.resources %}
+    {% if resource.kind == "browser-module" %}
+  <script type="module" src="{{ resource.url }}"></script>
+    {% endif %}
+  {% endfor %}
+  {% if presentation.interaction is defined %}
+  <script type="module" src="{{ presentation.interaction.url }}"></script>
+  {% endif %}
+
+  {# Fetch a same-site page's document on hover or press, never by scanning the page: the browser keeps at most two such fetches and loads no subresources. #}
+  <script type="speculationrules">{"prefetch":[{"where":{"and":[{"href_matches":"/*"},{"not":{"selector_matches":"[download], [rel~=nofollow], [data-no-prefetch], [href*='#']"}}]},"eagerness":"moderate"}]}</script>
+
+  {% if json_ld is defined %}
+  <script type="application/ld+json">{{ json_ld | json_script }}</script>
+  {% endif %}

@@ -1,0 +1,65 @@
+format: gazette-landing/v1
+content:
+  id: page:ambient-hero
+  site: site:reading
+  title: A scene and its destinations
+  lifecycle: draft
+  language: en
+  route: {path: /ambient-hero/}
+  structure: {kind: page, family: {kind: index}}
+sections:
+- component: ambient-hero
+  sections:
+  - component: ambient-source
+    body: |
+      [Opening film](opening.mp4)
+  - component: ambient-still
+    body: |
+      ![A bounded neutral scene](scene.svg)
+  - component: ambient-content
+    sections:
+    - component: page-opening
+      heading: {level: 1, text: A scene and its destinations}
+      body: |
+        The scene gives an authored introduction to three independent reading paths.
+      sections:
+      - component: primary-action
+        body: |
+          [Explore the reference](../reference/)
+    - component: destination-set
+      sections:
+      - component: destination
+        body: |
+          ## [First question](../first/)
+
+          Begin with the observation.
+      - component: destination
+        body: |
+          ## [Middle question](../middle/)
+
+          Examine the comparison.
+      - component: destination
+        body: |
+          ## [Last question](../last/)
+
+          Follow the consequence.
+- component: inquiry-section
+  sections:
+  - component: faq
+    heading: {level: 2, text: Practical questions}
+    sections:
+    - component: faq-item
+      arguments: {question: Where does the next inquiry begin?}
+      body: |
+        Follow the retained reference and compare its evidence.
+  - component: card-deck
+    arguments: {title: Continue the inquiry}
+    sections:
+    - component: deck-card
+      heading: {level: 3, text: A useful comparison}
+      body: |
+        Keep the observation and its interpretation distinct.
+      sections:
+      - component: primary-action
+        body: |
+          [Explore the reference](../reference/)

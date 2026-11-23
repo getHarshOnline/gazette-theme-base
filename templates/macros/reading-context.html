@@ -1,0 +1,20 @@
+{% import "base/macros/links.html" as links %}
+{# Show ancestry items and return locations, omitting links already in chrome navigation; chrome supplies labels and source identifies the current site. #}
+{% macro trail(items,locations,chrome,source) %}
+{% set label = chrome.regions | get(key="base:reading-context", default="") %}
+{% set_global primary_urls = [] %}
+{% for entry in chrome.navigation %}{% set_global primary_urls = primary_urls | concat(with=entry.destination.route.url) %}{% endfor %}
+{% set_global ancestry = [] %}
+{% for item in items %}{% if not item.route or item.route.url not in primary_urls %}{% set_global ancestry = ancestry | concat(with=item) %}{% endif %}{% endfor %}
+{% set_global returns = [] %}
+{% for location in locations %}
+  {% set repeated = ancestry | filter(attribute="route.url", value=location.url) %}
+  {% if location.url not in primary_urls and not repeated %}{% set_global returns = returns | concat(with=location) %}{% endif %}
+{% endfor %}
+{% if label and (ancestry or returns) %}
+<nav class="reading-context" aria-label="{{ label }}">{% set return_label = chrome.regions | get(key="base:reading-return",default="") %}{% if return_label %}<span class="reading-context__label">{{ return_label }}</span>{% endif %}<ol>
+{% for location in returns %}<li><a href="{{ location.url }}" {{ links::attributes(copy=chrome.regions,kind="internal-native",site=source,content_id=location.index) }}>{{ location.title }}</a></li>{% endfor %}
+{% for item in ancestry %}<li>{% if item.route %}<a href="{{ item.route.url }}" {{ links::attributes(copy=chrome.regions,source=source,node=item.node,target=item.presentation | default(value=false)) }}>{{ item.node.title }}</a>{% else %}<span>{{ item.node.title }}</span>{% endif %}</li>{% endfor %}
+</ol></nav>
+{% endif %}
+{% endmacro trail %}

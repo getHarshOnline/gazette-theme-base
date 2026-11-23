@@ -1,0 +1,41 @@
+<!doctype html>
+<html{% if content.language is defined %} lang="{{ content.language }}"{% endif %}{% if presentation.palette is defined and presentation.palette %} data-palette="{{ presentation.palette }}"{% endif %} data-motion="reduce">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>{{ content.title }}</title>
+  {% for resource in presentation.theme_resources %}
+    {% if resource.id in ["font:reading", "font:display", "font:system"] %}
+  <link rel="preload" href="{{ resource.url }}" as="font" type="font/woff2" crossorigin>
+    {% endif %}
+    {% if resource.kind == "stylesheet" and resource.id != "stylesheet:social-card" %}
+  <link rel="stylesheet" href="{{ resource.url }}">
+    {% endif %}
+  {% endfor %}
+  {% for resource in presentation.resources %}
+    {% if resource.kind == "stylesheet" %}
+  <link rel="stylesheet" href="{{ resource.url }}">
+    {% endif %}
+  {% endfor %}
+  {% block social_card_fonts %}{% endblock social_card_fonts %}
+  {% for resource in presentation.theme_resources %}
+    {% if resource.id == "stylesheet:social-card" %}
+  <link rel="stylesheet" href="{{ resource.url }}">
+    {% endif %}
+  {% endfor %}
+  {% if presentation.browser_modules is defined %}
+  <script type="importmap">{{ presentation.browser_modules.import_map | json_script }}</script>
+  {% endif %}
+</head>
+<body class="social-card" style="--social-card-width: {{ card.width }}px; --social-card-height: {{ card.height }}px">
+  <template data-social-card-source>{{ body_html | safe }}</template>
+  <div class="social-card__media" data-social-card-media></div>
+  <h1 class="social-card__title" data-social-card-title>{{ content.title }}</h1>
+  {% for resource in presentation.theme_resources %}
+    {% if resource.id == "module:social-card-media" %}
+  <script type="module" src="{{ resource.url }}"></script>
+    {% endif %}
+  {% endfor %}
+</body>
+</html>

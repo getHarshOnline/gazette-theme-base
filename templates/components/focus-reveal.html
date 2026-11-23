@@ -1,0 +1,6 @@
+<section class="focus-reveal" data-focus-mode="{{ component.arguments.mode | default(value='auto') }}">
+  <div class="focus-reveal__content">{{ component.body.html | safe }}</div>
+  {% if component.arguments.pause is defined and component.arguments.resume is defined %}
+  <button class="control control--quiet focus-reveal__pause" type="button" data-resume="{{ component.arguments.resume }}" hidden>{{ component.arguments.pause }}</button>
+  {% endif %}
+</section>

@@ -1,0 +1,8 @@
+<div class="work-relation">
+  <aside class="work-relation__source" aria-label="{{ component.arguments.source_label }}"><p class="work-relation__owner">{{ component.arguments.source_label }}</p><p>{{ component.arguments.source_detail }}</p></aside>
+  <dl class="work-relation__positions">
+    {% for position in component.arguments.positions %}
+    <div><dt>{{ position.owner }}</dt><dd><strong>{{ position.position }}</strong><p>{{ position.detail }}</p></dd></div>
+    {% endfor %}
+  </dl>
+</div>

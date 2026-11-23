@@ -1,0 +1,50 @@
+@use '../tokens/scss/layout';
+@use 'optical';
+@use 'carousel-controls';
+
+// One finite, scroll-snap depth surface for search and publication indexes.
+// Geometry uses the existing Search Depth role tokens; wrappers own their content.
+@mixin surface($root, $list, $card, $active: 'data-depth-active', $ready: $root) {
+  #{$root} #{$list}:where(:has(> li)) {
+    --depth-card-width: min(var(--layout-search-depth-card-width),calc(var(--layout-search-depth-compact-card-share) * 100vw));
+    --depth-slot-width: calc(var(--depth-card-width) * var(--layout-search-depth-step));
+    position: relative; display: flex; align-items: center; gap: var(--space-4);
+    inline-size: var(--depth-field-width,100vw);
+    margin-inline: var(--depth-field-offset,calc((100% - 100vw) / 2)) 0;
+    overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scrollbar-width: none;
+    min-block-size: var(--layout-search-depth-frame-min);
+    padding-block: var(--space-5);
+    padding-inline: max(var(--space-4),calc((var(--depth-field-width,100vw) - var(--depth-slot-width)) / 2));
+    scroll-padding-inline: max(var(--space-4),calc((var(--depth-field-width,100vw) - var(--depth-slot-width)) / 2));
+    perspective: var(--layout-search-depth-perspective);
+    @include optical.horizontal-fade;
+  }
+  // Native cards stay side by side until the script gives receding cards depth.
+  #{$root}:not(#{$ready}) #{$list} { --depth-slot-width: var(--depth-card-width); }
+  #{$root} #{$list} > li { position: relative; flex: 0 0 var(--depth-slot-width); display: grid; place-items: center; scroll-snap-align: center;
+      transform-style: preserve-3d; min-inline-size: 0; pointer-events: none; }
+  // The untransformed seat must not intercept links on its receding card.
+  #{$root} #{$card} { inline-size: var(--depth-card-width); margin-inline: calc((var(--depth-slot-width) - var(--depth-card-width)) / 2); min-block-size: calc(var(--layout-search-depth-frame-min) - var(--space-7)); transform-origin: center; backface-visibility: hidden; pointer-events: auto; }
+  // The front card is dense; cards thin towards the glass fill as they recede, so overlapping text never shows through.
+  #{$root} #{$card} {
+    --card-surface-fill: calc(var(--material-discovery-card-fill) + (var(--material-discovery-glass-fill) - var(--material-discovery-card-fill)) * min(1,calc(var(--depth-distance,0) / var(--material-discovery-glass-distance))));
+  }
+  #{$root} #{$card}[#{$active}] { border-color: var(--color-strong-line); }
+  // Cards behind the front one keep only their title, so the deck reads cleanly at rest.
+  // A card a reader moves into keeps its full text; print shows every card whole.
+  @media screen {
+    #{$ready} #{$card} > :not(h2,h3) { transition: opacity var(--deck-body-duration,var(--duration-result)) var(--easing-productive); }
+    #{$ready} #{$card}:not([#{$active}]):not(:focus-within) > :not(h2,h3) { opacity: 0; }
+  }
+  #{$root} #{$list}.is-dragging { scroll-snap-type: none; user-select: none; }
+  @include carousel-controls.dragging('#{$root} #{$list}.is-dragging');
+
+  @media (width < layout.$layout-breakpoint-navigation) {
+    #{$root} #{$list} { --depth-slot-width: var(--depth-card-width); }
+  }
+  @media print {
+    #{$root} #{$list} { display: grid; inline-size: auto; min-block-size: 0; margin-inline: 0; overflow: visible; padding: 0; }
+    #{$root} #{$list} > li,#{$root} #{$card} { inline-size: auto; min-block-size: 0; margin-inline: 0; transform: none; }
+  }
+}

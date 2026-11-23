@@ -1,0 +1,25 @@
+{% set preview = false %}
+{% set preview_geometry = false %}
+{% set preview_title = false %}
+{% if presentation.identity_assets is defined and presentation.identity_assets.link_preview is defined and presentation.identity_assets.link_preview %}
+  {% set preview = presentation.identity_assets.link_preview %}
+  {% if preview.image is defined and preview.image %}{% set preview_geometry = preview.image.output %}{% endif %}
+{% elif presentation.social_card is defined and presentation.social_card %}
+  {% set preview = presentation.social_card %}
+  {% set preview_geometry = preview %}
+  {% set preview_title = preview.title %}
+{% endif %}
+{% if preview %}
+  <meta property="og:image" content="{{ preview.url }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="{{ preview.url }}">
+  {% if preview_geometry %}
+  <meta property="og:image:width" content="{{ preview_geometry.width }}">
+  <meta property="og:image:height" content="{{ preview_geometry.height }}">
+  {% endif %}
+  {% if preview.media_type is defined %}<meta property="og:image:type" content="{{ preview.media_type }}">{% endif %}
+  {% if preview_title %}
+  <meta property="og:image:alt" content="{{ preview_title }}">
+  <meta name="twitter:image:alt" content="{{ preview_title }}">
+  {% endif %}
+{% endif %}

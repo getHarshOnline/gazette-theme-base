@@ -1,0 +1,6 @@
+{% if presentation.webmcp is defined and presentation.capabilities is defined %}
+{% set webmcp = presentation.capabilities | get(key="publication.webmcp/v1", default=false) %}
+{% if webmcp and webmcp.state == "available" %}
+<script type="application/json" id="webmcp-binding">{"binding":{{ webmcp.value | json_script }},"currentPage":{{ presentation.webmcp | json_script }},"search":{{ presentation.search | default(value=false) | json_script }}}</script>
+{% endif %}
+{% endif %}

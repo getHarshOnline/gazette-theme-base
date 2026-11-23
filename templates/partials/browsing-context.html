@@ -1,0 +1,3 @@
+{% if browsing_locations is defined and presentation.chrome is defined and presentation.chrome %}
+{{ context::trail(items=[],locations=browsing_locations,chrome=presentation.chrome,source=serving_site) }}
+{% endif %}

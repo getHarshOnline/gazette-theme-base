@@ -1,0 +1,4 @@
+{% extends "base/landing.html" %}
+{% block title_group %}{% include "base/partials/title-group.html" %}{% endblock title_group %}
+{% block page_mode %}index{% endblock page_mode %}
+{% block publication_body %}{% set account_layout = "product-listing" %}{% include "base/partials/publication-body.html" %}{% endblock publication_body %}

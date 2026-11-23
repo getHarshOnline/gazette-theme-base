@@ -1,0 +1,5 @@
+<dl class="work-proof">
+  {% for record in component.arguments.records %}
+  <div><dt>{{ record.record }}</dt><dd>{{ record.detail }}</dd></div>
+  {% endfor %}
+</dl>

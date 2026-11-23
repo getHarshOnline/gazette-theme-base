@@ -1,0 +1,5 @@
+{% import "base/macros/links.html" as links %}
+{# Show the supplied authors in order, linking their websites where available; copy supplies accessible link descriptions. #}
+{% macro names(authors,copy=false) %}
+{% for attribution in authors %}{% if attribution.website is defined and attribution.website %}<a href="{{ attribution.website.url }}" {{ links::attributes(copy=copy,destination=attribution.website.destination | default(value=false),rel="author") }}>{{ attribution.principal.name }}</a>{% else %}<span>{{ attribution.principal.name }}</span>{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+{% endmacro names %}

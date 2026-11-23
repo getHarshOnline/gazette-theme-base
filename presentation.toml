@@ -1,0 +1,472 @@
+package = "theme:base"
+namespace = "base"
+templates = "templates"
+render = { page = "page.html", alias = "alias.html", graph = "graph.html", not_found = "not-found.html", llms = "llms.txt" }
+browser_theme_colors = { light = "#f4f4f4", dark = "#161616" }
+initial_color_mode = "system"
+resource_requirements = ["stylesheet:physics", "module:shell"]
+
+[chrome.regions]
+"base:media-detail" = "Zoom in"
+"base:media-fit" = "Fit figure"
+
+[components.service-fit]
+template = "components/service-fit.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.work-copy]
+template = "components/work-copy.html"
+arguments = { type = "object", additionalProperties = false, properties = { role = { type = "string", enum = ["introduction", "instruction", "terms", "conditions"], description = "Identify the copy as an introduction, instruction, terms or conditions; omission keeps ordinary prose." } } }
+
+[components.work-relation]
+template = "components/work-relation.html"
+arguments = { type = "object", required = ["source_label", "source_detail", "positions"], additionalProperties = false, properties = { source_label = { type = "string", minLength = 1, description = "Name of the reference shared by the two positions." }, source_detail = { type = "string", minLength = 1, description = "Explanation of that shared reference." }, positions = { type = "array", minItems = 2, maxItems = 2, items = { type = "object", required = ["owner", "position", "detail"], additionalProperties = false, properties = { owner = { type = "string", minLength = 1, description = "Owner of this position." }, position = { type = "string", minLength = 1, description = "The position this owner takes." }, detail = { type = "string", minLength = 1, description = "Explanation or qualification of this position." } } }, description = "The two independently owned positions shown beside the reference." } } }
+
+[components.work-connections]
+template = "components/work-connections.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.work-connection]
+template = "components/work-connection.html"
+arguments = { type = "object", required = ["kind"], additionalProperties = false, properties = { kind = { type = "string", enum = ["origin", "references", "reference"], description = "Identify an origin, a group of references, or one reference within that group." } } }
+
+[components.work-proof]
+template = "components/work-proof.html"
+arguments = { type = "object", required = ["records"], additionalProperties = false, properties = { records = { type = "array", minItems = 1, items = { type = "object", required = ["record", "detail"], additionalProperties = false, properties = { record = { type = "string", minLength = 1, description = "Name of the record being described." }, detail = { type = "string", minLength = 1, description = "What this record establishes, with its relevant qualification." } } }, description = "Records and their explanations, kept in the supplied order." } } }
+
+[components.view-set]
+template = "components/view-set.html"
+arguments = { type = "object", required = ["label"], additionalProperties = false, properties = { label = { type = "string", minLength = 1, description = "Visible legend naming the group of text views." } } }
+
+[components.work-proposal]
+template = "components/work-proposal.html"
+arguments = { type = "object", required = ["choices_label", "choices", "decision_label", "decision"], additionalProperties = false, properties = { choices_label = { type = "string", minLength = 1, description = "Visible and accessible name for the available choices." }, choices = { type = "array", minItems = 2, items = { type = "object", required = ["name", "remit"], additionalProperties = false, properties = { name = { type = "string", minLength = 1, description = "Name of this choice." }, remit = { type = "string", minLength = 1, description = "What this choice is responsible for." } } }, description = "Choices to compare, each with its name and remit." }, decision_label = { type = "string", minLength = 1, description = "Label introducing the decision beneath the comparison." }, decision = { type = "string", minLength = 1, description = "The decision or question the comparison asks the reader to consider." } } }
+
+[components.view]
+template = "components/view.html"
+arguments = { type = "object", required = ["group", "label"], additionalProperties = false, properties = { group = { type = "string", pattern = "^[a-z][a-z0-9-]*$", description = "Radio group name shared by views in this set; use a different name for each set on the page." }, label = { type = "string", minLength = 1, description = "Visible choice title and accessible name of its panel." }, selected = { type = "boolean", description = "Select this view when the page first opens; select only one view in a group." }, description = { type = "string", minLength = 1, description = "Supporting text shown with the choice title." } } }
+
+[components.preview-set]
+template = "components/preview-set.html"
+arguments = { type = "object", additionalProperties = false, properties = { label = { type = "string", minLength = 1, description = "Optional visible legend; without it, the individual choices name their own views." } } }
+
+[components.preview-caption]
+template = "components/preview-caption.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.preview-set.interaction]
+module = "module:preview-tabs"
+export = "mount"
+mount = "load"
+
+[[resources]]
+id = "module:preview-tabs"
+inputs = ["scripts/preview-tabs.js"]
+build = { kind = "browser-module", entry = "scripts/preview-tabs.js" }
+
+[[resources]]
+id = "image:site-icon-placeholder"
+inputs = ["images/site-icon-placeholder.svg"]
+build = { kind = "svg-image", entry = "images/site-icon-placeholder.svg" }
+
+[[resources]]
+id = "stylesheet:base-tokens"
+inputs = ["tokens/base.css"]
+build = { kind = "stylesheet", entry = "tokens/base.css" }
+
+[[resources]]
+id = "stylesheet:physics"
+inputs = ["styles/physics.scss", "styles/_typography.scss", "styles/_controls.scss", "styles/_links.scss", "styles/_focus.scss", "styles/_navigation.scss", "styles/_quote-deck.scss", "styles/_carousel-controls.scss", "styles/_folder-card.scss", "styles/_catalogue.scss", "styles/_views.scss", "styles/_optical.scss", "styles/_selection-assistance.scss", "styles/_reading.scss", "styles/_reading-shelves.scss", "styles/_discovery.scss", "styles/_frame.scss", "styles/_settings.scss", "styles/_search.scss", "styles/_depth-carousel.scss", "styles/_article-listing.scss", "styles/_tables.scss", "styles/_code.scss", "styles/_media-viewer.scss", "styles/_work-accounts.scss", "styles/_about.scss", "styles/_bookmark-card.scss", "styles/_process.scss", "tokens/scss/_layout.scss"]
+build = { kind = "stylesheet", entry = "styles/physics.scss" }
+
+[[resources]]
+id = "module:settings"
+inputs = ["scripts/settings.js", "scripts/image-modes.js"]
+build = { kind = "browser-module", entry = "scripts/settings.js" }
+
+[[resources]]
+id = "stylesheet:social-card"
+inputs = ["styles/social-card.scss"]
+build = { kind = "stylesheet", entry = "styles/social-card.scss" }
+
+[[resources]]
+id = "module:social-card-media"
+inputs = ["scripts/social-card-media.js"]
+build = { kind = "browser-module", entry = "scripts/social-card-media.js", imports = { "@base/video-reveal" = "module:video-reveal" } }
+
+[[resources]]
+id = "module:motion-preference"
+inputs = ["scripts/motion-preference.js"]
+build = { kind = "browser-module", entry = "scripts/motion-preference.js" }
+
+[[resources]]
+id = "module:enquiry-context"
+inputs = ["scripts/enquiry-context.js"]
+build = { kind = "browser-module", entry = "scripts/enquiry-context.js" }
+
+[[resources]]
+id = "module:webmcp"
+inputs = ["scripts/webmcp.js", "scripts/search-limits.js", "scripts/search-matching.js", "scripts/vendor/gazette-search/corpus.mjs"]
+build = { kind = "browser-module", entry = "scripts/webmcp.js", imports = { "@base/webmcp" = "module:webmcp-sdk", "@base/search-sdk" = "module:search-sdk" } }
+
+[[resources]]
+id = "module:analytics-consent"
+inputs = ["scripts/analytics-consent.js"]
+build = { kind = "browser-module", entry = "scripts/analytics-consent.js", imports = { "@base/analytics" = "module:analytics-sdk" } }
+
+[[resources]]
+id = "module:frames"
+inputs = ["scripts/frames.js"]
+build = { kind = "browser-module", entry = "scripts/frames.js" }
+
+[[resources]]
+id = "module:search"
+inputs = ["scripts/carousel-controls.js", "scripts/canvas-size.js", "scripts/in-view.js", "scripts/search.js", "scripts/search-page.js", "scripts/search-explorer.js", "scripts/depth-carousel.js", "scripts/search-pond.js", "shared/pond-engine.mjs", "scripts/surface-ripples.js", "scripts/search-limits.js", "scripts/search-matching.js", "scripts/result-context.js", "scripts/crossings.js", "scripts/return-focus.js", "scripts/motion-preference.js", "scripts/vendor/gazette-search/corpus.mjs"]
+build = { kind = "browser-module", entry = "scripts/search.js", imports = { "@base/search-sdk" = "module:search-sdk" } }
+
+[[resources]]
+id = "module:shell"
+inputs = ["scripts/carousel-controls.js", "scripts/in-view.js", "scripts/shell.js", "scripts/deferred-search.js", "scripts/article-listing.js", "scripts/depth-carousel.js", "scripts/discovery-explorer.js", "scripts/reading-disclosures.js", "scripts/selection-assistance.js", "scripts/reading-position.js", "scripts/reading-navigation.js", "scripts/reading-focus.js", "scripts/media-viewer.js", "scripts/reading-overflow.js", "scripts/focus-reveal.js", "scripts/quote-deck.js", "scripts/carousel-playback.js", "scripts/folder-card.js", "scripts/card-shape.js", "scripts/crossings.js", "scripts/return-focus.js", "scripts/css-time.js", "scripts/motion-preference.js"]
+build = { kind = "browser-module", entry = "scripts/shell.js", imports = { "@base/settings" = "module:settings", "@base/search" = "module:search" } }
+
+[[resources]]
+id = "module:sequence"
+inputs = ["scripts/clamp.js", "scripts/sequence.js", "scripts/motion-preference.js"]
+build = { kind = "browser-module", entry = "scripts/sequence.js" }
+
+[[resources]]
+id = "module:portrait-frames"
+inputs = ["scripts/canvas-size.js", "scripts/in-view.js", "scripts/clamp.js", "scripts/portrait-frames.js", "scripts/frames.js", "scripts/motion-preference.js"]
+build = { kind = "browser-module", entry = "scripts/portrait-frames.js" }
+
+[[resources]]
+id = "module:continuous-portrait"
+inputs = ["scripts/canvas-size.js", "scripts/frame-loop.js", "scripts/in-view.js", "scripts/clamp.js", "scripts/continuous-portrait.js", "scripts/portrait-copy.js", "scripts/continuous-gaze.js", "scripts/portrait-glyphs.js", "scripts/portrait-poses.js", "scripts/portrait-gpu.js", "scripts/portrait-reveal.js", "scripts/surface-reveal.js", "scripts/surface-ripples.js", "scripts/reveal-rail.js", "scripts/typing-reveal.js", "scripts/css-time.js", "scripts/motion-preference.js"]
+build = { kind = "browser-module", entry = "scripts/continuous-portrait.js" }
+
+[components.process-path]
+template = "components/process-path.html"
+arguments = { type = "object", required = ["label"], additionalProperties = false, properties = { label = { type = "string", minLength = 1, description = "Accessible name for the ordered steps." }, pause = { type = "string", minLength = 1, description = "Pause-control text; supply resume as well to offer playback control." }, resume = { type = "string", minLength = 1, description = "Resume-control text paired with pause." }, autoplay = { type = "boolean", description = "Allow automatic step changes when motion preferences permit; requires pause and resume labels and is off by default." }, collapsible = { type = "boolean", description = "Allow the enhanced step descriptions to collapse; off by default." } } }
+
+[components.process-section]
+template = "components/process-section.html"
+arguments = { type = "object", additionalProperties = false, properties = { steps = { type = "string", enum = ["start", "end"], description = "Place the steps before or after the introduction in the wide two-column layout; start is the default." } } }
+
+[components.process-introduction]
+template = "components/process-introduction.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.process-path.interaction]
+module = "module:process-path"
+export = "mount"
+mount = "load"
+
+[[resources]]
+id = "module:process-path"
+inputs = ["scripts/in-view.js", "scripts/process-path.js", "scripts/css-time.js", "scripts/motion-preference.js"]
+build = { kind = "browser-module", entry = "scripts/process-path.js" }
+
+[components.focus-reveal]
+template = "components/focus-reveal.html"
+arguments = { type = "object", additionalProperties = false, properties = { mode = { type = "string", enum = ["auto", "manual", "once"], description = "Move emphasis automatically (auto, the default), by pointer or keyboard focus (manual), or through one pass (once)." }, pause = { type = "string", minLength = 1, description = "Pause-control text required with resume for auto and manual modes; once needs neither." }, resume = { type = "string", minLength = 1, description = "Resume-control text paired with pause." } } }
+
+[components.focus-reveal.interaction]
+module = "module:focus-reveal"
+export = "mount"
+mount = "load"
+
+[[resources]]
+id = "module:focus-reveal"
+inputs = ["scripts/in-view.js", "scripts/focus-reveal.js", "scripts/css-time.js", "scripts/motion-preference.js"]
+build = { kind = "browser-module", entry = "scripts/focus-reveal.js" }
+
+[components.quote-deck]
+template = "components/quote-deck.html"
+arguments = { type = "object", additionalProperties = false, properties = { autoplay = { type = "boolean", description = "Allow automatic card changes when motion preferences permit; on by default." }, wheel = { type = "boolean", description = "Allow the enhanced deck to respond to wheel input; on by default." } } }
+
+[components.quote-deck.interaction]
+module = "module:quote-deck"
+export = "mount"
+mount = "load"
+
+[components.quote-item]
+template = "components/quote-item.html"
+arguments = { type = "object", required = ["attribution"], additionalProperties = false, properties = { attribution = { type = "string", minLength = 1, description = "Name credited beneath the quotation." }, detail = { type = "string", description = "Optional role or other detail beneath the credited name." }, company = { type = "string", description = "Optional organisation name above the quotation." }, initials = { type = "string", maxLength = 3, description = "Up to three decorative initials; defaults to the first character of the credited name." }, rating = { type = "integer", minimum = 1, maximum = 5, description = "Optional supplied rating, drawn as one to five filled stars." }, rating_label = { type = "string", minLength = 1, description = "Accessible explanation of the rating, including its scale." } }, allOf = [{ if = { required = ["rating"] }, then = { required = ["rating_label"] } }] }
+
+[[resources]]
+id = "module:quote-deck"
+inputs = ["scripts/carousel-controls.js", "scripts/in-view.js", "scripts/quote-deck.js", "scripts/carousel-playback.js", "scripts/css-time.js", "scripts/motion-preference.js"]
+build = { kind = "browser-module", entry = "scripts/quote-deck.js" }
+
+# Semantic foreground groups shared by cinematic worlds; copy belongs to Content.
+[components.film-title]
+template = "components/film-title.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.film-premise]
+template = "components/film-premise.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.film-card]
+template = "components/film-card.html"
+arguments = { type = "object", additionalProperties = false }
+
+[[resources]]
+id = "module:cinematic-film"
+inputs = ["scripts/canvas-size.js", "scripts/frame-loop.js", "scripts/clamp.js", "scripts/cinematic-film.js", "scripts/film-timeline.js", "scripts/scroll-passage.js", "scripts/css-time.js", "scripts/motion-preference.js"]
+build = { kind = "browser-module", entry = "scripts/cinematic-film.js" }
+
+[[resources]]
+id = "stylesheet:cinematic-film"
+inputs = ["styles/cinematic-film.scss", "styles/_optical.scss", "tokens/scss/_layout.scss"]
+build = { kind = "stylesheet", entry = "styles/cinematic-film.scss" }
+
+[[resources]]
+id = "module:film-surface"
+inputs = ["scripts/frame-loop.js", "scripts/film-surface.js", "scripts/motion-preference.js", "scripts/css-time.js"]
+build = { kind = "browser-module", entry = "scripts/film-surface.js" }
+
+[[resources]]
+id = "image:film-grain"
+inputs = ["images/film-grain.svg"]
+build = { kind = "svg-image", entry = "images/film-grain.svg" }
+
+[components.primary-action]
+template = "components/primary-action.html"
+arguments = { type = "object", additionalProperties = false, properties = { disabled = { type = "boolean", description = "Show an unavailable button instead of the linked body content; off by default." }, label = { type = "string", minLength = 1, description = "Visible text of the unavailable button." }, reason = { type = "string", minLength = 1, description = "Optional explanation of unavailability, included in the button title and accessible name." } }, allOf = [{ if = { required = ["disabled"], properties = { disabled = { const = true } } }, then = { required = ["label", "reason"] } }] }
+
+[[resources]]
+id = "module:field-sequence"
+inputs = ["scripts/frame-loop.js", "scripts/clamp.js", "scripts/field-sequence.js", "scripts/field-timeline.js", "scripts/css-time.js", "scripts/motion-preference.js"]
+build = { kind = "browser-module", entry = "scripts/field-sequence.js" }
+
+[[resources]]
+id = "module:ambient-video"
+inputs = ["scripts/in-view.js", "scripts/ambient-video.js", "scripts/motion-preference.js"]
+build = { kind = "browser-module", entry = "scripts/ambient-video.js" }
+
+[[resources]]
+id = "module:video-reveal"
+inputs = ["scripts/canvas-size.js", "scripts/frame-loop.js", "scripts/video-reveal.js", "scripts/surface-reveal.js", "scripts/surface-ripples.js", "scripts/typing-reveal.js", "scripts/css-time.js"]
+build = { kind = "browser-module", entry = "scripts/video-reveal.js" }
+
+[components.page-opening]
+template = "components/page-opening.html"
+arguments = { type = "object", additionalProperties = false, properties = { layout = { type = "string", enum = ["stacked", "paired"], description = "Stack the opening by default, or pair its statement and context in a wide layout." } } }
+
+[components.about-opening]
+template = "components/about-opening.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.about-section]
+template = "components/about-section.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.about-choices]
+template = "components/about-choices.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.about-choice]
+template = "components/about-choice.html"
+arguments = { type = "object", additionalProperties = false, properties = { span = { type = "string", enum = ["standard", "full"], description = "Use an ordinary choice column (standard) or span the whole About choice group (full)." } } }
+
+[components.about-choice.interaction]
+module = "module:bookmark-card"
+export = "mount"
+mount = "load"
+
+[components.about-conclusion]
+template = "components/about-conclusion.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.about-copy]
+template = "components/about-copy.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.about-context]
+template = "components/about-context.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.about-history]
+template = "components/about-history.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.figure]
+template = "components/figure.html"
+semantic = { kind = "figure" }
+arguments = { type = "object", additionalProperties = false }
+
+[components.container-contents]
+template = "components/container-contents.html"
+semantic = { kind = "container-contents" }
+arguments = { type = "object", additionalProperties = false }
+
+[components.figure-caption]
+template = "components/figure-caption.html"
+semantic = { kind = "figure-caption" }
+arguments = { type = "object", additionalProperties = false }
+
+# Authored prose comparisons retain one native Markdown table at every width.
+[components.reading-comparison]
+template = "components/reading-comparison.html"
+arguments = { type = "object", required = ["label"], additionalProperties = false, properties = { label = { type = "string", minLength = 1, description = "Accessible name for the comparison." } } }
+
+[components.project-overview]
+template = "components/project-overview.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.project-summary]
+template = "components/project-summary.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.project-links]
+template = "components/project-links.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.project-walkthrough]
+template = "components/project-walkthrough.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.project-media]
+template = "components/project-media.html"
+arguments = { type = "object", required = ["label"], additionalProperties = false, dependentRequired = { src = ["poster", "transcript", "transcript_label"], captions = ["src", "caption_language"], transcript = ["src", "transcript_label"] }, properties = { label = { type = "string", minLength = 1, description = "Accessible description of the video or reserved media space; also labels an optional caption track." }, kind = { type = "string", enum = ["illustration", "walkthrough"], description = "Use an illustration or a walkthrough presentation; illustration is the default." }, placeholder = { type = "boolean", description = "Reserve a labelled media space when no video source is supplied; off by default." }, src = { type = "string", pattern = "^(/[^/]|https://)", maxLength = 2048, description = "Video address, either site-relative or HTTPS." }, poster = { type = "string", pattern = "^(/[^/]|https://)", maxLength = 2048, description = "Resting image address for the video." }, captions = { type = "string", pattern = "^(/[^/]|https://)", maxLength = 2048, description = "Optional caption-track address for the video." }, caption_language = { type = "string", minLength = 2, maxLength = 35, description = "Language tag of the supplied caption track." }, transcript = { type = "string", pattern = "^(/[^/]|https://)", maxLength = 2048, description = "Address of the video transcript linked beneath the caption." }, transcript_label = { type = "string", minLength = 1, maxLength = 160, description = "Visible text of the transcript link." } } }
+
+[components.project-state]
+template = "components/project-state.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.directory-context]
+template = "components/directory-context.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.destination-set]
+template = "components/destination-set.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.destination]
+template = "components/destination.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.feature-set]
+template = "components/feature-set.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.project-explanation]
+template = "components/project-explanation.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.feature]
+template = "components/feature.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.faq]
+template = "components/faq.html"
+semantic = { kind = "faq" }
+arguments = { type = "object", additionalProperties = false }
+
+[components.faq-item]
+template = "components/faq-item.html"
+semantic = { kind = "faq-item", question_argument = "question" }
+arguments = { type = "object", required = ["question"], additionalProperties = false, properties = { question = { type = "string", minLength = 1, description = "Question shown in the disclosure heading; the body supplies its answer." } } }
+
+[components.process-step]
+template = "components/process-step.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.service-opening]
+template = "components/service-opening.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.service-example]
+template = "components/service-example.html"
+arguments = { type = "object", required = ["conditions"], additionalProperties = false, properties = { label = { type = "string", minLength = 1, description = "Optional caption naming the whole comparison." }, conditions = { type = "array", minItems = 2, items = { type = "object", required = ["title", "explanation"], additionalProperties = false, properties = { title = { type = "string", minLength = 1, description = "Name of this condition." }, explanation = { type = "string", minLength = 1, description = "Explanation shown beneath this condition." } } }, description = "Conditions to compare, each kept with its explanation." } } }
+
+[components.service-example.interaction]
+module = "module:bookmark-card"
+export = "mount"
+mount = "load"
+
+# Catalogue data uses the same folder material as recursive collection cards.
+[components.catalogue]
+template = "components/catalogue.html"
+arguments = { type = "object", required = ["label"], additionalProperties = false, properties = { label = { type = "string", minLength = 1, description = "Accessible name for the catalogue and its controls." }, autoplay = { type = "boolean", description = "Allow automatic catalogue movement when motion preferences permit; on by default." } } }
+
+[components.catalogue.interaction]
+module = "module:catalogue"
+export = "mount"
+mount = "load"
+
+[components.catalogue-entry]
+template = "components/catalogue-entry.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.folder-art]
+template = "components/folder-art.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.folder-copy]
+template = "components/folder-copy.html"
+arguments = { type = "object", additionalProperties = false }
+
+[[resources]]
+id = "module:catalogue"
+inputs = ["scripts/carousel-controls.js", "scripts/in-view.js", "scripts/catalogue.js", "scripts/carousel-playback.js", "scripts/folder-card.js", "scripts/card-shape.js", "scripts/css-time.js", "scripts/motion-preference.js", "scripts/return-focus.js"]
+build = { kind = "browser-module", entry = "scripts/catalogue.js" }
+
+
+[[resources]]
+id = "module:bookmark-card"
+inputs = ["scripts/bookmark-card.js", "scripts/card-shape.js"]
+build = { kind = "browser-module", entry = "scripts/bookmark-card.js" }
+
+[components.ambient-hero]
+template = "components/ambient-hero.html"
+arguments = { type = "object", additionalProperties = false, properties = { pose_tracking = { type = "object", required = ["anchor", "aperture", "frames", "landmarks", "pupils"], additionalProperties = false, properties = { landmarks = { type = "object", required = ["front", "left", "right", "up", "down"], additionalProperties = false, properties = { front = { type = "array", minItems = 2, maxItems = 2, items = { type = "array", minItems = 2, maxItems = 2, items = { type = "number", minimum = 0, maximum = 1 } }, description = "Two x/y landmark positions in the front pose, as fractions of that image." }, left = { type = "array", minItems = 2, maxItems = 2, items = { type = "array", minItems = 2, maxItems = 2, items = { type = "number", minimum = 0, maximum = 1 } }, description = "Two x/y landmark positions in the left pose, as fractions of that image." }, right = { type = "array", minItems = 2, maxItems = 2, items = { type = "array", minItems = 2, maxItems = 2, items = { type = "number", minimum = 0, maximum = 1 } }, description = "Two x/y landmark positions in the right pose, as fractions of that image." }, up = { type = "array", minItems = 2, maxItems = 2, items = { type = "array", minItems = 2, maxItems = 2, items = { type = "number", minimum = 0, maximum = 1 } }, description = "Two x/y landmark positions in the up pose, as fractions of that image." }, down = { type = "array", minItems = 2, maxItems = 2, items = { type = "array", minItems = 2, maxItems = 2, items = { type = "number", minimum = 0, maximum = 1 } }, description = "Two x/y landmark positions in the down pose, as fractions of that image." } }, description = "Two fixed optical landmarks per pose, in the same order across all five poses." }, pupils = { type = "object", required = ["front", "left", "right", "up", "down"], additionalProperties = false, properties = { front = { type = "array", minItems = 2, maxItems = 2, items = { type = "array", minItems = 2, maxItems = 2, items = { type = "number", minimum = 0, maximum = 1 } }, description = "Two x/y pupil positions in the front pose, in the same order as its landmarks." }, left = { type = "array", minItems = 2, maxItems = 2, items = { type = "array", minItems = 2, maxItems = 2, items = { type = "number", minimum = 0, maximum = 1 } }, description = "Two x/y pupil positions in the left pose, in the same order as its landmarks." }, right = { type = "array", minItems = 2, maxItems = 2, items = { type = "array", minItems = 2, maxItems = 2, items = { type = "number", minimum = 0, maximum = 1 } }, description = "Two x/y pupil positions in the right pose, in the same order as its landmarks." }, up = { type = "array", minItems = 2, maxItems = 2, items = { type = "array", minItems = 2, maxItems = 2, items = { type = "number", minimum = 0, maximum = 1 } }, description = "Two x/y pupil positions in the up pose, in the same order as its landmarks." }, down = { type = "array", minItems = 2, maxItems = 2, items = { type = "array", minItems = 2, maxItems = 2, items = { type = "number", minimum = 0, maximum = 1 } }, description = "Two x/y pupil positions in the down pose, in the same order as its landmarks." } }, description = "Two pupil centres per pose, paired with the corresponding optical landmarks." }, aperture = { type = "array", minItems = 2, maxItems = 2, items = { type = "number", exclusiveMinimum = 0, exclusiveMaximum = 1 }, description = "Inner and outer fade radii as fractions of the front landmark separation; inner must be smaller." }, anchor = { type = "array", minItems = 2, maxItems = 2, items = { type = "number", minimum = 0, maximum = 1 }, description = "Pointer origin as an x/y fraction of the source image, from zero to one." }, frames = { type = "object", required = ["front", "left", "right", "up", "down"], additionalProperties = false, properties = { front = { type = "array", minItems = 2, maxItems = 2, items = { type = "integer", minimum = 1, maximum = 8192 }, description = "Width and height in pixels of the front source image." }, left = { type = "array", minItems = 2, maxItems = 2, items = { type = "integer", minimum = 1, maximum = 8192 }, description = "Width and height in pixels of the left source image." }, right = { type = "array", minItems = 2, maxItems = 2, items = { type = "integer", minimum = 1, maximum = 8192 }, description = "Width and height in pixels of the right source image." }, up = { type = "array", minItems = 2, maxItems = 2, items = { type = "integer", minimum = 1, maximum = 8192 }, description = "Width and height in pixels of the up source image." }, down = { type = "array", minItems = 2, maxItems = 2, items = { type = "integer", minimum = 1, maximum = 8192 }, description = "Width and height in pixels of the down source image." } }, description = "Source image dimensions for each directional pose." } }, description = "Registration of the five directional stills used for optional pointer response." } } }
+
+[components.ambient-source]
+template = "components/ambient-source.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.ambient-still]
+template = "components/ambient-still.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.ambient-poses]
+template = "components/ambient-poses.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.ambient-content]
+template = "components/ambient-content.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.ambient-hero.interaction]
+module = "module:ambient-hero"
+export = "mount"
+mount = "load"
+
+[[resources]]
+id = "module:ambient-hero"
+inputs = ["scripts/canvas-size.js", "scripts/frame-loop.js", "scripts/in-view.js", "scripts/clamp.js", "scripts/ambient-hero.js", "scripts/ambient-poses.js", "scripts/frames.js", "scripts/portrait-poses.js", "scripts/portrait-gpu.js", "scripts/motion-preference.js", "scripts/css-time.js"]
+build = { kind = "browser-module", entry = "scripts/ambient-hero.js", imports = { "@base/ambient-video" = "module:ambient-video" } }
+
+[[resources]]
+id = "stylesheet:ambient-hero"
+inputs = ["styles/ambient-hero.scss", "tokens/scss/_layout.scss"]
+build = { kind = "stylesheet", entry = "styles/ambient-hero.scss" }
+
+[components.inquiry-section]
+template = "components/inquiry-section.html"
+arguments = { type = "object", additionalProperties = false }
+
+[components.card-deck]
+template = "components/card-deck.html"
+arguments = { type = "object", required = ["title"], additionalProperties = false, properties = { title = { type = "string", minLength = 1, description = "Visible heading and accessible name for the destination deck." } } }
+
+[components.deck-card]
+template = "components/deck-card.html"
+arguments = { type = "object", additionalProperties = false }
+
+[[resources]]
+id = "module:search-sdk"
+inputs = ["scripts/vendor/gazette-search/index.mjs", "scripts/vendor/gazette-search/corpus.mjs", "scripts/vendor/gazette-search/load.mjs", "scripts/vendor/gazette-search/browse.mjs", "scripts/vendor/gazette-search/vendor/elasticlunr.mjs"]
+build = { kind = "browser-module", entry = "scripts/vendor/gazette-search/index.mjs" }

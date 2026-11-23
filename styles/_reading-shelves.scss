@@ -1,0 +1,82 @@
+@use 'typography';
+@use 'optical';
+@use '../tokens/scss/layout';
+
+// Reading tools share one anatomy. World tokens supply the material and voice,
+// rather than separate world rules changing the size or alignment of the tools.
+@mixin shelf-surface {
+  @include optical.frame;
+  @include optical.layer(
+    $face: color-mix(in srgb,var(--color-sheet) calc(var(--world-material-optical-fill) * 100%),transparent),
+    $filter: blur(var(--world-material-optical-blur)) Saturate(var(--world-material-optical-saturation)),
+    $solid: var(--color-sheet));
+}
+
+@mixin place-arrives-at-once {
+  :is(.reading-corpus,.reading-outline--local) :is([aria-current='page'],[aria-current='location']) { transition-duration: 0s; }
+}
+
+@mixin recipes {
+  :is(.reading-corpus,.reading-outline--local) {
+    --reading-item-inset: var(--space-3);
+    padding: var(--space-4);
+    @include typography.reading-face();
+    font-size: var(--type-size-meta);
+    @include shelf-surface;
+  }
+  // Beside the text on a desk, the contents read as rule and type so the column leads.
+  // The floating form on narrow screens keeps its shelf, because it covers text there.
+  .reading-navigation :is(.reading-corpus,.reading-outline--local) {
+    padding: 0 0 0 var(--space-4);
+    border: 0;
+    border-inline-start: var(--stroke-hair) solid var(--color-line);
+    border-radius: 0;
+    box-shadow: none;
+    background: none;
+    backdrop-filter: none;
+  }
+  :is(.reading-corpus,.reading-outline--local) summary {
+    @include typography.reading-face($weight: var(--type-weight-display));
+    font-size: var(--type-size-meta);
+    line-height: var(--type-line-height-body);
+    padding-block: var(--space-2);
+  }
+  :is(.reading-corpus,.reading-outline--local) :is(.reading-sections,.reading-chapters,.reading-siblings,.reading-orientation__overview) {
+    @include typography.reading-face($weight: null);
+    font-size: var(--type-size-meta);
+    line-height: var(--type-line-height-body);
+  }
+  // The reader's place carries the world's state-bearing light. As the place moves on,
+  // the light lets go on the world's decay; the new place lights on its expressive curve.
+  // Only the amount of light travels, so the colours follow a mode change at once.
+  // A curve that overshoots is held within the light's range.
+  @property --reading-place-light { syntax: '<number>'; inherits: false; initial-value: 0; }
+  :is(.reading-corpus,.reading-outline--local) :is(a,[aria-current='page']) {
+    --reading-place-share: calc(clamp(0, var(--reading-place-light), 1) * 100%);
+    border-radius: var(--control-radius,var(--radius-control));
+    padding-block: var(--space-2);
+    padding-inline: var(--reading-item-inset);
+    background: color-mix(in srgb,var(--color-tint) var(--reading-place-share),transparent);
+    box-shadow: inset var(--stroke-lit-edge) 0 color-mix(in srgb,var(--world-illumination-emission) var(--reading-place-share),transparent);
+    transition: --reading-place-light var(--expressive-decay) var(--expressive-easing);
+  }
+  :is(.reading-corpus,.reading-outline--local) :is([aria-current='page'],[aria-current='location']) {
+    --reading-place-light: 1;
+    color: var(--color-ink);
+    text-decoration: none;
+    transition-duration: var(--expressive-duration);
+  }
+  // With reduced motion the new place is lit at once; only the release keeps the reduced decay.
+  :root[data-motion='reduce'] { @include place-arrives-at-once; }
+  @media (prefers-reduced-motion: reduce) { :root:not([data-motion='allow']) { @include place-arrives-at-once; } }
+  :is(.reading-corpus,.reading-outline--local) .reading-orientation { padding: 0; }
+  :root:has(.shell__dialog[open]) :is(.reading-corpus,.reading-outline--local) { backdrop-filter: none; background: var(--color-sheet); }
+  @media (width < layout.$layout-breakpoint-reading) {
+    :is(.reading-corpus,.reading-outline--local):not(:has(details[open])) { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; backdrop-filter: none; }
+    :is(.reading-corpus,.reading-outline--local) details:not([open]) > summary { @include shelf-surface; }
+  }
+  @media print {
+    :is(.reading-corpus,.reading-outline--local) { border: 0; border-radius: 0; background: transparent; box-shadow: none; backdrop-filter: none; }
+  }
+}
+

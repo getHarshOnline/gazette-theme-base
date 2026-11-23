@@ -1,0 +1,18 @@
+{% set context_label = "" %}
+{% if presentation.chrome is defined and presentation.chrome %}
+  {% set context_label = presentation.chrome.regions | get(key="base:reading-context", default="") %}
+{% endif %}
+{% set has_browsing = browsing_locations is defined and browsing_locations | length > 0 %}
+{% if context_label %}
+  {% for trail in breadcrumbs %}
+    {% set_global visible_trail = [] %}
+    {% for item in trail.items %}
+      {% if item.node.id != content.id %}
+        {% set_global visible_trail = visible_trail | concat(with=item) %}
+      {% endif %}
+    {% endfor %}
+    {% set locations = [] %}
+    {% if loop.first and has_browsing %}{% set locations = browsing_locations %}{% endif %}
+    {{ context::trail(items=visible_trail,locations=locations,chrome=presentation.chrome,source=serving_site) }}
+  {% endfor %}
+{% endif %}

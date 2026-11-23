@@ -1,0 +1,176 @@
+@use 'typography';
+// One action anatomy and one set of action states: hover, press, focus and disabled. Worlds bind expression parameters;
+// native buttons and authored primary links keep their respective semantics.
+
+// Press is its own tone step beyond hover: the colour mode's pressed fraction of
+// ink mixed into the hover colour. It carries the press when reduced motion
+// removes the scale, and is written at each use so a world's hover hook carries through.
+@function pressed($hover) {
+  @return color-mix(in oklab,#{$hover},var(--color-ink) calc(var(--color-state-pressed) * 100%));
+}
+@mixin primary-response {
+  // Signal is a pale material in every world; keep its ink on the dark reading role.
+  // A world's explicit action pair still owns its scene-specific contrast.
+  color: var(--control-primary-hover-ink,var(--control-primary-ink,var(--world-light-ink)));
+  background: var(--control-primary-hover-face,var(--color-signal));
+}
+@mixin reduced {
+  :is(.control,.primary-action a,.frame__nav a,.frame__menu),
+  :is(.control,.primary-action a,.frame__nav a,.frame__menu):not(:disabled):is(:hover,:focus-visible,:active) {
+    transform: none;
+    transition-duration: var(--motion-reduced-feedback);
+  }
+  :is(.control,.primary-action a,.frame__nav a,.frame__menu):not(:disabled):active {
+    transform: scale(var(--motion-reduced-press-scale));
+  }
+}
+
+@mixin recipes {
+  button,summary,[role='option'] { border-radius: var(--control-radius,var(--radius-control)); }
+  input[type='radio'] { --focus-ring-style: auto; }
+  .control,.primary-action a,.publication-body fieldset select,.publication-body fieldset input[type='number'] {
+    min-block-size: var(--control-min-block-size,var(--target-project));
+    max-inline-size: 100%;
+    padding: var(--control-inset-block,var(--space-2)) var(--control-inset-inline,var(--space-4));
+    @include typography.face(var(--control-font-family,var(--type-family-reading)), $weight: var(--type-weight-reading));
+    font-size: var(--control-font-size,var(--type-size-meta));
+    line-height: var(--control-line-height,inherit);
+    border: var(--control-border,var(--stroke-hair) solid var(--color-strong-line));
+    border-radius: var(--control-radius,var(--radius-control));
+    color: var(--control-ink,var(--color-ink));
+    background: var(--control-face,var(--color-sheet));
+  }
+  .publication-body fieldset :is(select,input[type='number']) { min-inline-size: 0; }
+  .control,.primary-action a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    text-shadow: none;
+    touch-action: manipulation;
+    transition: background-color var(--control-duration,var(--duration-feedback)) var(--control-easing,var(--easing-productive)),transform var(--control-duration,var(--duration-feedback)) var(--control-easing,var(--easing-productive));
+  }
+  .control:not(:disabled):focus-visible { transform: var(--control-focus-transform,none); }
+  .control:disabled {
+    cursor: not-allowed;
+    color: var(--color-muted);
+    transform: none;
+  }
+  .control--secondary {
+    color: var(--control-secondary-ink,inherit);
+    border-color: var(--control-secondary-border,var(--color-strong-line));
+    border-radius: var(--control-secondary-radius,var(--control-radius,var(--radius-control)));
+    background: var(--control-secondary-background,transparent);
+    text-decoration: none;
+    text-underline-offset: var(--space-1);
+  }
+  a.control--secondary { text-decoration: var(--control-secondary-decoration,none); }
+  .control--quiet {
+    padding: var(--control-inset-block,var(--space-3)) var(--control-inset-inline,0);
+    border: 0;
+    background: transparent;
+    color: var(--color-muted);
+    @include typography.reading-face();
+    font-size: var(--type-size-meta);
+    text-decoration: none;
+    text-underline-offset: var(--space-1);
+  }
+  a.control--quiet { text-decoration: underline; }
+  .primary-action > p { margin: 0; }
+  .control--primary,.primary-action a {
+    min-block-size: var(--control-primary-min-block-size,var(--target-project));
+    padding: var(--control-primary-inset-block,var(--layout-film-action-inset-block)) var(--control-primary-inset-inline,var(--layout-film-action-inset-inline));
+    border: var(--control-primary-border,var(--stroke-hair) solid var(--color-ink));
+    border-radius: var(--control-primary-radius,calc(var(--target-project) * 2));
+    @include typography.face(var(--control-primary-font-family,var(--type-family-reading)));
+    font-size: var(--control-primary-font-size,var(--type-film-premise));
+    line-height: var(--control-primary-line-height,var(--type-film-line-height));
+    box-shadow: var(--control-primary-shadow,none);
+  }
+  // Filled actions share their state colours; geometry can differ by role.
+  .control--primary,.control--navigation,.primary-action a {
+    color: var(--control-primary-ink,var(--color-paper));
+    background: var(--control-primary-face,var(--color-ink));
+    // Change inverse ink and face atomically, including navigation controls.
+    transition-property: var(--control-primary-transition-properties,transform);
+    transition-duration: var(--control-primary-background-duration,var(--control-primary-duration,var(--duration-feedback))),var(--control-primary-duration,var(--duration-feedback));
+    transition-timing-function: var(--control-primary-background-easing,var(--easing-productive)),var(--control-primary-easing,var(--easing-productive));
+  }
+  // Primary actions take their whole rest edge, colour included, from
+  // --control-primary-border; navigation keeps the control hairline in ink.
+  .control--navigation { border-color: var(--color-ink); }
+  // Compact actions retain the same colour, focus and press ledger. Only their
+  // dimensions change, so a list result does not acquire landing-page scale.
+  .control--compact {
+    min-block-size: var(--target-project);
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--type-size-meta);
+    line-height: var(--type-line-height-body);
+  }
+  // A world's borderless enabled pill still shows the line edge when disabled.
+  // The inset outline sits on the border's own pixel, so it matches a bordered
+  // pill and leaves the box, and its row, the size of the enabled pills.
+  :is(.control--primary,.control--navigation):disabled {
+    color: var(--color-muted);
+    background: var(--color-sheet);
+    border-color: var(--color-line);
+    outline: var(--stroke-hair) solid var(--color-line);
+    outline-offset: calc(-1 * var(--stroke-hair));
+    box-shadow: none;
+  }
+  :is(.control--primary,.control--navigation,.primary-action a):focus-visible {
+    color: var(--control-primary-ink,var(--color-paper));
+    background: var(--control-primary-face,var(--color-ink));
+    border-color: var(--color-focus);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .control:not(:disabled):hover {
+      transform: var(--control-hover-transform,none);
+    }
+    .control--quiet:not(:disabled):hover { color: var(--color-ink); }
+    .control--secondary:not(:disabled):hover {
+      background: var(--control-secondary-hover-background,var(--color-tint));
+    }
+    :is(.control--primary,.control--navigation,.primary-action a):not(:disabled):hover {
+      @include primary-response;
+      border-color: var(--color-focus);
+      transform: var(--control-primary-hover-transform,var(--control-hover-transform,none));
+    }
+  }
+  // Press owns the transform after focus and hover, including keyboard activation.
+  // Header destinations and the Menu keep their own faces but share this press.
+  :is(.control,.primary-action a,.frame__nav a,.frame__menu):not(:disabled):active {
+    transform: scale(var(--scale-press));
+    transition-duration: var(--duration-feedback);
+  }
+  // After the hover tint, which a mouse press always starts from and which would
+  // otherwise win at equal specificity.
+  .control--secondary:not(:disabled):active {
+    background: var(--control-secondary-pressed-background,#{pressed(var(--control-secondary-hover-background,var(--color-tint)))});
+  }
+  :is(.control--primary,.control--navigation,.primary-action a):not(:disabled):active {
+    @include primary-response;
+    background: var(--control-primary-pressed-face,#{pressed(var(--control-primary-hover-face,var(--color-signal)))});
+    box-shadow: none;
+  }
+  :root[data-motion='reduce'] { @include reduced; }
+  @media (prefers-reduced-motion: reduce) {
+    :root:not([data-motion='allow']) { @include reduced; }
+  }
+  @media (forced-colors: active) {
+    :is(.control--primary,.control--navigation,.primary-action a) {
+      border: var(--stroke-hair) solid ButtonText;
+    }
+  }
+  @media print {
+    :is(.control,.primary-action a),:is(.control,.primary-action a):is(:hover,:focus-visible,:active) {
+      color: var(--control-print-ink,var(--world-light-ink));
+      background: transparent;
+      border: var(--control-print-border,var(--stroke-hair) solid currentColor);
+      text-decoration: var(--control-print-decoration,none);
+      box-shadow: none;
+      transform: none;
+      transition: none;
+    }
+  }
+}

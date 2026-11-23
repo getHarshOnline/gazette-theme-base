@@ -1,0 +1,59 @@
+{% if listing is defined and listing %}
+{% set listing_copy = presentation.chrome.regions | default(value=false) %}
+{% if listing.subject is defined and listing.subject %}
+  {% set subject_label = '' %}
+  {% if presentation.chrome is defined and presentation.chrome %}
+    {% set subject_label = presentation.chrome.regions | get(key='base:listing-subject', default='') %}
+    {% if listing.subject.residence is defined %}{% set subject_key = ['base:listing-subject-', listing.subject.residence] | join(sep='') %}{% set subject_label = presentation.chrome.regions | get(key=subject_key, default=subject_label) %}{% endif %}
+  {% endif %}
+  <p class="listing-subject">{% if subject_label %}<span>{{ subject_label }}</span> {% endif %}<a href="{{ listing.subject.landing.url }}" {{ links::attributes(copy=presentation.chrome.regions | default(value=false), destination=listing.subject.landing.destination) }}>{{ listing.subject.name | default(value=listing.subject.landing.title) }}</a></p>
+{% endif %}
+{% if listing.total_items == 0 and presentation.chrome is defined and presentation.chrome %}
+  {% set copy = presentation.chrome.regions %}
+  {% set empty_label = copy | get(key='base:listing-empty', default='') %}
+  {% set explore_label = copy | get(key='base:listing-empty-explore', default='') %}
+  {% if listing.subject is defined and listing.subject %}
+    {% set product_name = listing.subject.name | default(value=listing.subject.landing.title) %}
+    {% set publication_name = '' %}
+    {% if publication_metadata %}{% set publication_name = publication_metadata.brand.name %}{% endif %}
+    {% if listing.subject.residence is defined %}{% set empty_key = ['base:listing-empty-', listing.subject.residence] | join(sep='') %}{% set empty_label = copy | get(key=empty_key, default=empty_label) %}{% endif %}
+    {% set empty_label = empty_label | replace(from='{product}', to=product_name) | replace(from='{publication}', to=publication_name) %}
+  {% endif %}
+  {% if empty_label %}
+  <div class="listing-empty">
+    <p>{{ empty_label }}</p>
+    {% if explore_label and listing.subject is defined and listing.subject.explore is defined and listing.subject.explore %}
+      <a class="control control--primary" href="{{ listing.subject.explore.url }}" {{ links::attributes(copy=copy, destination=listing.subject.explore.destination) }}>{{ explore_label }}</a>
+    {% endif %}
+  </div>
+  {% endif %}
+{% endif %}
+{% set article_listing = not is_search_page and listing.direction is defined %}
+{% if article_listing %}
+<section class="article-listing" data-article-listing aria-label="{{ listing.title }}">
+  {% set latest = false %}
+  {% if listing.latest is defined and listing.latest %}
+    {% set latest = listing.latest %}
+  {% endif %}
+  {% if latest %}{% include "base/partials/listing-latest.html" %}{% endif %}
+{% endif %}
+{% set controls_position = 'top' %}
+{% include "base/partials/listing-controls.html" %}
+<ul class="reading-list">
+{% for item in listing.items %}
+{# The featured Latest post is shown once, above; the deck begins with the next one. #}
+{% if article_listing and latest is defined and latest and item.url == latest.url %}{% continue %}{% endif %}
+<li><article class="reading-list__entry{% if article_listing %} card-surface--listing{% endif %}">
+  <h2 class="reading-list__title"><a href="{{ item.url }}" {{ links::attributes(copy=presentation.chrome.regions | default(value=false), destination=item.destination | default(value=false), source=serving_site, site=item.site | default(value=serving_site), content_id=item.id, target=item.presentation | default(value=false)) }}>{{ item.title }}</a></h2>
+  {{ metadata::item(item=item,copy=presentation.chrome.regions | default(value=false)) }}
+  {% if item.description is defined and item.description %}<p class="reading-list__description">{{ item.description }}</p>{% endif %}
+</article></li>
+{% endfor %}
+</ul>
+{% if article_listing and listing_copy %}
+  {{ carousel_controls::render(prefix="article-listing",action="depth",previous=listing_copy | get(key="base:list-previous",default=""),next=listing_copy | get(key="base:list-next",default=""),label=listing.title) }}
+{% endif %}
+{% set controls_position = 'bottom' %}
+{% include "base/partials/listing-controls.html" %}
+{% if article_listing %}</section>{% endif %}
+{% endif %}
