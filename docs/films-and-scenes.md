@@ -58,6 +58,8 @@ Each `.cinematic-still` accepts one image paragraph, or two ordered image paragr
 
 Optional transparent frame sequences set `film.transparent` and clear the drawing surface before each frame, including reverse travel; opaque consumers retain their existing blending. Prepared alpha sequences own their artwork's emergence, so the controller does not infer silhouettes or add another mask.
 
+Each film reads its landscape and portrait addresses from the `data-cinematic-frames` JSON blocks. Carrier and Nocturne project them from their existing authored frame lists. The storyboard stills, captions, headings and destinations remain in the reading view. The player also accepts the earlier hidden frame lists for existing themes.
+
 Optional `film.prepare: true` reserves the full stage before decoding and prepares only a bounded frame window within the shared viewport margin. It does not seek the first beat on entry or animate offscreen. A failed decode, insufficient copy space, reduction or print restores the complete native storyboard; other consumers keep decode-first layout.
 
 An optional intro uses shared motion tokens to establish a small initial edit floor. `film.choreography` supplies normalized progress ranges for veil, title release, cue, caption settlement, ghost, seal, late letters and premise. Base applies these paint-only states within the same lifecycle. Complete native headings and still alternatives remain available; focus makes a pending caption readable, and reduced motion restores complete copy.
@@ -68,7 +70,7 @@ With an authored `film.departureAt` progress, action and reading reach that fram
 
 Optional `film.layout: 'flow'` maps an illustration's natural viewport crossing without adding pinned distance. `film.nativeFrame` measures the native still's box, while `film.fit: 'contain'` preserves its full payload. These geometry options share the existing bounded decoding, failure, focus and preference lifecycle.
 
-The frame window warms the selected destination as well as adjacent frames and cancels obsolete requests; the captured byte limit remains unchanged.
+The frame window warms the selected destination and adjacent frames during scroll and navigation, cancelling obsolete requests. During an automatic opening, one request at a time can finish as the playhead advances. The player can paint that frame on the way to the latest position. Both paths share the same decoded-byte limit.
 
 The same module exports `mountScrollPassage(root, {reveal, window})` for reversible native text passages. `window` contains four ordered normalized positions: entrance start/end and exit start/end, measured over the element's full viewport crossing. Only opacity and token-based defocus change; text keeps its native layout and reading order. Focus restores complete copy. Reduction, print, suspension and disposal restore the authored presentation. Image depth and reveal belong to the supplied film, so passages do not add a second image mask or particle loop.
 

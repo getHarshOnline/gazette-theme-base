@@ -21,7 +21,7 @@ test('the card keeps one inert source and loads only its selected media module',
 
 // Exercise the composition with prepared title/media inputs. Native Gazette
 // checks must also cover Tera binding, local asset admission and extraction.
-test('neutral cards keep complete media and title inside the canvas in both colour modes', async () => {
+test('neutral cards fill the canvas with the image and keep the title hidden', async () => {
   const browser = await launch();
   try {
     const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
@@ -35,10 +35,7 @@ test('neutral cards keep complete media and title inside the canvas in both colo
           .replace('{{ card.width }}', '1200').replace('{{ card.height }}', '630')
           .replace('{{ body_html | safe }}', source).replace('{{ content.title }}', title)
           .replace(/{% for resource[\s\S]*?{% endfor %}/g, '');
-        // This neutral fixture's selected typography stands in for the world's
-        // existing font partial and physics stylesheet, which the card inherits.
-        const typography = 'h1{font-family:var(--type-family-display);font-weight:var(--type-weight-display)}';
-        await page.setContent(`<html data-mode="${mode}"><head><style>${tokens}\n${typography}\n${stylesheet}</style></head>${body}</html>`);
+        await page.setContent(`<html data-mode="${mode}"><head><style>${tokens}\n${stylesheet}</style></head>${body}</html>`);
         await page.locator('[data-social-card-media]').evaluate((target, size) => {
           const image = document.createElement('img');
           image.alt = 'Two regions connected by one line';
@@ -50,22 +47,19 @@ test('neutral cards keep complete media and title inside the canvas in both colo
           const card = document.body, title = card.querySelector('[data-social-card-title]');
           const media = card.querySelector('[data-social-card-media]'), image = media.querySelector('img');
           const rect = element => { const { x, y, width, height } = element.getBoundingClientRect(); return { x, y, width, height }; };
-          return { card: rect(card), title: rect(title), media: rect(media), image: rect(image),
+          return { card: rect(card), titleHidden: getComputedStyle(title).display === 'none', media: rect(media), image: rect(image),
             overflow: card.scrollWidth > card.clientWidth || card.scrollHeight > card.clientHeight,
             fit: getComputedStyle(image).objectFit, titleText: title.textContent,
-            titleFont: getComputedStyle(title).fontFamily, paper: getComputedStyle(card).backgroundColor,
+            paper: getComputedStyle(card).backgroundColor,
             ink: getComputedStyle(card).color, sourceRan: window.sourceRan === true };
         });
         assert.deepEqual(geometry.card, { x: 0, y: 0, width: 1200, height: 630 });
         assert.equal(geometry.overflow, false, JSON.stringify(geometry));
-        for (const region of [geometry.title, geometry.media, geometry.image]) {
-          assert.ok(region.x >= 0 && region.y >= 0);
-          assert.ok(region.x + region.width <= 1200 && region.y + region.height <= 630);
-        }
-        assert.ok(geometry.media.x + geometry.media.width < geometry.title.x);
-        assert.equal(geometry.fit, 'contain');
+        assert.deepEqual(geometry.media, geometry.card);
+        assert.deepEqual(geometry.image, geometry.card);
+        assert.equal(geometry.titleHidden, true);
+        assert.equal(geometry.fit, 'cover');
         assert.equal(geometry.titleText, title);
-        assert.match(geometry.titleFont, /Archivo/);
         assert.notEqual(geometry.paper, geometry.ink);
         assert.equal(geometry.sourceRan, false);
       }

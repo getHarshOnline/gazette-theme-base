@@ -36,7 +36,7 @@ The output directory must be new. Run `npm run journeys -- --help` for the comma
 
 ## What the primary check exercises
 
-Every page receives its own semantic, shell and applicable control checks. Search refinement runs in the Search page’s existing context. A reading sequence is traversed once per ordered member list, width, palette and motion setting; later member pages reference that exact observation instead of repeating the whole sequence. Repeated header destinations similarly reference the first successful click and Back check within the same origin and presentation.
+Every page receives its own semantic, shell and applicable control checks. Search refinement runs in the Search page’s existing context. A reading sequence is traversed once per ordered member list, width, palette and motion setting; later member pages reference that exact observation instead of repeating the whole sequence. Repeated header destinations similarly reference the first successful click and Back check within the same origin and presentation. Search still opens and operates each page in the browser. The assertions reuse the exact fetched index within a worker and record its bytes and digest, so they do not issue a separate full transfer for each route.
 
 | Surface | Checks |
 | --- | --- |

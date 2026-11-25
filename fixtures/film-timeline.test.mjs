@@ -130,8 +130,13 @@ function environment({hash='',defer=false,overflow=false,authoredTitle=false,tok
   story.queries={'.cinematic-still img':[still],'.cinematic-stage':[copyStage],'.cinematic-beat':beats,'.cinematic-card':cards,'.cinematic-title h1, .cinematic-title h2':heading?[heading]:[]};
   for(const variant of ['landscape','portrait']){
     if(variant==='portrait'&&portraitFrames===null)continue;
-    story.queries[`.cinematic-frames--${variant}`]=[new Node()];
-    story.queries[`.cinematic-frames--${variant} a[href]`]=Array.from({length:variant==='portrait'?portraitFrames:frameCount},(_,i)=>({href:`https://example.test/${variant}/${i}`}));
+    const frameData = Array.from(
+      {length: variant === 'portrait' ? portraitFrames : frameCount},
+      (_, i) => `https://example.test/${variant}/${i}`,
+    );
+    story.queries[`script[data-cinematic-frames="${variant}"]`] = [
+      {textContent: JSON.stringify(frameData)},
+    ];
   }
   const doc=new TrackedTarget();doc.documentElement={dataset:{motion:'allow'}};doc.body=new Node();doc.activeElement=null;doc.hidden=false;
   doc.querySelector=selector=>selector==='.frame__header'?masthead:null;
@@ -182,6 +187,40 @@ test('cold fragment survives enhancement; nested cards remain accessible before 
     assert.equal(env.beats[2].getAttribute('aria-hidden'),null);assert.equal(env.beats[2].inert,false);
     const count=env.requests.length;window.dispatchEvent(new Event('resize'));window.dispatchEvent(new Event('pageshow'));await env.drain();assert.equal(env.requests.length,count);
   }finally{env.restore();}
+});
+
+test('the first frame reuses an exact native still when its browser request is available', async () => {
+  const opening = 'https://example.test/landscape/0';
+  for (const variant of ['matching', 'unselected', 'responsive', 'picture', 'different', 'broken', 'lazy']) {
+    const env = environment();
+    try {
+      let decoded = 0;
+      const unselected = ['unselected', 'responsive', 'picture'].includes(variant);
+      const reusesStill = variant === 'matching' || variant === 'unselected';
+      Object.assign(env.still, {
+        currentSrc: unselected ? '' : variant === 'different' ? 'https://example.test/portrait/0' : opening,
+        src: opening,
+        srcset: variant === 'responsive' ? 'other.webp 2x' : '',
+        parentElement: { localName: variant === 'picture' ? 'picture' : 'p' },
+        loading: variant === 'lazy' ? 'lazy' : 'eager',
+        complete: false,
+        async decode() {
+          decoded++;
+          if (variant === 'broken') throw new Error('The native image failed to decode');
+          this.currentSrc = opening;
+        },
+      });
+      const decodeBitmap = createImageBitmap;
+      globalThis.createImageBitmap = input => decodeBitmap(input.currentSrc ?? input);
+      const dispose = mountCinematicFilm({ element: env.stage, film: env.film });
+      await env.drain();
+      assert.equal(env.wrapper.dataset.islandState, 'drawn', variant);
+      assert.equal(env.drawnURLs[0], opening, variant);
+      assert.equal(decoded, Number(reusesStill || variant === 'broken'), variant);
+      assert.equal(env.requests.includes(opening), !reusesStill, variant);
+      dispose();
+    } finally { env.restore(); }
+  }
 });
 
 test('default cover keeps opaque canvas and original focal crop without clearing',async()=>{
@@ -830,6 +869,34 @@ const choreographyTokens={
  '--material-scroll-scene-veil-start':.25,'--material-scroll-scene-veil-gain':.6,
  '--material-scroll-scene-ghost-opacity':.1
 };
+
+test('the automatic opening finishes its current decode before pursuing the latest frame',async()=>{
+ const env=environment({tokens:{...choreographyTokens,'--scene-intro-share':.9},defer:true,frameCount:31});
+ try{
+  env.film.intro=true;
+  env.film.windows=env.film.windows.map(()=>[-1,-1]);
+  const requests=[];
+  globalThis.fetch=async (url,{signal})=>{
+   requests.push({url,signal});
+   return {ok:true,blob:async()=>url};
+  };
+  const dispose=mountCinematicFilm({element:env.stage,film:env.film});
+  const first='https://example.test/landscape/0';
+  await env.drain();env.resolve(first);await env.drain();
+  let now=100;
+  while(requests.length<2&&now<1000){env.tick(now+=16);await env.drain();}
+  assert.equal(requests.length,2);
+  const next=requests[1];
+  while(now<2500){env.tick(now+=32);await env.drain();}
+  assert.equal(next.signal.aborted,false);
+  assert.equal(requests.length,2);
+  env.resolve(next.url);await env.drain();
+  assert.equal(env.drawnURLs.at(-1),next.url);
+  assert.equal(requests.length,3);
+  assert.ok(Number(requests[2].url.split('/').at(-1))>Number(next.url.split('/').at(-1)));
+  dispose();env.resolve();await env.drain();
+ }finally{env.restore();}
+});
 
 test('optional copy departure follows forward and reverse scroll, protects focus and restores author state',async()=>{
  const env=environment({tokens:choreographyTokens});

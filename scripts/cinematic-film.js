@@ -9,6 +9,17 @@ import { clamp, createFilmTimeline, filmVisibility, filmLineVisibility, advanceF
 // position after all resize listeners have updated the surrounding geometry.
 const resizeReturns = new WeakMap();
 
+function frameAddresses(story,variant) {
+  const data=story.querySelector(`script[data-cinematic-frames="${variant}"]`);
+  if(!data)return [...story.querySelectorAll(`.cinematic-frames--${variant} a[href]`)].map(link=>link.href);
+  try {
+    const urls=JSON.parse(data.textContent);
+    return Array.isArray(urls)&&urls.every(url=>typeof url==='string'&&url.length)?urls:[];
+  } catch {
+    return [];
+  }
+}
+
 // Animate a complete HTML storyboard when supported. Navigation works without decoding.
 export function mountCinematicFilm({ element, film }) {
   function validWindow(value) {
@@ -19,6 +30,7 @@ export function mountCinematicFilm({ element, film }) {
   const story = wrapper?.querySelector('.cinematic-story');
   if (!story || !globalThis.createImageBitmap) return;
   const beats = [...story.querySelectorAll('.cinematic-beat')];
+  const stills = [...story.querySelectorAll('.cinematic-still img')];
   const choreography = film.choreography;
   const caption = story.querySelector('.cinematic-copy');
   const cards = [...story.querySelectorAll('.cinematic-card')];
@@ -85,7 +97,7 @@ export function mountCinematicFilm({ element, film }) {
     }
   } catch { return; }
   const urls = Object.fromEntries(['landscape','portrait'].map(key => [key,
-    [...story.querySelectorAll(`.cinematic-frames--${key} a[href]`)].map(a => a.href)]));
+    frameAddresses(story,key)]));
   if (Object.values(urls).some(list => list.length !== film.frames)) return;
   const canvas = document.createElement('canvas');
   const initialLayout = wrapper.getAttribute('data-film-layout');
@@ -146,6 +158,7 @@ export function mountCinematicFilm({ element, film }) {
   let active=false, drawn=false, prepared=false, failed=false, printing=false, tooSmall=false, variant='', head=0, painted=-1;
   let width=0,height=0,distance=0,dirty=true,pendingTarget=null,resumePosition=null;
   let navigation=null,activity=0,traversalPending=false,introStarted=null,departureSeeking=false;
+  let openingInterrupted=false;
   let readingPosition=null;
   let presentationIndex=-2,presentationIntro=-1,presentationWindow=[0,0];
   const introProgress = now => film.intro ? filmIntroProgress(now-(introStarted??now),scenePhysics['intro-duration'],scenePhysics['intro-share'],scenePhysics['intro-exponent']) : 0;
@@ -368,22 +381,35 @@ export function mountCinematicFilm({ element, film }) {
     synchronizeDeparture();
     const center=clamp(Math.round(head*film.fps),0,film.frames-1);
     const capacity=current.frameBytes?Math.max(1,Math.floor(film.decodedByteLimit/current.frameBytes)):1;
-    const target=clamp(Math.round(at(progress())*film.fps),0,film.frames-1);
+    const position=progress();
+    if(position>0)openingInterrupted=true;
+    const opening=film.intro&&!openingInterrupted;
+    const target=clamp(Math.round(at(position)*film.fps),0,film.frames-1);
     const desired=filmFrameWindow(film.frames,center,capacity,target);
-    return {center,capacity,desired};
+    return {center,capacity,desired,opening};
   }
   function pump() {
     const current=session;if(!active||!current||disposed)return;
-    const {center,capacity,desired}=residentWindow(current);
-    for(const [index,request] of current.pending)if(!desired.includes(index)&&(current.frameBytes||departureSeeking)){
+    const {center,capacity,desired,opening}=residentWindow(current);
+    // Let the opening finish one useful request at a time as its clock advances.
+    for(const [index,request] of current.pending)if(!opening&&!desired.includes(index)&&(current.frameBytes||departureSeeking)){
       current.pending.delete(index);request.abort();
     }
     // Evict decoded pixels, never frame addresses. Reverse travel can request every original again.
-    for(const [i,image] of current.pictures)if(!desired.includes(i)){
+    for(const [i,image] of current.pictures)if(opening?i!==painted:!desired.includes(i)){
       current.bytes-=image.width*image.height*4;image.close();current.pictures.delete(i);
     }
-    const candidates=current.frameBytes?desired:filmFrameWindow(film.frames,center,film.frames);
-    const limit=current.frameBytes?Math.min(capacity,film.concurrency):1;
+    let candidates;
+    if(opening){
+      let next=center;
+      while(next>painted&&current.missing.has(next))next--;
+      if(next<=painted&&!drawn){
+        next=center+1;
+        while(next<film.frames&&current.missing.has(next))next++;
+      }
+      candidates=next>painted&&next<film.frames?[next]:[];
+    }else candidates=current.frameBytes?desired:filmFrameWindow(film.frames,center,film.frames);
+    const limit=current.frameBytes&&!opening?Math.min(capacity,film.concurrency):1;
     for(const i of candidates){
       if(current.pending.size>=limit)break;
       if(current.pictures.has(i)||current.pending.has(i)||current.missing.has(i))continue;
@@ -394,18 +420,36 @@ export function mountCinematicFilm({ element, film }) {
   async function load(current,index,request) {
     let bitmap=null;
     try {
-      const response=await fetch(urls[variant][index],{signal:request.signal,credentials:'same-origin'});
-      if(!response.ok)throw new Error('Film frame unavailable');
-      bitmap=await createImageBitmap(await response.blob());
+      const url=urls[variant][index];
+      const source=!current.frameBytes&&new URL(url,document.baseURI);
+      const still=source&&source.origin===location.origin&&stills.find(image=>{
+        if(image.loading==='lazy'&&!image.complete)return false;
+        // An eager single-source image can be downloading before currentSrc is set.
+        const selected=image.currentSrc||(!image.srcset&&image.parentElement?.localName!=='picture'&&image.src);
+        return selected===source.href;
+      });
+      // The visible storyboard can already be loading the exact opening frame.
+      if(still&&typeof still.decode==='function'){
+        try{
+          await still.decode();
+          if(!request.signal.aborted&&still.currentSrc===source.href)bitmap=await createImageBitmap(still);
+        }catch{}
+      }
+      if(!bitmap){
+        if(request.signal.aborted)return;
+        const response=await fetch(url,{signal:request.signal,credentials:'same-origin'});
+        if(!response.ok)throw new Error('Film frame unavailable');
+        bitmap=await createImageBitmap(await response.blob());
+      }
       if(disposed||session!==current||!active||request.signal.aborted||current.pending.get(index)!==request){bitmap.close();return;}
       if(!drawn&&film.prepare)head=resumePosition?.head??at(pendingTarget?restFor(pendingTarget):progress());
       const bytes=bitmap.width*bitmap.height*4;
       if(!bytes||bytes>film.decodedByteLimit){bitmap.close();bitmap=null;fail();return;}
       current.frameBytes=Math.max(current.frameBytes,bytes);
-      const {center,desired}=residentWindow(current);
-      // A completed request can belong to an older scroll position. It must
-      // neither evict the current picture nor paint before the next pump.
-      if(!desired.includes(index)){bitmap.close();bitmap=null;return;}
+      const {center,desired,opening}=residentWindow(current);
+      // A completed opening picture can advance the screen even if the clock
+      // has moved on. Scroll-driven requests must still belong to the live window.
+      if(opening?index<=painted||drawn&&index>center:!desired.includes(index)){bitmap.close();bitmap=null;return;}
       // Exact byte accounting also protects mixed-dimension inputs.
       while(current.bytes+bytes>film.decodedByteLimit&&current.pictures.size){
         const farthest=[...current.pictures.keys()].reduce((a,b)=>Math.abs(b-center)>Math.abs(a-center)?b:a);
@@ -534,6 +578,7 @@ export function mountCinematicFilm({ element, film }) {
   }
   function seek(target,focus=true) {
     const rest=restFor(target);if(rest===null||disposed)return false;
+    if(rest>0)openingInterrupted=true;
     cancelNavigation();
     cancelResizeReturn();
     readingPosition=null;
@@ -560,6 +605,7 @@ export function mountCinematicFilm({ element, film }) {
   function navigate(target,invoker) {
     const rest=restFor(target);
     if(rest===null)return;
+    openingInterrupted=true;
     if(!drawn||!active||!preference()||!Number.isFinite(navigationDuration)||!(navigationDuration>0)||!navigationCurve){seek(target);return;}
     cancelResizeReturn();readingPosition=null;resumePosition=null;
     navigation={target,invoker,from:scrollY,to:scrollY+wrapper.getBoundingClientRect().top+scrollOffset(rest),started:null};

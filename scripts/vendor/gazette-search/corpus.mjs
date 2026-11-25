@@ -154,6 +154,7 @@ export function corpus(records, selected) {
       ranking = Object.fromEntries(rankingFields.map(field => {
         const value = record.indexed[field];
         if (value === undefined) return [field, ''];
+        if (field === 'body' && value === true) return [field, record.body];
         if (['keywords', 'projects'].includes(field)) {
           if (!Array.isArray(value)) fail('search_data');
           return [field, value.map(value => text(value)).join(' ')];

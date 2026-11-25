@@ -233,6 +233,7 @@ build = { kind = "svg-image", entry = "images/film-grain.svg" }
 
 [components.primary-action]
 template = "components/primary-action.html"
+semantic = { kind = "navigation-action" }
 arguments = { type = "object", additionalProperties = false, properties = { disabled = { type = "boolean", description = "Show an unavailable button instead of the linked body content; off by default." }, label = { type = "string", minLength = 1, description = "Visible text of the unavailable button." }, reason = { type = "string", minLength = 1, description = "Optional explanation of unavailability, included in the button title and accessible name." } }, allOf = [{ if = { required = ["disabled"], properties = { disabled = { const = true } } }, then = { required = ["label", "reason"] } }] }
 
 [[resources]]
@@ -388,6 +389,7 @@ mount = "load"
 
 # Catalogue data uses the same folder material as recursive collection cards.
 [components.catalogue]
+semantic = { kind = "catalogue" }
 template = "components/catalogue.html"
 arguments = { type = "object", required = ["label"], additionalProperties = false, properties = { label = { type = "string", minLength = 1, description = "Accessible name for the catalogue and its controls." }, autoplay = { type = "boolean", description = "Allow automatic catalogue movement when motion preferences permit; on by default." } } }
 
@@ -397,6 +399,7 @@ export = "mount"
 mount = "load"
 
 [components.catalogue-entry]
+semantic = { kind = "catalogue-entry" }
 template = "components/catalogue-entry.html"
 arguments = { type = "object", additionalProperties = false }
 

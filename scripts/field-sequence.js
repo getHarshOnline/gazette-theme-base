@@ -106,7 +106,7 @@ export function mountFieldSequence({ element, field, pixelRatio, createRenderer,
   function frame(now, immediate=false) {
     const elapsed=last?Math.max(0,(now-last)/1000):0;
     const dt=Math.min(values['step-limit'],elapsed);
-    last=now;time+=elapsed;
+    const nextTime=time+elapsed;
     const state=fieldPosition(raw(),sections.length,field);
     const a=field.presets[state.index],b=field.presets[Math.min(state.index+1,sections.length-1)];
     const mix=(x,y)=>x+(y-x)*state.blend;
@@ -118,15 +118,23 @@ export function mountFieldSequence({ element, field, pixelRatio, createRenderer,
     cameraZ=damp(cameraZ,mix(a.camZ,b.camZ),values['camera-rate'],dt);
     streamOpacity=damp(streamOpacity,mix(a.stream,b.stream),values['stream-rate'],dt);
     const ratio=pixelRatio(devicePixelRatio||1);
-    const rendered=renderer.render({time,index:state.index,blend:state.blend,intro:1-Math.pow(1-clamp(time/values['intro-duration']),3),
+    const rendered=renderer.render({time:nextTime,index:state.index,blend:state.blend,intro:1-Math.pow(1-clamp(nextTime/values['intro-duration']),3),
       pointerX:smoothX,pointerY:smoothY,velocity,cameraX,cameraY,cameraZ,pointerCameraZ,streamOpacity,
       parallaxX:smoothX*values['stream-x'],parallaxY:smoothY*values['stream-y'],pointerEnabled:fine.matches,
       size:{width,height,pixelRatio:ratio}});
     if(rendered===false)throw new Error('Field did not draw');
+    if(rendered===null)return false;
+    last=now;time=nextTime;
     if(drawn)reveal(state,immediate);
+    return true;
   }
-  function tick(now){if(!active||!drawn||disposed)return;try{frame(now);}catch{failed=true;state();return;}return true;}
-  const animation=createFrameLoop(tick,{window,eligible:()=>active&&drawn&&!disposed});
+  function tick(now){
+    if(!active||disposed)return;
+    if(!drawn){state();return;}
+    try{frame(now);}catch{failed=true;state();return;}
+    return true;
+  }
+  const animation=createFrameLoop(tick,{window,eligible:()=>active&&!disposed});
   const schedule=animation.request;
   function stop(){animation.cancel();last=0;}
   function fits(){
@@ -174,12 +182,18 @@ export function mountFieldSequence({ element, field, pixelRatio, createRenderer,
         const b=section.getBoundingClientRect();return b.bottom>height*.5&&b.top<height;
       }) : null);
       acquire();if(failed||lost||!renderer)return;
-      try{frame(performance.now(),true);}catch{failed=true;return;}
+      try{
+        if(!frame(performance.now(),true)){position();schedule();return;}
+      }catch{failed=true;stop();return;}
       drawn=true;hasDrawn=true;wrapper.dataset.islandState='drawn';
       if(!fits()){tooSmall=true;state();return;}
-      if(printReturn){const r=printReturn;printReturn=null;window.scrollTo({top:scrollY+wrapper.getBoundingClientRect().top+r*distance,behavior:'instant'});}
+      if(printReturn){
+        const r=printReturn;printReturn=null;
+        window.scrollTo({top:scrollY+wrapper.getBoundingClientRect().top+r*distance,behavior:'instant'});
+        frame(performance.now(),true);
+      }
       else if(target)seek(target,false);
-      frame(performance.now(),Boolean(target||printReturn));
+      else reveal(fieldPosition(raw(),sections.length,field));
     }
     position();schedule();
   }

@@ -1,4 +1,3 @@
-/* The selected world's ordinary stylesheet supplies its complete type roles. */
 html:has(> .social-card) {
   scrollbar-gutter: auto;
 }
@@ -6,14 +5,11 @@ html:has(> .social-card) {
 body.social-card {
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: center;
-  gap: var(--space-section);
+  grid-template-columns: minmax(0, 1fr);
   inline-size: var(--social-card-width);
   block-size: var(--social-card-height);
   min-block-size: 0;
   margin: 0;
-  padding: var(--space-section);
   background: var(--color-paper);
   color: var(--color-ink);
 }
@@ -33,19 +29,9 @@ body.social-card {
   block-size: 100%;
   max-inline-size: 100%;
   max-block-size: 100%;
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .social-card__media > [hidden] {
   display: none;
-}
-
-.social-card__title {
-  min-inline-size: 0;
-  margin: 0;
-  font-size: var(--type-size-display-1);
-  line-height: var(--type-line-height-display);
-  letter-spacing: var(--type-tracking-heading);
-  overflow-wrap: anywhere;
-  text-wrap: balance;
 }

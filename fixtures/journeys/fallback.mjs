@@ -15,8 +15,16 @@ export async function fallback(env) {
   for (let index = 0; index < (await images.count()); index++) {
     time();
     const image = images.nth(index);
-    if (!(await image.isVisible())) continue;
-    await image.scrollIntoViewIfNeeded();
+    const visible = await image.evaluate((element) => {
+      if (
+        !element.getClientRects().length ||
+        getComputedStyle(element).visibility !== "visible"
+      )
+        return false;
+      element.scrollIntoView({ block: "nearest", behavior: "instant" });
+      return true;
+    });
+    if (!visible) continue;
     await imageSettled(image, 1000);
     const value = await image.evaluate((image) => ({
       src: image.currentSrc || image.src,
@@ -271,11 +279,19 @@ export async function fallback(env) {
       headerPosition,
     });
     if (item.kind === "nojs-home") {
-      const link = navLinks.locator("visible=true").first();
-      requireState(
-        (await link.count()) === 1,
-        "No visible navigation destination for navigation/Back.",
+      const destination = await navLinks.evaluateAll((links) =>
+        links.findIndex((link) => {
+          const to = new URL(link.href);
+          return (
+            to.origin === location.origin && to.pathname !== location.pathname
+          );
+        }),
       );
+      requireState(
+        destination >= 0,
+        "No native navigation destination distinct from Home.",
+      );
+      const link = navLinks.nth(destination);
       const journey = await followAndBack(link);
       await journey.back();
       row.checks.push({

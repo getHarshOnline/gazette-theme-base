@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 const requireState = (value, message) => {
   if (!value) throw new Error(message);
 };
@@ -66,7 +67,7 @@ const checkTimestampOrder = (shown, eligible, order) => {
   };
 };
 
-export async function search({ page, item, allowed }) {
+export async function search({ page, item, allowed, options }) {
   const row = { issues: [] };
   const root = page.locator(".search-page");
   const list = root.locator(".search-page__results");
@@ -78,52 +79,71 @@ export async function search({ page, item, allowed }) {
   // The page replaces its results, writes the status, then changes the URL in
   // one render. Wait for that contract rather than a guessed network delay.
   const ready = async (expected, previous = null) => {
-    await page.waitForFunction(
-      ({ expected, previous }) => {
-        const root = document.querySelector(".search-page"),
-          form = root?.querySelector("form");
-        const list = root?.querySelector(".search-page__results"),
-          status = root?.querySelector('[role="status"]');
-        const fallback =
-          root?.querySelector(".search-page__fallback") ||
-          document.querySelector(".search-page__fallback");
-        if (
-          !form ||
-          form.hidden ||
-          !list ||
-          list.hidden ||
-          !fallback?.hidden ||
-          !status?.textContent.trim() ||
-          previous?.isConnected
-        )
-          return false;
-        if (location.href !== expected) return false;
-        const parameters = new URL(expected).searchParams;
-        for (const name of [
-          "q",
-          "kind",
-          "author",
-          "project",
-          "keyword",
-          "classification",
-          "sort",
-        ]) {
-          const value =
-            parameters.get(name) || (name === "sort" ? "relevance" : "");
-          if (form.elements.namedItem(name)?.value !== value) return false;
-        }
-        const empty = list.children.length === 0;
-        return empty
-          ? status.textContent === status.getAttribute("data-status-empty")
-          : ![
-              status.getAttribute("data-status-loading"),
-              status.getAttribute("data-status-unavailable"),
-              root.getAttribute("data-search-query-limit"),
-            ].includes(status.textContent);
-      },
-      { expected, previous },
-      { timeout: 15000 },
-    );
+    await page
+      .waitForFunction(
+        ({ expected, previous }) => {
+          const root = document.querySelector(".search-page"),
+            form = root?.querySelector("form");
+          const list = root?.querySelector(".search-page__results"),
+            status = root?.querySelector('[role="status"]');
+          const fallback =
+            root?.querySelector(".search-page__fallback") ||
+            document.querySelector(".search-page__fallback");
+          if (
+            !form ||
+            form.hidden ||
+            !list ||
+            list.hidden ||
+            !fallback?.hidden ||
+            !status?.textContent.trim() ||
+            previous?.isConnected
+          )
+            return false;
+          if (location.href !== expected) return false;
+          const parameters = new URL(expected).searchParams;
+          for (const name of [
+            "q",
+            "kind",
+            "author",
+            "project",
+            "keyword",
+            "classification",
+            "sort",
+          ]) {
+            const value =
+              parameters.get(name) || (name === "sort" ? "relevance" : "");
+            if (form.elements.namedItem(name)?.value !== value) return false;
+          }
+          const empty = list.children.length === 0;
+          return empty
+            ? status.textContent === status.getAttribute("data-status-empty")
+            : ![
+                status.getAttribute("data-status-loading"),
+                status.getAttribute("data-status-unavailable"),
+                root.getAttribute("data-search-query-limit"),
+              ].includes(status.textContent);
+        },
+        { expected, previous },
+        { timeout: 15000 },
+      )
+      .catch(async (error) => {
+        const state = await root
+          .evaluate((node) => {
+            const form = node.querySelector("form");
+            return {
+              url: location.href,
+              status: node.querySelector('[role="status"]')?.textContent,
+              formHidden: form?.hidden,
+              results: node.querySelector(".search-page__results")?.children
+                .length,
+            };
+          })
+          .catch(() => null);
+        if (!state) throw error;
+        throw new Error(
+          `Search expected ${expected}. Observed ${state.url}, ${state.status}, form ${state.formHidden ? "hidden" : "visible"}, ${state.results} children.`,
+        );
+      });
   };
   const mutate = async (operation, expected) => {
     const previous =
@@ -181,10 +201,31 @@ export async function search({ page, item, allowed }) {
       allowed.has(corpusURL.origin),
       "Search corpus is outside the supplied preview.",
     );
-    const response = await page.request.get(corpusURL.href, { timeout: 15000 });
-    requireState(response.ok(), "Could not read the candidate search corpus.");
-    const corpus = await response.json();
-    requireState(Array.isArray(corpus), "Search corpus is not an array.");
+    const cache = options.searchCorpora;
+    let captured = cache?.get(corpusURL.href);
+    const reused = Boolean(captured);
+    if (!captured) {
+      const response = await page.request.get(corpusURL.href, {
+        timeout: 15000,
+      });
+      requireState(
+        response.ok(),
+        "Could not read the candidate search corpus.",
+      );
+      const bytes = await response.body();
+      const rows = JSON.parse(bytes);
+      requireState(Array.isArray(rows), "Search corpus is not an array.");
+      const evidence = {
+        url: corpusURL.href,
+        records: rows.length,
+        bytes: bytes.length,
+        sha256: createHash("sha256").update(bytes).digest("hex"),
+      };
+      captured = { rows, evidence };
+      cache?.set(corpusURL.href, captured);
+    }
+    const corpus = captured.rows;
+    row.corpus = { ...captured.evidence, reused };
     const byURL = new Map(corpus.map((record) => [record.route.url, record]));
     const articles = corpus.filter(
       (record) =>

@@ -136,6 +136,11 @@ export function journeyManifest(input) {
       ),
       "Unknown page kind.",
     );
+    if (route.authoredControls !== undefined)
+      must(
+        typeof route.authoredControls === "boolean",
+        "Authored controls require a boolean selection.",
+      );
     if (route.figures)
       must(
         Array.isArray(route.figures) &&
@@ -241,7 +246,8 @@ export async function main(args) {
   const plan = planCases(manifest, options.suites),
     selection = new Set(options.suites);
   const completedJourneys = new Map(),
-    navigationSeen = new Map();
+    navigationSeen = new Map(),
+    searchCorpora = new Map();
   await mkdir(dirname(options.out), { recursive: true });
   await mkdir(options.out);
   const report = {
@@ -287,6 +293,7 @@ export async function main(args) {
         ...options,
         completedJourneys,
         navigationSeen,
+        searchCorpora,
         timeoutMs: Math.min(options.timeoutMs, remaining),
         allowedOrigins: manifest.allowedOrigins,
       };

@@ -65,7 +65,12 @@ export async function interactions(env) {
   const { settle, click, withTarget, images, usable } = controls(page);
   const height = item.height,
     currentMode = item.mode,
-    figures = (item.figures ?? []).join(",");
+    figures = [
+      ...(item.figures ?? []),
+      ...(item.authoredControls
+        ? ["main .publication-body fieldset:not(fieldset fieldset)"]
+        : []),
+    ].join(",");
   let jobs = [];
   const add = (id, kind, operation, target = null) =>
     jobs.push({
@@ -75,7 +80,10 @@ export async function interactions(env) {
     });
   // Traverse native disclosures in DOM order, exposing nested disclosures
   // through their native summaries. Reopen parents only for child checks.
-  const details = page.locator("main details,.reading-header-row details");
+  // Search refinement has its own readiness, history and focus checks.
+  const details = page.locator(
+    "main details:not(.search-page form details),.reading-header-row details",
+  );
   row.inventory = {
     details: await details.count(),
     carousels: [],
@@ -284,19 +292,39 @@ export async function interactions(env) {
           "Carousel selected a different slide/count.",
         );
       };
+      const visibleCard = async (index) => {
+        await select(index);
+        const card = cards.nth(index);
+        // The active attribute changes before cards finish moving past each other.
+        await card.evaluate(async (element) => {
+          await Promise.allSettled(
+            element.parentElement
+              .getAnimations({ subtree: true })
+              .filter(
+                (animation) =>
+                  animation instanceof CSSTransition &&
+                  (animation.pending || animation.playState === "running"),
+              )
+              .map((transition) => transition.finished),
+          );
+        });
+        await card.scrollIntoViewIfNeeded();
+        await settle();
+        must(
+          await card.evaluate(
+            (element, selector) => element.matches(selector),
+            config.active,
+          ),
+          "Position changed without marking the intended card active.",
+        );
+        return card;
+      };
       for (let slide = 0; slide < count; slide++)
         add(
           `${config.name}:${instance}:slide:${slide}`,
           "carousel-slide",
           async () => {
-            await select(slide);
-            const card = cards.nth(slide);
-            await card.scrollIntoViewIfNeeded();
-            await settle();
-            must(
-              await card.evaluate((e, s) => e.matches(s), config.active),
-              "Position changed without marking the intended card active.",
-            );
+            const card = await visibleCard(slide);
             return {
               state: "passed",
               slide,
@@ -314,10 +342,7 @@ export async function interactions(env) {
           `${config.name}:${instance}:drag`,
           "carousel-drag",
           async () => {
-            await select(0);
-            const card = cards.nth(0);
-            await card.scrollIntoViewIfNeeded();
-            await settle();
+            const card = await visibleCard(0);
             const rect = await card.boundingBox();
             must(
               rect && rect.width > 0 && rect.height > 0,
@@ -514,7 +539,7 @@ export async function interactions(env) {
   for (let instance = 0; instance < (await panels.count()); instance++) {
     const panel = panels.nth(instance),
       controls = panel.locator(
-        'select,input[type="radio"],input[type="checkbox"],input[type="range"],button[type="button"]',
+        'select,input[type="radio"],input[type="checkbox"],input[type="range"],input[type="number"],button[type="button"],button[type="reset"]',
       );
     for (
       let controlIndex = 0;
@@ -551,7 +576,16 @@ export async function interactions(env) {
             await control.scrollIntoViewIfNeeded();
             if (shape.tag === "SELECT")
               await control.selectOption(values[choice]);
-            else if (shape.type === "range") {
+            else if (shape.type === "number") {
+              const previous = await control.inputValue();
+              const atUpperLimit =
+                shape.max !== "" && Number(previous) >= Number(shape.max);
+              await control.press(atUpperLimit ? "ArrowDown" : "ArrowUp");
+              must(
+                (await control.inputValue()) !== previous,
+                "Number control did not change its value.",
+              );
+            } else if (shape.type === "range") {
               await control.focus();
               await control.press(choice === 0 ? "Home" : "End");
             } else if (shape.type === "checkbox")
@@ -564,7 +598,8 @@ export async function interactions(env) {
               state: "passed",
               control: await control.getAttribute("id"),
               value:
-                shape.tag === "SELECT" || shape.type === "range"
+                shape.tag === "SELECT" ||
+                ["range", "number"].includes(shape.type)
                   ? await control.inputValue()
                   : null,
               changedText: before !== after,
@@ -581,10 +616,16 @@ export async function interactions(env) {
   const authored = page.locator("main img[data-gazette-image]");
   for (let i = 0; i < (await authored.count()) && Date.now() < deadline; i++) {
     const img = authored.nth(i);
-    if (await img.isVisible()) {
-      await img.scrollIntoViewIfNeeded();
-      await imageSettled(img, 1000);
-    }
+    const revealed = await img.evaluate((image) => {
+      if (
+        !image.getClientRects().length ||
+        getComputedStyle(image).visibility !== "visible"
+      )
+        return false;
+      image.scrollIntoView({ block: "nearest", behavior: "instant" });
+      return true;
+    });
+    if (revealed) await imageSettled(img, 1000);
   }
   const viewers = page.locator("main .media-inspection-control");
   row.inventory.viewers = await viewers.count();
@@ -594,11 +635,46 @@ export async function interactions(env) {
       `viewer:${instance}`,
       "media-viewer",
       async () => {
-        if (!(await control.isVisible()))
+        if (!(await control.isVisible())) {
+          const unavailable = await control.evaluate((button) => {
+            if (button.closest('[data-island-state="drawn"]'))
+              return "Active motion replaces this still; the viewer belongs to the fallback.";
+            const asset = button.previousElementSibling;
+            const image = asset?.matches("img")
+              ? asset
+              : asset?.querySelector("img");
+            if (
+              !button.hidden ||
+              !image?.complete ||
+              !image.naturalWidth ||
+              !image.getClientRects().length ||
+              getComputedStyle(image).visibility !== "visible" ||
+              /\.svg(?:[?#]|$)/i.test(image.currentSrc)
+            )
+              return null;
+            const proofs = JSON.parse(
+              document.querySelector("[data-media-images]")?.textContent ||
+                "[]",
+            );
+            const proof = proofs.find(
+              (entry) =>
+                entry.address === image.getAttribute("data-gazette-image"),
+            );
+            if (
+              proof &&
+              (proof.intrinsic?.width ?? image.naturalWidth) <=
+                image.clientWidth
+            )
+              return "The still is already displayed at or above its full raster width.";
+            return null;
+          });
           return {
-            state: "unexercised",
-            reason: "Viewer control belongs to an inactive/hidden image.",
+            state: unavailable ? "not-applicable" : "unexercised",
+            reason:
+              unavailable ??
+              "Viewer control belongs to an inactive/hidden image.",
           };
+        }
         must(
           !(await control.evaluate((e) =>
             e.hasAttribute("data-media-pending"),
@@ -624,6 +700,11 @@ export async function interactions(env) {
               proof?.variants?.[document.documentElement.dataset.mode] ||
               proof?.destination ||
               null,
+            renditions: (
+              proof?.responsive?.[document.documentElement.dataset.mode] ||
+              proof?.responsive?.default ||
+              []
+            ).map(({ url }) => url),
             top: button.getBoundingClientRect().top,
           };
         });
@@ -650,10 +731,19 @@ export async function interactions(env) {
             };
           } else {
             const shown = tenant.locator(".media-viewer__image");
+            // The fitted raster may have no box until its full-size source decodes.
+            await imageSettled(shown, 1400);
+            must(
+              await shown.evaluate(
+                (image) => image.complete && image.naturalWidth > 0,
+              ),
+              "Viewer image did not finish loading.",
+            );
             await images(tenant);
             const src = await shown.evaluate((e) => e.currentSrc || e.src);
             must(
-              src === before.expected && before.src === before.expected,
+              src === before.expected &&
+                [before.expected, ...before.renditions].includes(before.src),
               "Viewer or inline image does not match the active colour variant.",
             );
             result = {

@@ -7,7 +7,7 @@
 {% set date_format = "%-d %B %Y" %}
 {% if copy %}{% set date_format = copy | get(key="base:date-format", default=date_format) %}{% endif %}
 {% if item.attributions is defined %}{% set authors = item.attributions | filter(attribute="role",value="author") | filter(attribute="principal.name") %}{% endif %}
-{% if authors or item.published is defined and item.published %}<p class="reading-list__metadata">{% if authors %}<span>{{ attribution::names(authors=authors,copy=copy) }}</span>{% endif %}{% if item.published is defined and item.published %}<time datetime="{{ item.published }}">{{ item.published | editorial_date(format=date_format) }}</time>{% endif %}</p>{% endif %}
+{% if authors or item.published is defined and item.published %}<p class="reading-list__metadata">{% if authors %}<span>{{ attribution::names(authors=authors,copy=copy) }}</span>{% endif %}{% if item.published is defined and item.published %} <time datetime="{{ item.published }}">{{ item.published | editorial_date(format=date_format) }}</time>{% endif %}</p>{% endif %}
 {% endmacro item %}
 
 {# Group the supplied entries by taxonomy and link available taxonomy and term destinations; copy supplies accessible link descriptions. #}
@@ -15,7 +15,7 @@
 {% if entries %}
 <dl class="reading-classifications">
   {% for taxonomy_id, terms in entries | group_by(attribute="taxonomy.id") %}
-  <div><dt>{% if terms[0].taxonomy.destination is defined and terms[0].taxonomy.destination %}{% set target = terms[0].taxonomy.destination %}<a href="{{ target.url }}" {{ links::attributes(copy=copy,destination=target.destination) }}>{{ terms[0].taxonomy.label }}</a>{% else %}{{ terms[0].taxonomy.label }}{% endif %}</dt><dd><ul>{% for entry in terms %}<li>{% if entry.destination is defined and entry.destination %}<a href="{{ entry.destination.url }}" {{ links::attributes(copy=copy,destination=entry.destination.destination) }}>{{ entry.term.label }}</a>{% else %}{{ entry.term.label }}{% endif %}</li>{% endfor %}</ul></dd></div>
+  <div><dt>{% if terms[0].taxonomy.destination is defined and terms[0].taxonomy.destination %}{% set target = terms[0].taxonomy.destination %}<a href="{{ target.url }}" {{ links::attributes(copy=copy,destination=target.destination) }}>{{ terms[0].taxonomy.label }}</a>{% else %}{{ terms[0].taxonomy.label }}{% endif %}</dt> <dd><ul>{% for entry in terms %}<li>{% if entry.destination is defined and entry.destination %}<a href="{{ entry.destination.url }}" {{ links::attributes(copy=copy,destination=entry.destination.destination) }}>{{ entry.term.label }}</a>{% else %}{{ entry.term.label }}{% endif %}</li>{% endfor %}</ul></dd></div>
   {% endfor %}
 </dl>
 {% endif %}
@@ -26,7 +26,7 @@
 {% if entries and copy %}
 {% set label = copy | get(key="base:keywords", default="") %}
 {% if label %}
-<details class="reading-keywords"><summary><span>{{ label }}</span><span>{{ entries | length }}</span></summary><ul>
+<details class="reading-keywords"><summary><span>{{ label }}</span> <span>{{ entries | length }}</span></summary><ul>
 {% for keyword in entries %}
 <li>{% if search and search.page is defined and search.page %}<a href="{{ search.page.route.url }}?keyword={{ keyword | url_query }}" {{ links::attributes(copy=copy,source=source,node=search.page.content) }}>{{ keyword }}</a>{% else %}{{ keyword }}{% endif %}</li>
 {% endfor %}
@@ -51,10 +51,10 @@
 {% set has_modified = modified_label and content.modified is defined and content.modified and (content.published is not defined or content.modified != content.published) %}
 {% if authors or subjects and subject_label or has_published or has_modified %}
 <dl class="reading-credit">
-  {% if authors %}<div class="reading-byline"><dt>{{ byline_label }}</dt><dd>{{ attribution::names(authors=authors,copy=copy) }}</dd></div>{% endif %}
-  {% if subjects and subject_label %}<div class="reading-subject"><dt>{{ subject_label }}</dt><dd><ul>{% for member in subjects %}<li>{% if member.landing is defined and member.landing %}<a href="{{ member.landing.url }}" {{ links::attributes(copy=copy,destination=member.landing.destination) }}>{{ member.project.name }}</a>{% else %}{{ member.project.name }}{% endif %}</li>{% endfor %}</ul></dd></div>{% endif %}
-  {% if has_published %}<div class="reading-date"><dt>{{ published_label }}</dt><dd><time datetime="{{ content.published }}">{{ content.published | editorial_date(format=date_format) }}</time></dd></div>{% endif %}
-  {% if has_modified %}<div class="reading-date"><dt>{{ modified_label }}</dt><dd><time datetime="{{ content.modified }}">{{ content.modified | editorial_date(format=date_format) }}</time></dd></div>{% endif %}
+  {% if authors %}<div class="reading-byline"><dt>{{ byline_label }}</dt> <dd>{{ attribution::names(authors=authors,copy=copy) }}</dd></div>{% endif %}
+  {% if subjects and subject_label %}<div class="reading-subject"><dt>{{ subject_label }}</dt> <dd><ul>{% for member in subjects %}<li>{% if member.landing is defined and member.landing %}<a href="{{ member.landing.url }}" {{ links::attributes(copy=copy,destination=member.landing.destination) }}>{{ member.project.name }}</a>{% else %}{{ member.project.name }}{% endif %}</li>{% endfor %}</ul></dd></div>{% endif %}
+  {% if has_published %}<div class="reading-date"><dt>{{ published_label }}</dt> <dd><time datetime="{{ content.published }}">{{ content.published | editorial_date(format=date_format) }}</time></dd></div>{% endif %}
+  {% if has_modified %}<div class="reading-date"><dt>{{ modified_label }}</dt> <dd><time datetime="{{ content.modified }}">{{ content.modified | editorial_date(format=date_format) }}</time></dd></div>{% endif %}
 </dl>
 {% endif %}
 {% endif %}

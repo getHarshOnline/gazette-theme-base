@@ -211,8 +211,8 @@ Gazette also writes destination facts onto compiled Markdown links. Base’s lin
 | Attribute | Values and location | Writer | A world may |
 | --- | --- | --- | --- |
 | `data-social-card-source` | Inert template containing the resolved home body used to select the card's media and title. | [social-card.html](../templates/social-card.html) | Inherit the source container. |
-| `data-social-card-media` | Single destination for the selected image or video frame. | [social-card.html](../templates/social-card.html) | Style the media box with its existing tokens. |
-| `data-social-card-title` | The title destination filled from the home heading. | [social-card.html](../templates/social-card.html) | Use its existing display face. |
+| `data-social-card-media` | The selected image or video frame fills the thumbnail with a centred crop. | [social-card.html](../templates/social-card.html) | Keep the artwork full bleed. |
+| `data-social-card-title` | Hidden capture evidence filled from the home heading. The shared thumbnail carries the visual, and each page supplies its title and description in its share tags. | [social-card.html](../templates/social-card.html) | Keep the marker out of the captured composition. |
 | `data-treatment` | `monochrome` on the generated canvas when the source requests the shared film treatment. | [social-card-media.js](../scripts/social-card-media.js) | Retain the selected treatment. |
 
 <!-- /base-attribute-inventory -->

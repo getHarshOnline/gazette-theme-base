@@ -63,16 +63,17 @@ export async function runCase(browser, item, suite, options) {
       });
       return route.abort("blockedbyclient");
     });
-    await context.addInitScript(
-      ({ mode, motion }) => {
-        localStorage.setItem("color-mode", mode);
-        localStorage.setItem(
-          "motion-preference",
-          motion === "reduce" ? "reduce" : "allow",
-        );
-      },
-      { mode: item.mode, motion: item.motion },
-    );
+    if (suite !== "nojs")
+      await context.addInitScript(
+        ({ mode, motion }) => {
+          localStorage.setItem("color-mode", mode);
+          localStorage.setItem(
+            "motion-preference",
+            motion === "reduce" ? "reduce" : "allow",
+          );
+        },
+        { mode: item.mode, motion: item.motion },
+      );
     page = await context.newPage();
     page.setDefaultTimeout(3500);
     page.setDefaultNavigationTimeout(15000);
@@ -157,19 +158,59 @@ export async function runCase(browser, item, suite, options) {
       await page.screenshot({ path: join(options.out, name), timeout: 3000 });
       return name;
     };
-    const activate = async (target) => {
+    const activate = async (target, clickOptions) => {
       requireTime();
       await target.scrollIntoViewIfNeeded();
       if (item.width <= 768) await target.tap();
-      else await target.click();
+      else await target.click(clickOptions);
+    };
+    const awaitEnquiryTarget = async (link) => {
+      const expected = await link.evaluate((anchor) => {
+        const data = JSON.parse(
+          document.querySelector("#enquiry-context")?.textContent ?? "null",
+        );
+        const { source, destination } = data ?? {};
+        if (
+          !source ||
+          !destination ||
+          (source.content === destination.content &&
+            source.site === destination.site)
+        )
+          return null;
+        if (
+          anchor.dataset.gazetteDestinationContent !== destination.content ||
+          anchor.dataset.gazetteDestinationSite !== destination.site
+        )
+          return null;
+        return {
+          site: source.site,
+          content: source.content,
+          page: source.url,
+          button: anchor.dataset.enquiryButton ?? "services-link",
+        };
+      });
+      if (expected) {
+        await page.waitForFunction(
+          ({ anchor, expected }) => {
+            const query = new URL(anchor.href).searchParams;
+            return Object.entries(expected).every(([field, value]) => {
+              const matches = query.getAll("g_from_" + field);
+              return matches.length === 1 && matches[0] === value;
+            });
+          },
+          { anchor: await link.elementHandle(), expected },
+          { timeout: 3500 },
+        );
+      }
     };
     const followAndBack = async (link) => {
       requireTime();
+      await awaitEnquiryTarget(link);
       const source = page.url(),
         target = localURL(await link.getAttribute("href"));
       await Promise.all([
         page.waitForURL(target, { waitUntil: "domcontentloaded" }),
-        activate(link),
+        activate(link, { noWaitAfter: true }),
       ]);
       must(
         page.url() === target,
@@ -376,8 +417,9 @@ export async function runCase(browser, item, suite, options) {
             nodes.map((node, sceneIndex) => ({
               sceneIndex,
               layout: node.dataset.filmLayout,
-              recipe: node.querySelector('script[type="application/json"]')
-                ?.textContent,
+              recipe: node.querySelector(
+                'script[type="application/json"]:not([data-cinematic-frames])',
+              )?.textContent,
             })),
           );
         for (const recipe of item.motion === "reduce" ? [] : (item.films ?? []))

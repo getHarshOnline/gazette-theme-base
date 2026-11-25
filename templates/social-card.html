@@ -31,7 +31,7 @@
 <body class="social-card" style="--social-card-width: {{ card.width }}px; --social-card-height: {{ card.height }}px">
   <template data-social-card-source>{{ body_html | safe }}</template>
   <div class="social-card__media" data-social-card-media></div>
-  <h1 class="social-card__title" data-social-card-title>{{ content.title }}</h1>
+  <span data-social-card-title hidden>{{ content.title }}</span>
   {% for resource in presentation.theme_resources %}
     {% if resource.id == "module:social-card-media" %}
   <script type="module" src="{{ resource.url }}"></script>

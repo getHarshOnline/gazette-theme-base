@@ -9,6 +9,7 @@
 {%- import "base/macros/page_mode.html" as frame -%}
 {%- import "base/macros/links.html" as links -%}
 {% set product_entrance = project_resources is defined and project_resources %}
+{% set publication_metadata = site.metadata | default(value=false) %}
 <!doctype html>
 
 <html{% if content.language is defined %} lang="{{ content.language }}"{% endif %}{% if presentation.palette %} data-palette="{{ presentation.palette }}"{% endif %} data-page-mode="{% block page_mode %}{{ frame::page_mode(content=content,product_entrance=product_entrance) }}{% endblock page_mode %}" data-footer-treatment="{% block footer_treatment %}{% if product_entrance or content.structure.kind == 'page' and content.structure.family.kind == 'project' %}colophon{% else %}quiet{% endif %}{% endblock footer_treatment %}">
@@ -24,7 +25,17 @@
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="{{ presentation.browser_theme_colors.dark }}">
   {% endif %}
   <title>{{ content.title }}</title>
+  {% if presentation.chrome is defined %}
+    {% for item in presentation.chrome.footer %}
+      {% if item.key is defined and item.key == "base:generator-credit" %}
+  <meta name="generator" content="{{ item.label }}">
+      {% endif %}
+    {% endfor %}
+  {% endif %}
   <meta property="og:title" content="{{ content.title }}">
+  {% if publication_metadata %}
+  <meta property="og:site_name" content="{{ publication_metadata.brand.name }}">
+  {% endif %}
   <meta property="og:type" content="{% if content.structure.kind == 'page' and content.structure.family.kind == 'article' %}article{% else %}website{% endif %}">
   {% if content.description is defined and content.description %}
   <meta name="description" content="{{ content.description }}">
@@ -65,7 +76,6 @@
   {% include "base/partials/link-descriptions.html" %}
   {% set serving_site = content.site %}
   {% set is_search_page = presentation.search is defined and presentation.search.page is defined and presentation.search.page and presentation.search.page.content.id == content.id %}
-  {% set publication_metadata = site.metadata | default(value=false) %}
   {% set services_link = false %}
   {% if invitations is defined %}
     {% set services_link = invitations | get(key="base:services", default=false) %}

@@ -26,8 +26,12 @@ export interface SearchRecord {
   readonly body: string;
   readonly summary?: string;
   readonly projects: readonly { readonly project: { readonly id: string; readonly name?: string; readonly [key: string]: Json | undefined }; readonly [key: string]: Json | undefined }[];
-  /** Explicit emitted ranking selection; omitted only for the direct complete-corpus SDK operation. */
-  readonly indexed?: Readonly<Partial<Record<Exclude<SearchField, 'keywords' | 'projects'>, string>> & Partial<Record<'keywords' | 'projects', readonly string[]>>>;
+  /** Explicit emitted ranking selection. A body of true ranks the retained body. */
+  readonly indexed?: Readonly<Partial<Record<Exclude<SearchField, 'body' | 'keywords' | 'projects'>, string>> & {
+    body?: string | true;
+    keywords?: readonly string[];
+    projects?: readonly string[];
+  }>;
   readonly [key: string]: Json | undefined;
 }
 export interface IndexOptions {
@@ -43,7 +47,10 @@ export interface LoadOptions extends IndexOptions {
   readonly allowNetwork: true;
   /** Complete HTTP response bytes, independently bounded by MAX_SEARCH_BYTES. */
   readonly maxResponseBytes: number;
+  /** Overall acquisition deadline, in milliseconds. */
   readonly timeoutMs: number;
+  /** Optional deadline between response progress, bounded by the overall deadline. */
+  readonly idleTimeoutMs?: number;
 }
 export interface QueryOptions {
   readonly limit: number;

@@ -39,7 +39,7 @@ export function mountSocialCardMedia(doc) {
           return { rgb, light: sample.getImageData(0, 0, 1, 1).data[0] };
         }).sort((a, b) => a.light - b.light);
         raster.width = columns; raster.height = rows;
-        const scale = Math.min(width / media.videoWidth, height / media.videoHeight);
+        const scale = Math.max(width / media.videoWidth, height / media.videoHeight);
         const drawingWidth = media.videoWidth * scale, drawingHeight = media.videoHeight * scale;
         sample.filter = 'grayscale(1)';
         sample.drawImage(media, (width - drawingWidth) / 2 * columns / width,

@@ -5,8 +5,8 @@ import { loadIndex } from '@base/search-sdk';
 import { applyDestination } from './crossings.js';
 import { describeResultContext, readResultContextLabels, renderResultContext } from './result-context.js';
 
-// Work bounds: 10,000 documents / 8 MiB keep synchronous indexing finite;
-// 1 KiB queries and 20 results bound ranking and DOM work; 10 s caps acquisition.
+// The shared corpus limits bound acquisition and indexing. The command view
+// keeps its own result count to bound ranking and DOM work.
 const LIMITS = Object.freeze({ ...SEARCH_LIMITS, maxResults: 20 });
 
 // This tenant reads the compiler's search binding and immutable SDK result records.

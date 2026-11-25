@@ -78,6 +78,10 @@ export async function shell(env) {
       kind: "preferences",
       operation: async () => {
         const trigger = triggers.first();
+        // The shell exposes its trigger after the controller has attached.
+        await trigger
+          .and(page.locator(":not([hidden])"))
+          .waitFor({ state: "attached", timeout: 8000 });
         const menu = page.locator(".frame__menu");
         const openedMenu = !(await trigger.isVisible());
         if (openedMenu) {

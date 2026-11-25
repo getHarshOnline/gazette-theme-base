@@ -60,6 +60,8 @@ These cards carry their native title, description and destination without testim
 
 Product catalogues place a related `destination-set` between their main catalogue and FAQ. Each owner authors the relevant questions and resolved ecosystem links in Content; the same destination and action components render them in every world. The template invents neither related claims nor site-specific cards. An omitted declaration is a content-composition gap, not a separate card recipe.
 
+Each `catalogue-entry` starts with one linked heading. Gazette uses that heading and its resolved destination to describe the entry in the catalogue's ordered `ItemList`. Supporting links stay in the card's copy.
+
 The destination recipe owns the shared contour, inset and bottom-aligned action. Its Base template selects `card-surface`, the same optical material used by the Search form and related-reading cards. Worlds bind the bed, fill or stationary filter through `--card-surface-bed`, `--card-surface-fill` and `--card-surface-filter`. Moving and painted card surfaces use the same fill without live backdrop filtering. Contrast and transparency preferences fall back to the opaque bed.
 
 `inquiry-section` pairs an existing FAQ with an onward destination deck using the same two-to-three column split as the ambient opening. It stacks at the same narrow-screen transition.

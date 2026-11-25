@@ -33,11 +33,11 @@ async function prepare(page, { video = false, treatment = 'natural' } = {}) {
     const media = document.createElement(video ? 'video' : 'img');
     media.setAttribute('data-treatment', treatment);
     if (video) {
-      const source = document.createElement('canvas'); source.width = 300; source.height = 150;
+      const source = document.createElement('canvas'); source.width = 300; source.height = 120;
       const context = source.getContext('2d');
-      context.fillStyle = 'black'; context.fillRect(0, 0, 100, 150);
-      context.fillStyle = 'rgb(128 128 128)'; context.fillRect(100, 0, 100, 150);
-      context.fillStyle = 'white'; context.fillRect(200, 0, 100, 150);
+      context.fillStyle = 'black'; context.fillRect(0, 0, 100, source.height);
+      context.fillStyle = 'rgb(128 128 128)'; context.fillRect(100, 0, 100, source.height);
+      context.fillStyle = 'white'; context.fillRect(200, 0, 100, source.height);
       media.muted = true; media.srcObject = source.captureStream();
       const firstFrame = new Promise(resolve => media.requestVideoFrameCallback(resolve));
       await media.play();
@@ -66,7 +66,7 @@ test('natural media completes without replacing or hiding its decoded original',
   assert.deepEqual(await page.evaluate(() => ({ same: original === document.querySelector('[data-social-card-media]').firstElementChild, hidden: original.hidden, canvases: document.querySelectorAll('canvas').length })), { same: true, hidden: false, canvases: 0 });
 }));
 
-test('monochrome video reuses film tones, keeps photographic light and completes only once', async () => {
+test('monochrome video fills the frame, keeps photographic light and completes only once', async () => {
   for (const dark of [false, true]) await card(async page => {
     await prepare(page, { video: true, treatment: 'monochrome' });
     if (dark) await page.evaluate(() => {
@@ -76,7 +76,7 @@ test('monochrome video reuses film tones, keeps photographic light and completes
     assert.deepEqual(await page.evaluate(() => finish()), { status: 'complete' });
     const pixels = await page.evaluate(() => {
       const canvas = document.querySelector('[data-social-card-media] canvas'), context = canvas.getContext('2d');
-      return { dark: [...context.getImageData(50, 75, 1, 1).data], light: [...context.getImageData(250, 75, 1, 1).data], hidden: original.hidden, display: getComputedStyle(original).display };
+      return { dark: [...context.getImageData(50, 2, 1, 1).data], light: [...context.getImageData(250, 147, 1, 1).data], hidden: original.hidden, display: getComputedStyle(original).display };
     });
     assert.deepEqual(pixels, { dark: [30, 40, 35, 255], light: [240, 235, 220, 255], hidden: true, display: 'none' });
     assert.equal(await page.evaluate(() => finish()), undefined);

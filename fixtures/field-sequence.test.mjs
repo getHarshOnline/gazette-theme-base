@@ -56,7 +56,7 @@ function environment({ hash='', overflow=false, reduced=false, top=0 }={}) {
   Object.assign(window, { requestAnimationFrame, cancelAnimationFrame });
   install('ResizeObserver',class{constructor(fn){this.fn=fn;observer=this;}observe(){}disconnect(){this.disconnected=true;}});
   const field={presets:Array.from({length:7},(_,i)=>({camZ:8+i,stream:.2+i*.1})),sceneSpan:1.85,blendStart:.5,blendEnd:.95,fadeStart:.7,fadeEnd:1,closeSpan:.85,pixelRatio:1.5,pixelRatioHigh:1.2};
-  const createRenderer=opts=>{callbacks=opts;const renderer={canvas:new Node(),render(frame){draws.push(frame);if(env.failDraw)throw new Error('render unavailable');return !env.noDraw;},dispose(){disposals.push(renderer);}};return renderer;};
+  const createRenderer=opts=>{callbacks=opts;const renderer={canvas:new Node(),render(frame){draws.push(frame);if(env.failDraw)throw new Error('render unavailable');return env.pending?null:!env.noDraw;},dispose(){disposals.push(renderer);}};return renderer;};
   const env={wrapper,story,stage,sections,headings,copies,notes,closing,action,draws,rafs,media,fine,tokens,field,createRenderer,disposals,Node,
     get callbacks(){return callbacks;},get observer(){return observer;},get listenerCount(){return listeners.size;},
     mount(){return mountFieldSequence({element:stage,field,pixelRatio:r=>Math.min(r,1.5),createRenderer,lighting:{}});},
@@ -168,6 +168,24 @@ test('turning motion back on respects navigation performed in the static documen
 
 test('a renderer that cannot draw never hides the native document',()=>{
   const e=environment();try{e.noDraw=true;const dispose=e.mount();assert.notEqual(e.wrapper.dataset.islandState,'drawn');assert.ok(e.sections.every(s=>!s.inert));assert.equal(e.rafs.size,0);dispose();}finally{e.restore();}
+});
+
+test('pending shader work keeps the native sections open and starts the field clock at its first draw',()=>{
+  const e=environment();
+  try{
+    e.pending=true;
+    const dispose=e.mount();
+    e.tick(100);e.tick(200);
+    assert.notEqual(e.wrapper.dataset.islandState,'drawn');
+    assert.ok(e.sections.every(section=>!section.inert));
+    assert.ok(e.draws.every(frame=>frame.time===0));
+    e.pending=false;e.tick(300);
+    assert.equal(e.wrapper.dataset.islandState,'drawn');
+    assert.equal(e.draws.at(-1).intro,0);
+    e.tick(400);
+    assert.ok(e.draws.at(-1).time>0);
+    dispose();
+  }finally{e.restore();}
 });
 
 test('fit checks use resting composition instead of rejecting inactive exit transforms',()=>{

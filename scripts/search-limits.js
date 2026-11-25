@@ -1,7 +1,6 @@
 import { MAX_SEARCH_BYTES } from './vendor/gazette-search/corpus.mjs';
 
-// Use the SDK's complete-corpus byte ceiling for acquisition and capture.
-// Each presentation supplies its own
-// result count: the command view's limit or the full page's configured page size.
+// The complete corpus can take longer to transfer on a slow connection.
+// A stalled response still reaches the retry control after ten seconds.
 export const SEARCH_LIMITS = Object.freeze({ maxDocuments: 10000, maxBytes: MAX_SEARCH_BYTES,
-  maxQueryBytes: 1024, maxResponseBytes: MAX_SEARCH_BYTES, timeoutMs: 10000 });
+  maxQueryBytes: 1024, maxResponseBytes: MAX_SEARCH_BYTES, timeoutMs: 20000, idleTimeoutMs: 10000 });
