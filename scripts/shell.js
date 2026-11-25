@@ -14,6 +14,7 @@ import { mountDiscoveryExplorers } from './discovery-explorer.js';
 import { mountArticleListings } from './article-listing.js';
 import { mountCrossings } from './crossings.js';
 import { mountReturnFocus, rememberSearchReturn } from './return-focus.js';
+import { startSearchWorker } from './search-worker-client.js';
 
 mountCrossings();
 let restoreSearchFromHistory = null;
@@ -33,9 +34,20 @@ document.querySelectorAll('[data-search-shortcut]').forEach(hint => {
 });
 const fullSearchPage = document.querySelector('.search-page');
 if (fullSearchPage) {
-  void import('@base/search').then(({ mountSearchPage }) => {
-    mountSearchPage(fullSearchPage, JSON.parse(document.getElementById('search-corpus')?.textContent || 'null'));
-  }).catch(() => { /* The HTML catalogue remains usable when enhancement cannot load. */ });
+  const corpus = document.getElementById('search-corpus');
+  const enhance = async () => {
+    const binding = JSON.parse(corpus?.textContent || 'null');
+    const workerURL = corpus?.dataset?.searchWorker;
+    const preparation = startSearchWorker(workerURL, binding,
+      Number(fullSearchPage.getAttribute('data-search-page-size')));
+    try {
+      const { mountSearchPage } = await import('@base/search');
+      if (!mountSearchPage(fullSearchPage, binding, { preparation, workerURL })) {
+        preparation?.close();
+      }
+    } catch { preparation?.close(); }
+  };
+  void enhance().catch(() => { /* Keep the native catalogue when the binding cannot be read. */ });
 }
 
 // The same navigation remains usable without scripts. CSS decides when its
@@ -139,6 +151,8 @@ mountReadingFocus({ position: readingPosition, navigation: readingNavigation });
 const shell = document.querySelector('[data-shell]');
 let dismissForNavigation = null;
 if (shell) {
+  const template = document.getElementById?.('publication-dialog');
+  if (template) shell.append(template.content.cloneNode(true));
   const dialog = shell.querySelector('dialog');
   const title = shell.querySelector('.shell__title');
   const settings = shell.querySelector('[data-tenant="settings"]');
@@ -273,6 +287,7 @@ if (shell) {
         summon(name, trigger);
       });
     }
+    document.dispatchEvent(new Event('publication-shell-ready'));
     document.addEventListener('keydown', event => {
       if (event.isComposing || event.altKey || event.shiftKey || !(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'k') return;
       if (dialog.open) return;

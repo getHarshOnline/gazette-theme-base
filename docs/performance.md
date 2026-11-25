@@ -61,3 +61,15 @@ Compare the same emitted page and conditions before and after one delivery chang
 Keep image geometry, fonts, modes and animation in the comparison. A faster result caused by a failed image or a missing stylesheet is a defect, not an optimization. Then use the [capture and interaction workflow](../README.md#shared-verification-entrypoint) to inspect the affected pages and controls across their supported conditions. This stationary loading recorder does not scroll through pages, exercise controls, audit indexing or replace that review.
 
 For the metric definitions and browser prerequisites, see [LCP diagnosis](https://web.dev/articles/optimize-lcp), [CLS session windows](https://web.dev/articles/cls), and [Playwright’s browser installation guide](https://playwright.dev/docs/browsers).
+
+## Record a reading and scroll trace
+
+[The browser performance runner](../fixtures/performance.mjs) accepts a composing workspace’s manifest. The workspace supplies resolved page URLs, the selected page types, viewport and throttle conditions, and the theme cases. Base opens a fresh context per case, reads the loading profile, measures forward and reverse scroll, and records sample keyboard interaction timing. For a Search case it submits the supplied query and waits for the intended route to appear in the updated results. Each reading region must scroll in both directions. A world case can name its own regions and paths to its frames. The report keeps frame requests and cancellations beside scroll timing.
+
+The compact timeline keeps the measured phase boundaries and paints. Pass `--raw-trace` to the runner to keep the native Chrome timeline too, with the same scroll labels as User Timing measures. A short lab interaction is a sample, and an animation-callback interval is a pacing signal. Use the trace to investigate compositor delivery. Read a saved benchmark with `node fixtures/performance.mjs --benchmark /path/to/benchmark.json --out /path/to/timeline.json`. Use the neutral browser test to verify the recorder and both exports:
+
+```sh
+node --test fixtures/performance-browser.test.mjs
+```
+
+Run `node --test fixtures/page-cache-browser.test.mjs` for the cache’s version-switching browser fixture. It records origin requests and HTML body bytes for cold and warm visits with the worker blocked and enabled. Online navigation revalidates even a recently removed route. Verified local copies support an offline visit. Use the fixture to check those behaviours, then measure the published host’s warm journey under its own HTTP cache policy.

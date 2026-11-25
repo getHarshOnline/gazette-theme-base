@@ -4,7 +4,7 @@
 {% import "base/macros/connections.html" as connections %}
 {% set publication_metadata = presentation.publication | default(value=false) %}
 <!doctype html>
-<html{% if publication_metadata.language is defined %} lang="{{ publication_metadata.language }}"{% endif %}{% if presentation.palette %} data-palette="{{ presentation.palette }}"{% endif %} data-page-mode="index"><head>
+<html data-mode="system"{% if publication_metadata.language is defined %} lang="{{ publication_metadata.language }}"{% endif %}{% if presentation.palette %} data-palette="{{ presentation.palette }}"{% endif %} data-page-mode="index"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 {% set graph_title = presentation.chrome.regions | get(key="base:graph-title", default="") %}
 <title>{{ graph_title }}</title>
@@ -12,7 +12,7 @@
 {% include "base/partials/resources.html" %}
 {% block head_extra %}{% endblock head_extra %}
 </head><body>
-{% include "base/partials/link-descriptions.html" %}
+
 {% set serving_site = site %}
 <a class="skip-link" href="#main">{{ presentation.chrome.skip_to_content_label }}</a>
 {% include "base/partials/header.html" %}
@@ -78,5 +78,7 @@
 </ul>
 {% endif %}
 </main>
+{% include "base/partials/link-descriptions.html" %}
+{% include "base/partials/shell-dialog.html" %}
 {% include "base/partials/footer.html" %}
 </body></html>

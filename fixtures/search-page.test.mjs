@@ -95,6 +95,67 @@ function carouselPage(){
  return{...f,previous,next,matches,restore(){for(const [key,descriptor]of Object.entries(originals)){if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];}}};
 }
 
+test('a reader below Search keeps the native catalogue until returning to the top', async () => {
+ const s = await server([record(0)]), f = page();
+ const oldWindow = globalThis.window, oldDocument = globalThis.document;
+ globalThis.window = f.window;
+ globalThis.document = { createElement: tag => new Element(tag), createElementNS: (_ns, tag) => new Element(tag), getElementById: () => null };
+ try {
+  f.window.scrollY = 500;
+  mountSearchPage(f.root, { url: s.url, profile: 'lexical' });
+  await until(() => !f.form.hidden);
+  assert.equal(f.fallback.hidden, false);
+  assert.equal(f.list.hidden, true);
+  f.window.scrollY = 0;
+  f.events.scroll();
+  assert.equal(f.fallback.hidden, true);
+  assert.equal(f.list.hidden, false);
+ } finally {
+  globalThis.window = oldWindow;
+  globalThis.document = oldDocument;
+  await s.close();
+ }
+});
+
+test('delayed Search keeps the catalogue and ignores an older worker result', async () => {
+ const f = page(), requests = new Map();
+ const index = createIndex([record(0), record(1)], bounds);
+ const ready = Promise.withResolvers();
+ const preparation = {
+  ready: ready.promise,
+  browse(query, options) {
+   const reply = Promise.withResolvers();
+   requests.set(query, () => reply.resolve(index.browse(query, options)));
+   return reply.promise;
+  },
+ };
+ const oldWindow = globalThis.window, oldDocument = globalThis.document;
+ globalThis.window = f.window;
+ globalThis.document = { createElement: tag => new Element(tag), getElementById: () => null };
+ try {
+  mountSearchPage(f.root, { url: 'https://example.test/search.json', profile: 'lexical' }, { preparation });
+  assert.equal(f.form.hidden, false);
+  f.input.value = 'Question 0';
+  f.input.fire('input');
+  assert.equal(f.fallback.hidden, false);
+  ready.resolve();
+  await until(() => requests.has('Question 0'));
+  f.input.value = 'Question 1';
+  f.input.fire('input');
+  f.flushFrames();
+  requests.get('Question 1')();
+  await until(() => f.fallback.hidden);
+  requests.get('Question 0')();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(f.input.value, 'Question 1');
+  assert.equal(new URL(f.window.location.href).searchParams.get('q'), 'Question 1');
+  assert.equal(f.list.children[0].children[0].children.find(node => node.tag === 'h2').children[0].textContent, 'Question 1');
+ } finally {
+  globalThis.window = oldWindow;
+  globalThis.document = oldDocument;
+ }
+});
+
 test('full page replaces the native catalogue only after complete load; paging and Back keep one index',async()=>{
  const s=await server(Array.from({length:35},(_,i)=>record(i))),f=page();const oldWindow=globalThis.window,oldDocument=globalThis.document;
  globalThis.window=f.window;globalThis.document={createElement:tag=>new Element(tag),createElementNS:(_ns,tag)=>new Element(tag),getElementById:()=>null};

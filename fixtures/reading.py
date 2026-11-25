@@ -1008,7 +1008,7 @@ def verify(output, base_url="https://example.test/mount/", model=None, namespace
     nested_context = region(read("nested"), "reading-context")
     assert 'Root corpus' in nested_context, 'the actual parent remains reachable'
     assert 'Nested corpus' not in nested_context, 'the title is already the page heading'
-    binding = json.loads(re.search(r'<script type="application/json" id="search-corpus">(.*?)</script>', first, re.S).group(1))
+    binding = json.loads(re.search(r'<script type="application/json" id="search-corpus"[^>]*>(.*?)</script>', first, re.S).group(1))
     assert binding["url"] == base_url + "search.json"
     assert binding["profile"] == "english"
     corpus = json.loads((output / "search.json").read_text())

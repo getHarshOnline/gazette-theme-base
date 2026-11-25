@@ -53,7 +53,7 @@ export function profileArguments(args) {
 }
 
 function observeLoading() {
-  const result = { candidates: [], cls: 0, shifts: 0, shiftSources: [], longTasks: { count: 0, totalMs: 0, longestMs: 0 }, truncated: false };
+  const result = { candidates: [], cls: 0, shifts: 0, shiftSources: [], longTasks: { count: 0, totalMs: 0, longestMs: 0 }, truncated: false, interactions: [] };
   window.__gazetteLoadingProfile = result;
   performance.setResourceTimingBufferSize(1000);
   new PerformanceObserver(list => {
@@ -84,6 +84,23 @@ function observeLoading() {
       result.longTasks.longestMs = Math.max(result.longTasks.longestMs, entry.duration);
     }
   }).observe({ type: 'longtask', buffered: true });
+  function recordInteractions(list) {
+    for (const entry of list.getEntries()) {
+      if (!entry.interactionId) continue;
+      const existing = result.interactions.find(item => item.id === entry.interactionId);
+      if (existing) existing.durationMs = Math.max(existing.durationMs, entry.duration);
+      else if (result.interactions.length < 128) result.interactions.push({
+        id: entry.interactionId, name: entry.name, timeMs: entry.startTime, durationMs: entry.duration,
+      });
+      else result.truncated = true;
+    }
+  }
+  if (PerformanceObserver.supportedEntryTypes.includes('event')) {
+    const interactions = new PerformanceObserver(recordInteractions);
+    interactions.observe({ type: 'event', durationThreshold: 16, buffered: true });
+    const firstInput = new PerformanceObserver(recordInteractions);
+    firstInput.observe({ type: 'first-input', buffered: true });
+  }
 }
 
 function loadingState() {
@@ -95,6 +112,13 @@ function loadingState() {
   }).map(image => image.currentSrc || image.src);
   return { nowMs: performance.now(), ready: document.readyState, fonts: document.fonts.status,
     lastPaintMs: window.__gazetteLoadingProfile?.candidates.at(-1)?.timeMs ?? 0, pendingImages };
+}
+
+function readObservation(page) {
+  return page.evaluate(() => ({ ...window.__gazetteLoadingProfile,
+    paints: performance.getEntriesByType('paint').map(entry => entry.toJSON()),
+    navigation: performance.getEntriesByType('navigation')[0]?.toJSON(),
+    resources: performance.getEntriesByType('resource').map(entry => entry.toJSON()) }));
 }
 
 /** Keep every recorded outcome separate: cancellation is not a completed download. */
@@ -118,11 +142,12 @@ export function requestSummary(requests) {
 
 export async function profilePage(browser, url, options) {
   const context = await browser.newContext({ viewport: { width: options.width, height: options.height },
-    deviceScaleFactor: 1, isMobile: true, hasTouch: true, colorScheme: options.mode, serviceWorkers: 'block' });
+    deviceScaleFactor: options.deviceScaleFactor ?? 1, isMobile: options.mobile ?? true,
+    hasTouch: options.touch ?? true, colorScheme: options.mode, serviceWorkers: 'block' });
   const records = [], current = new Map(), errors = [];
-  let state = null, observed = null, error = null, settled = false, truncated = false, cdp;
+  let state = null, observed = null, error = null, settled = false, truncated = false, cdp, exercised = null, finishTrace;
   // Closing this isolated context also interrupts an unresponsive evaluation.
-  const watchdog = setTimeout(() => { void context.close().catch(() => {}); }, options.timeoutMs + 5000);
+  const watchdog = setTimeout(() => { void context.close().catch(() => {}); }, options.timeoutMs + (options.exercise ? 20000 : 5000));
   watchdog.unref();
   try {
     if(options.delayMs || options.allowedOrigins) await context.route('**/*',async route=>{
@@ -135,7 +160,7 @@ export async function profilePage(browser, url, options) {
     const page = await context.newPage();
     cdp = await context.newCDPSession(page);
     await cdp.send('Network.enable');
-    await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
+    await cdp.send('Network.setCacheDisabled', { cacheDisabled: options.disableCache ?? true });
     await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: options.network.latency,
       downloadThroughput: options.network.downloadKbps === null ? -1 : options.network.downloadKbps * 1024 / 8,
       uploadThroughput: options.network.uploadKbps === null ? -1 : options.network.uploadKbps * 1024 / 8 });
@@ -170,24 +195,33 @@ export async function profilePage(browser, url, options) {
     });
     page.on('pageerror', failure => { if (errors.length < 100) errors.push(failure.message); else truncated = true; });
     await page.addInitScript(observeLoading);
+    finishTrace = await options.startTrace?.();
     const deadline = Date.now() + options.timeoutMs;
     await page.goto(url, { waitUntil: 'commit', timeout: Math.min(15000, options.timeoutMs) });
+    if (options.kind === 'alias') {
+      await page.waitForURL(address => address.href !== url, {
+        waitUntil: 'commit', timeout: Math.max(1, deadline - Date.now()),
+      });
+    }
     do {
       await page.waitForTimeout(100);
       state = await page.evaluate(loadingState);
       settled = state.ready === 'complete' && state.fonts === 'loaded' && state.lastPaintMs > 0 &&
         state.nowMs - state.lastPaintMs >= options.settleMs && !state.pendingImages.length;
     } while (!settled && !truncated && Date.now() < deadline);
-    observed = await page.evaluate(() => ({ ...window.__gazetteLoadingProfile,
-      paints: performance.getEntriesByType('paint').map(entry => entry.toJSON()),
-      navigation: performance.getEntriesByType('navigation')[0]?.toJSON(),
-      resources: performance.getEntriesByType('resource').map(entry => entry.toJSON()) }));
+    observed = await readObservation(page);
+    // A late asset can leave loading incomplete after the reading surface is usable.
+    const readyToExercise = state.ready !== 'loading' && state.lastPaintMs > 0;
+    if (options.exercise && readyToExercise) {
+      exercised = await options.exercise(page, cdp);
+      observed = await readObservation(page);
+    }
   } catch (failure) { error = failure.message; }
   finally {
     clearTimeout(watchdog);
     // Browser teardown must not relabel requests pending at the capture boundary.
     cdp?.removeAllListeners();
-    await context.close();
+    try { await finishTrace?.(); } finally { await context.close(); }
   }
   const start = records[0]?.start ?? 0;
   const requests = records.map(({ start: begin, response, end, ...request }) => ({ ...request,
@@ -197,7 +231,7 @@ export async function profilePage(browser, url, options) {
   return { url, settled, error, truncated: truncated || observed?.truncated || false, capture: state,
     lcp: observed?.candidates.at(-1) ?? null,
     fcpMs: observed?.paints.find(entry => entry.name === 'first-contentful-paint')?.startTime ?? null,
-    observed, requests, summary, pageErrors: errors };
+    observed, requests, summary, pageErrors: errors, ...(options.exercise ? { exercised } : {}) };
 }
 
 export const failedCapture = row => !row.settled || row.error || row.truncated ||

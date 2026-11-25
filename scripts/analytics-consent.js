@@ -177,8 +177,9 @@ if (typeof document !== 'undefined') {
     const tenant = shell?.querySelector('[data-tenant="settings"]');
     if (tenant && dialog && typeof dialog.showModal === 'function' && trigger && !trigger.hidden) {
       mountAnalyticsConsent(tenant);
+      return true;
     }
+    return false;
   };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, { once: true });
-  else mount();
+  if (!mount()) document.addEventListener('publication-shell-ready', mount, { once: true });
 }

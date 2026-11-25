@@ -7,7 +7,7 @@
 {% set recovery_home = publication_metadata.home | default(value=false) %}
 {% set recovery_search = not_found.search_url | default(value=false) %}
 <!doctype html>
-<html{% if publication_metadata.language is defined %} lang="{{ publication_metadata.language }}"{% endif %}{% if presentation.palette %} data-palette="{{ presentation.palette }}"{% endif %} data-page-mode="utility" data-footer-treatment="quiet">
+<html data-mode="system"{% if publication_metadata.language is defined %} lang="{{ publication_metadata.language }}"{% endif %}{% if presentation.palette %} data-palette="{{ presentation.palette }}"{% endif %} data-page-mode="utility" data-footer-treatment="quiet">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -28,7 +28,7 @@
 </head>
 <body>
   <a class="skip-link" href="#main">{{ presentation.chrome.skip_to_content_label }}</a>
-  {% include "base/partials/link-descriptions.html" %}
+
   {% include "base/partials/header.html" %}
   <main id="main" tabindex="-1" data-surface="not-found">
     <hgroup class="title-group">
@@ -46,6 +46,8 @@
     </p>
     {% endif %}
   </main>
+{% include "base/partials/link-descriptions.html" %}
+{% include "base/partials/shell-dialog.html" %}
   {% include "base/partials/footer.html" %}
 </body>
 </html>

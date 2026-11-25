@@ -115,7 +115,8 @@ function fixture({ nativeOpen = false, searchReturn = false, mediaView = false, 
     shell.selectors.set('[data-tenant]', [notes, settings, media]);
   }
   const searchActivations = [], searchSaves = [];
-  const context = vm.createContext({ document, window, navigator: { platform }, location: window.location, URL,
+  document.dispatchEvent = event => document.fire(event.type, event);
+  const context = vm.createContext({ document, window, Event, navigator: { platform }, location: window.location, URL,
     get scrollY() { return window.scrollY; }, get scrollX() { return window.scrollX; },
     requestAnimationFrame: callback => callback(), queueMicrotask: callback => callback(),
     getComputedStyle: element => ({ display: element === menu ? 'inline-flex' : 'block', position: element === header ? 'sticky' : 'static' }),

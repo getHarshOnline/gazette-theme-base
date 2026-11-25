@@ -30,7 +30,11 @@
   .search-page { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0,1fr); gap: var(--space-4); min-inline-size: 0; }
   .search-page__discovery { position: relative; min-inline-size: 0; }
   .search-page > :not(.search-page__field) { position: relative; }
-  .search-page__discovery:has(form:not([hidden])) { display: grid; place-items: center; min-block-size: min(calc(var(--layout-search-viewport-share) * 100svh),var(--layout-search-frame-max)); padding: var(--space-6) var(--space-4); }
+  @media screen and (scripting: enabled) {
+    main:has(.search-page) { min-block-size: calc(100svh - var(--frame-chrome,0px)); }
+    .search-page__status { min-block-size: 1lh; }
+    .search-page__discovery { display: grid; place-items: center; min-block-size: min(calc(var(--layout-search-viewport-share) * 100svh),var(--layout-search-frame-max)); padding: var(--space-6) var(--space-4); }
+  }
   .search-page__center { position: relative; z-index: 1; inline-size: min(100%,var(--layout-search-center-width)); display: grid; gap: var(--space-4); }
   .search-page__center:not(:has(> form:not([hidden]))) { display: none; }
   .search-page__center:has(form:not([hidden])) { --card-surface-bed: var(--color-paper); padding: var(--space-5); @include optical.frame($radius: var(--radius-preview-frame)); }
@@ -47,8 +51,10 @@
   .search-page__reset { justify-self: start; min-block-size: var(--target-project); align-content: center; }
   // Keep the count and pagination readable over the decorative field.
   .search-page__summary { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-3) var(--space-5); font-size: var(--type-size-meta); background: var(--color-paper); }
-  // While loading or unavailable, the status reports on the full-width fallback catalogue.
-  .search-page:has(.search-page__form:not([hidden])) .search-page__summary { inline-size: min(100%,var(--layout-search-center-width)); margin-inline: auto; }
+  // Reserve the enhanced panel during loading, with no space added to the no-script catalogue.
+  @media screen and (scripting: enabled) {
+    .search-page__summary { inline-size: min(100%,var(--layout-search-center-width)); margin-inline: auto; }
+  }
   .search-page__summary > p,.search-page__pagination > p { margin: 0; }
   // The retry is the next action for the status it follows.
   .search-page__retry { margin-inline-end: auto; }
@@ -105,7 +111,7 @@
   .search-page__pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); inline-size: min(100%,var(--layout-search-center-width)); margin-inline: auto; font-size: var(--type-size-meta); }
   .search-page__summary .search-page__pagination { inline-size: auto; margin-inline: 0; }
   @media (width < layout.$layout-breakpoint-navigation) {
-    .search-page__discovery:has(form:not([hidden])) { padding-inline: 0; }
+    .search-page__discovery { padding-inline: 0; }
     .search-page__center { padding-inline: var(--space-3); }
     .search-page__filters { grid-template-columns: minmax(0,1fr); }
   }

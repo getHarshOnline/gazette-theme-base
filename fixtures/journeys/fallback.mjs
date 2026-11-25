@@ -1,3 +1,4 @@
+import { setTimeout as delay } from "node:timers/promises";
 import { must as requireState } from "./support.mjs";
 import { imageSettled } from "../lib/browser.mjs";
 export async function fallback(env) {
@@ -25,7 +26,7 @@ export async function fallback(env) {
       return true;
     });
     if (!visible) continue;
-    await imageSettled(image, 1000);
+    await Promise.race([imageSettled(image, 1000), delay(1000)]);
     const value = await image.evaluate((image) => ({
       src: image.currentSrc || image.src,
       loaded: image.complete && image.naturalWidth > 0,
@@ -441,15 +442,18 @@ export async function fallback(env) {
               : null,
           };
         }),
-        figures: [...main.querySelectorAll("figure")].map((element) => ({
-          visible: element.getBoundingClientRect().height > 0,
-          caption: element.querySelector("figcaption")?.innerText.trim() ?? "",
-          media: [...element.querySelectorAll("img,svg")].some(
-            (node) =>
+        figures: [...main.querySelectorAll("figure")].map((element) => {
+          const images = [...element.querySelectorAll("img,svg")];
+          return {
+            visible: element.getBoundingClientRect().height > 0,
+            caption: element.querySelector("figcaption")?.innerText.trim() ?? "",
+            media: images.some((node) =>
               node.getBoundingClientRect().width > 0 &&
               node.getBoundingClientRect().height > 0,
-          ),
-        })),
+            ),
+            textOnly: images.length === 0 && element.innerText.trim().length > 0,
+          };
+        }),
         notes: [...main.querySelectorAll(".reading-notes__body")].map(
           (element) => ({
             visible: element.getBoundingClientRect().height > 0,
@@ -498,9 +502,9 @@ export async function fallback(env) {
     }
     requireState(
       content.figures.every(
-        (figure) => figure.visible && figure.caption && figure.media,
+        (figure) => figure.visible && (figure.textOnly || (figure.caption && figure.media)),
       ),
-      "Native figure lacks its readable graphic or caption.",
+      "Native figure lacks readable text or a visible graphic with its caption.",
     );
     row.checks.push({ kind: "article-fallback", counts, ...content });
     for (const selector of [

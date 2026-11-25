@@ -60,6 +60,16 @@ export = "mount"
 mount = "load"
 
 [[resources]]
+id = "module:publication-worker"
+inputs = ["scripts/publication-worker.js"]
+build = { kind = "browser-module", entry = "scripts/publication-worker.js" }
+
+[[resources]]
+id = "module:page-cache-client"
+inputs = ["scripts/page-cache-client.js"]
+build = { kind = "browser-module", entry = "scripts/page-cache-client.js" }
+
+[[resources]]
 id = "module:preview-tabs"
 inputs = ["scripts/preview-tabs.js"]
 build = { kind = "browser-module", entry = "scripts/preview-tabs.js" }
@@ -121,12 +131,17 @@ build = { kind = "browser-module", entry = "scripts/frames.js" }
 
 [[resources]]
 id = "module:search"
-inputs = ["scripts/carousel-controls.js", "scripts/canvas-size.js", "scripts/in-view.js", "scripts/search.js", "scripts/search-page.js", "scripts/search-explorer.js", "scripts/depth-carousel.js", "scripts/search-pond.js", "shared/pond-engine.mjs", "scripts/surface-ripples.js", "scripts/search-limits.js", "scripts/search-matching.js", "scripts/result-context.js", "scripts/crossings.js", "scripts/return-focus.js", "scripts/motion-preference.js", "scripts/vendor/gazette-search/corpus.mjs"]
+inputs = ["scripts/carousel-controls.js", "scripts/canvas-size.js", "scripts/in-view.js", "scripts/search.js", "scripts/search-page.js", "scripts/search-explorer.js", "scripts/depth-carousel.js", "scripts/search-pond.js", "shared/pond-engine.mjs", "scripts/surface-ripples.js", "scripts/search-limits.js", "scripts/search-matching.js", "scripts/search-worker-client.js", "scripts/result-context.js", "scripts/crossings.js", "scripts/return-focus.js", "scripts/motion-preference.js", "scripts/vendor/gazette-search/corpus.mjs"]
 build = { kind = "browser-module", entry = "scripts/search.js", imports = { "@base/search-sdk" = "module:search-sdk" } }
 
 [[resources]]
+id = "module:search-worker"
+inputs = ["scripts/search-worker.js", "scripts/vendor/gazette-search/index.mjs", "scripts/vendor/gazette-search/corpus.mjs", "scripts/vendor/gazette-search/load.mjs", "scripts/vendor/gazette-search/browse.mjs", "scripts/vendor/gazette-search/vendor/elasticlunr.mjs"]
+build = { kind = "browser-module", entry = "scripts/search-worker.js" }
+
+[[resources]]
 id = "module:shell"
-inputs = ["scripts/carousel-controls.js", "scripts/in-view.js", "scripts/shell.js", "scripts/deferred-search.js", "scripts/article-listing.js", "scripts/depth-carousel.js", "scripts/discovery-explorer.js", "scripts/reading-disclosures.js", "scripts/selection-assistance.js", "scripts/reading-position.js", "scripts/reading-navigation.js", "scripts/reading-focus.js", "scripts/media-viewer.js", "scripts/reading-overflow.js", "scripts/focus-reveal.js", "scripts/quote-deck.js", "scripts/carousel-playback.js", "scripts/folder-card.js", "scripts/card-shape.js", "scripts/crossings.js", "scripts/return-focus.js", "scripts/css-time.js", "scripts/motion-preference.js"]
+inputs = ["scripts/carousel-controls.js", "scripts/in-view.js", "scripts/shell.js", "scripts/deferred-search.js", "scripts/search-worker-client.js", "scripts/search-limits.js", "scripts/vendor/gazette-search/corpus.mjs", "scripts/article-listing.js", "scripts/depth-carousel.js", "scripts/discovery-explorer.js", "scripts/reading-disclosures.js", "scripts/selection-assistance.js", "scripts/reading-position.js", "scripts/reading-navigation.js", "scripts/reading-focus.js", "scripts/media-viewer.js", "scripts/reading-overflow.js", "scripts/focus-reveal.js", "scripts/quote-deck.js", "scripts/carousel-playback.js", "scripts/folder-card.js", "scripts/card-shape.js", "scripts/crossings.js", "scripts/return-focus.js", "scripts/css-time.js", "scripts/motion-preference.js"]
 build = { kind = "browser-module", entry = "scripts/shell.js", imports = { "@base/settings" = "module:settings", "@base/search" = "module:search" } }
 
 [[resources]]
@@ -473,3 +488,9 @@ arguments = { type = "object", additionalProperties = false }
 id = "module:search-sdk"
 inputs = ["scripts/vendor/gazette-search/index.mjs", "scripts/vendor/gazette-search/corpus.mjs", "scripts/vendor/gazette-search/load.mjs", "scripts/vendor/gazette-search/browse.mjs", "scripts/vendor/gazette-search/vendor/elasticlunr.mjs"]
 build = { kind = "browser-module", entry = "scripts/vendor/gazette-search/index.mjs" }
+
+
+[components.poster-variant]
+template = "components/poster-variant.html"
+presentation_only = true
+arguments = { type = "object", additionalProperties = false }

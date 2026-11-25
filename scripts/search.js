@@ -1,7 +1,6 @@
 export { mountSearchPage } from './search-page.js';
 import { SEARCH_LIMITS } from './search-limits.js';
 import { SEARCH_MATCHING } from './search-matching.js';
-import { loadIndex } from '@base/search-sdk';
 import { applyDestination } from './crossings.js';
 import { describeResultContext, readResultContextLabels, renderResultContext } from './result-context.js';
 
@@ -138,9 +137,9 @@ export function mountSearch(tenant, binding, dismiss, rememberResult) {
     if (index || pending) { render(); return; }
     failed = false;
     message('loading');
-    pending = loadIndex(binding.url, {
+    pending = import('@base/search-sdk').then(({ loadIndex }) => loadIndex(binding.url, {
       ...LIMITS, profile: binding.profile, allowNetwork: true
-    }).then(value => { index = value; }, () => { failed = true; }).finally(() => {
+    })).then(value => { index = value; }, () => { failed = true; }).finally(() => {
       pending = null;
       render();
     });

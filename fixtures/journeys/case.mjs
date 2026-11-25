@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { join } from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 import { must, observeInteractions } from "./support.mjs";
 import { httpURL } from "../lib/args.mjs";
 import { shell } from "./shell.mjs";
@@ -131,12 +132,13 @@ export async function runCase(browser, item, suite, options) {
           (item.kind === "not-found" && response?.status() === 404),
         `Navigation returned ${response?.status()}.`,
       );
-      await page.evaluate(() =>
+      const fonts = page.evaluate(() =>
         Promise.race([
           document.fonts.ready,
           new Promise((resolve) => setTimeout(resolve, 1500)),
         ]),
       );
+      await (suite === "nojs" ? Promise.race([fonts, delay(1500)]) : fonts);
     };
     const snap = async (label, target) => {
       requireTime();
@@ -205,7 +207,24 @@ export async function runCase(browser, item, suite, options) {
     };
     const followAndBack = async (link) => {
       requireTime();
-      await awaitEnquiryTarget(link);
+      if (suite === "nojs") {
+        // Native links can move during a finite CSS entrance, even with scripts off.
+        const settledBy = Date.now() + 3500;
+        const moving = () => link.evaluate((anchor) => {
+          for (let node = anchor; node; node = node.parentElement) {
+            if (node.getAnimations().some((animation) =>
+              animation.playState === "running" &&
+              Number.isFinite(animation.effect?.getComputedTiming().endTime),
+            )) return true;
+          }
+          return false;
+        });
+        while (await moving()) {
+          requireTime();
+          must(Date.now() < settledBy, "Native navigation did not settle.");
+          await delay(50);
+        }
+      } else await awaitEnquiryTarget(link);
       const source = page.url(),
         target = localURL(await link.getAttribute("href"));
       await Promise.all([
@@ -220,7 +239,7 @@ export async function runCase(browser, item, suite, options) {
         source,
         target,
         async back() {
-          await page.goBack({ waitUntil: "domcontentloaded" });
+          await page.goBack({ waitUntil: suite === "nojs" ? "load" : "domcontentloaded" });
           must(page.url() === source, "Back lost the source page.");
         },
       };
@@ -411,33 +430,18 @@ export async function runCase(browser, item, suite, options) {
             kind: "motion",
             operation: () => reviewPortraitContinuity({ ...item, env }),
           });
-        const recipes = await page
+        const recipes = item.motion === "reduce" ? [] : item.films ?? await page
           .locator("[data-film-layout]")
-          .evaluateAll((nodes) =>
-            nodes.map((node, sceneIndex) => ({
-              sceneIndex,
-              layout: node.dataset.filmLayout,
-              recipe: node.querySelector(
-                'script[type="application/json"]:not([data-cinematic-frames])',
-              )?.textContent,
-            })),
-          );
-        for (const recipe of item.motion === "reduce" ? [] : (item.films ?? []))
+          .evaluateAll(nodes => nodes.flatMap((node, sceneIndex) => {
+            if (node.dataset.filmLayout !== "pinned" || !node.dataset.filmTiming) return [];
+            const [approach, departureAt] = node.dataset.filmTiming.split(",").map(Number);
+            return [{ sceneIndex, film: { layout: "pinned", approach, departureAt }, toHeight: innerHeight + 64 }];
+          }));
+        for (const recipe of recipes)
           await run({
             id: `film-resize:${recipe.sceneIndex}`,
             kind: "motion",
             operation: () => reviewFilmResize({ ...item, ...recipe, env }),
-          });
-        if (
-          item.motion !== "reduce" &&
-          recipes.some((recipe) => recipe.layout === "pinned") &&
-          !item.films?.length
-        )
-          row.tests.push({
-            id: "film-resize",
-            state: "unexercised",
-            reason: "Pinned scenes require native timing recipes in films.",
-            scenes: recipes,
           });
       }
       if (!row.tests.length)

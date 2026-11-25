@@ -26,19 +26,40 @@
     {% endif %}
   {% endfor %}
 
+  {% set worker_url = false %}
+  {% set cache_client = false %}
+  {% set search_worker = false %}
+  {% for resource in presentation.theme_resources %}
+    {% if resource.id == "module:publication-worker" %}{% set_global worker_url = resource.url %}{% endif %}
+    {% if resource.id == "module:page-cache-client" %}{% set_global cache_client = resource.url %}{% endif %}
+    {% if resource.id == "module:search-worker" %}{% set_global search_worker = resource.url %}{% endif %}
+  {% endfor %}
+  {% set full_search = presentation.search is defined and presentation.search.page is defined and content.id is defined and presentation.search.page.content.id == content.id %}
+  {% set cache_enabled = false %}
+  {% for output in presentation.discovery %}
+    {% if output.kind == "page-cache" %}{% set_global cache_enabled = worker_url and cache_client %}{% endif %}
+  {% endfor %}
   {% if presentation.browser_modules is defined %}
   <script type="importmap">{{ presentation.browser_modules.import_map | json_script }}</script>
+    {% if full_search %}
+      {% set search_module = presentation.browser_modules.import_map.imports | get(key="@base/search", default=false) %}
+      {% if search_module %}
+  <link rel="modulepreload" href="{{ search_module }}" fetchpriority="low">
+      {% endif %}
+    {% endif %}
     {# Modules no reader sees at first paint wait behind page images, text and the scene modules that reveal them. #}
     {% set background_modules = ["/analytics-consent.js", "/analytics-sdk.js", "/enquiry-context.js", "/webmcp.js", "/webmcp-sdk.js"] %}
     {% for preload in presentation.browser_modules.preloads %}
       {% set_global background = false %}
       {% for ending in background_modules %}{% if preload.url is ending_with(ending) %}{% set_global background = true %}{% endif %}{% endfor %}
+      {% if preload.url != worker_url and preload.url != cache_client and preload.url != search_worker %}
   <link rel="modulepreload" href="{{ preload.url }}"{% if background %} fetchpriority="low"{% endif %}>
+      {% endif %}
     {% endfor %}
   {% endif %}
 
   {% if presentation.search is defined %}
-  <script type="application/json" id="search-corpus">{{ presentation.search | json_script }}</script>
+  <script type="application/json" id="search-corpus"{% if full_search and search_worker %} data-search-worker="{{ search_worker }}"{% endif %}>{{ presentation.search | json_script }}</script>
   {% endif %}
 
   {% set enquiry_destination = false %}
@@ -82,8 +103,13 @@
   <script type="module" src="{{ presentation.interaction.url }}"></script>
   {% endif %}
 
+  {% if cache_enabled and presentation.surface.kind in ["page", "taxonomy"] %}
+  <script type="module" async fetchpriority="low" data-publication-worker="{{ worker_url }}" src="{{ cache_client }}"></script>
+  {% elif not cache_enabled %}
   {# Fetch a same-site page's document on hover or press, never by scanning the page: the browser keeps at most two such fetches and loads no subresources. #}
   <script type="speculationrules">{"prefetch":[{"where":{"and":[{"href_matches":"/*"},{"not":{"selector_matches":"[download], [rel~=nofollow], [data-no-prefetch], [href*='#']"}}]},"eagerness":"moderate"}]}</script>
+
+  {% endif %}
 
   {% if json_ld is defined %}
   <script type="application/ld+json">{{ json_ld | json_script }}</script>

@@ -2,14 +2,17 @@ import { mountSearchExplorer } from './search-explorer.js';
 import { mountSearchPond } from './search-pond.js';
 import { SEARCH_LIMITS } from './search-limits.js';
 import { SEARCH_MATCHING } from './search-matching.js';
-import { loadIndex } from '@base/search-sdk';
+import { searchOptions, startSearchWorker } from './search-worker-client.js';
 import { applyDestination } from './crossings.js';
 import { describeResultContext, readResultContextLabels, renderResultContext } from './result-context.js';
 import { rememberBrowseReturn, takeBrowseReturn } from './return-focus.js';
 
-
 const dimensions = ['kind', 'author', 'project', 'keyword', 'classification'];
 const sorts = ['relevance', 'latest', 'oldest'];
+
+// The native fallback has a synchronous index. A worker result uses the same
+// projection once its message arrives.
+const whenReady = (value, use) => value instanceof Promise ? value.then(use) : use(value);
 export function readSearchState(url) {
   const parameters = new URL(url).searchParams;
   const page = Number(parameters.get('page') || '1');
@@ -65,7 +68,7 @@ export function describeSearchSelection(state, facets, labels = {}) {
   return null;
 }
 
-export function mountSearchPage(root, binding) {
+export function mountSearchPage(root, binding, { preparation = null, workerURL } = {}) {
   const form = root.querySelector('form');
   const status = root.querySelector('[role="status"]');
   const list = root.querySelector('.search-page__results');
@@ -82,7 +85,10 @@ export function mountSearchPage(root, binding) {
   const retry = root.querySelector('[data-search-retry]');
   const labels = readResultContextLabels(root);
   let index = null;
-  let composing = false, pendingFrame = null, inputRevision = 0, liveHistory = false;
+  let initialResultsPending = false;
+  let facetQuery, queryFacets;
+  let composing = false, pendingFrame = null, inputRevision = 0, renderRevision = 0, liveHistory = false;
+  let waitingForIndex = false, pendingSubmit = false;
   let openContext = null, selectedContext = null;
   let contexts = [], cards = [], resultIds = [];
   let explorer = null;
@@ -215,19 +221,53 @@ export function mountSearchPage(root, binding) {
     if (explorer) selectContext(0);
   };
   const render = (history = null) => {
-    try {
-      let result = browseSearch(index, state, pageSize);
+    initialResultsPending = false;
+    const revision = ++renderRevision;
+    const current = () => revision === renderRevision;
+    let selected = state;
+    const apply = result => {
+      if (!current()) return false;
       const pages = Math.max(1, Math.ceil(result.total / pageSize));
-      if (state.page > pages) { state = { ...state, page: pages }; result = browseSearch(index, state, pageSize); }
+      const show = (matches, availableFacets) => {
+        if (!current()) return false;
+        state = selected;
+        facetQuery = state.query;
+        queryFacets = availableFacets;
+        return commit(matches, pages);
+      };
+      const withFacets = matches => {
+        if (!current()) return false;
+        if (!Object.keys(selected.filters).length) return show(matches, matches.facets);
+        if (facetQuery === selected.query && queryFacets) return show(matches, queryFacets);
+        const all = index.browse(selected.query, { limit: pageSize, ...SEARCH_MATCHING });
+        return whenReady(all, unfiltered => show(matches, unfiltered.facets));
+      };
+      if (selected.page <= pages) return withFacets(result);
+      selected = { ...selected, page: pages };
+      return whenReady(browseSearch(index, selected, pageSize), withFacets);
+    };
+    const fail = error => {
+      if (!current()) return false;
+      list.hidden = true; fallback.hidden = false;
+      explorer?.destroy(); explorer = null;
+      if (field) field.hidden = true;
+      for (const pager of pagers) pager.hidden = true;
+      status.textContent = error?.code === 'search_limit' ? root.getAttribute('data-search-query-limit') : status.getAttribute('data-status-unavailable');
+      if (error?.code === 'search_worker') {
+        index = null;
+        if (retry) retry.hidden = false;
+      }
+      return false;
+    };
+    const commit = (result, pages) => {
       selectedContext = openContext = null; contexts = []; cards = []; resultIds = [];
       const entries = result.hits.map(resultNode);
       // Only a complete usable result replaces the original HTML catalogue.
       list.replaceChildren(...entries); list.hidden = false; fallback.hidden = true;
       renderField(result.hits);
       input.value = state.query; selects.sort.value = state.sort;
-      const facets = index.browse(state.query, { limit: pageSize, ...SEARCH_MATCHING }).facets;
-      setFacets(facets);
-      renderContext(facets);
+      setFacets(queryFacets);
+      renderContext(queryFacets);
       const countLabel = result.total === 1 ? root.getAttribute('data-search-count-one') : root.getAttribute('data-search-count');
       status.textContent = result.total ? (countLabel || root.getAttribute('data-search-count') || '').replace('{count}', String(result.total)) : status.getAttribute('data-status-empty');
       for (const pager of pagers) {
@@ -244,17 +284,15 @@ export function mountSearchPage(root, binding) {
         window.history[history === 'replace' ? 'replaceState' : 'pushState'](window.history.state, '', destination);
       }
       return true;
-    } catch (error) {
-      list.hidden = true; fallback.hidden = false;
-      explorer?.destroy(); explorer = null;
-      if (field) field.hidden = true;
-      for (const pager of pagers) pager.hidden = true;
-      status.textContent = error?.code === 'search_limit' ? root.getAttribute('data-search-query-limit') : status.getAttribute('data-status-unavailable');
-      return false;
-    }
+    };
+    try {
+      const result = whenReady(browseSearch(index, selected, pageSize), apply);
+      return result instanceof Promise ? result.catch(fail) : result;
+    } catch (error) { return fail(error); }
   };
   const cancelInput = () => {
     inputRevision++;
+    renderRevision++;
     if (pendingFrame !== null) window.cancelAnimationFrame(pendingFrame);
     pendingFrame = null;
   };
@@ -289,10 +327,13 @@ export function mountSearchPage(root, binding) {
       pendingFrame = null;
       if (composing || !validQuery()) return;
       const previousURL = window.location.href;
-      if (applyInput(liveHistory ? 'replace' : 'push') && window.location.href !== previousURL) liveHistory = true;
+      whenReady(applyInput(liveHistory ? 'replace' : 'push'), applied => {
+        if (applied && window.location.href !== previousURL) liveHistory = true;
+      });
     });
   };
   input.addEventListener('input', event => {
+    renderRevision++;
     markQuery('');
     pond?.nudge();
     if (event.isComposing) cancelInput();
@@ -305,6 +346,7 @@ export function mountSearchPage(root, binding) {
     if (composing || event.isComposing) return;
     liveHistory = false;
     if (index && validQuery(true)) { pond?.scatter(); applyInput('push'); }
+    else if (waitingForIndex && validQuery(true)) pendingSubmit = true;
   });
   form.addEventListener('change', event => { if (event.target !== input) form.requestSubmit(); });
   for (const pager of pagers) pager.addEventListener('click', event => {
@@ -312,18 +354,22 @@ export function mountSearchPage(root, binding) {
     if (!link || event.button > 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault(); cancelInput(); liveHistory = false;
     state = readSearchState(link.href);
-    if (render('push')) {
+    whenReady(render('push'), applied => {
+      if (!applied) return;
       // The next/previous link may disappear at the new boundary. Move to the
       // updated result count only after an explicit page action, not on refinement.
       status.setAttribute('tabindex', '-1');
       status.focus({ preventScroll: true });
       status.scrollIntoView({ block: 'start', behavior: 'instant' });
-    }
+    });
   });
   window.addEventListener('popstate', () => {
     cancelInput(); liveHistory = false; composing = false;
     if (index) { state = readSearchState(window.location.href); render(); }
   });
+  window.addEventListener('scroll', () => {
+    if (initialResultsPending && window.scrollY <= 0) render();
+  }, { passive: true });
   window.addEventListener('pagehide', cancelInput);
   for (const type of ['pointerdown', 'keydown', 'wheel', 'touchstart']) window.addEventListener(type, event => {
     if (event.isTrusted) returnActivity++;
@@ -362,12 +408,41 @@ export function mountSearchPage(root, binding) {
   const load = () => {
     const recovering = document.activeElement === status;
     status.textContent = status.getAttribute('data-status-loading');
-    loadIndex(binding.url, { ...SEARCH_LIMITS, maxResults: pageSize, profile: binding.profile, allowNetwork: true }).then(value => {
+    const worker = preparation || startSearchWorker(workerURL, binding, pageSize);
+    preparation = null;
+    const localIndex = () => import('@base/search-sdk').then(({ loadIndex }) =>
+      loadIndex(binding.url, searchOptions(binding.profile, pageSize)));
+    waitingForIndex = Boolean(worker);
+    if (worker) form.hidden = false;
+    const acquire = worker ? worker.ready.then(() => worker).catch(error => {
+      worker.close();
+      if (error.code === 'search_worker') return localIndex();
+      throw error;
+    }) : localIndex();
+    acquire.then(value => {
       index = value;
-      render(); form.hidden = false;
-      if (recovering && document.activeElement === status) input.focus({ preventScroll: true });
-      if (window.performance?.getEntriesByType('navigation')[0]?.type === 'back_forward') restoreReturn();
+      waitingForIndex = false;
+      const returning = window.performance?.getEntriesByType('navigation')[0]?.type === 'back_forward';
+      const queryChanged = input.value !== state.query;
+      const submitted = pendingSubmit;
+      pendingSubmit = false;
+      let applied;
+      if (submitted || queryChanged && !composing && validQuery()) {
+        applied = applyInput('push');
+      }
+      // Keep the document under a reader who scrolled into the native catalogue.
+      // A query or a return to the top can switch to the shorter search surface.
+      else if (!parameters.size && !returning && window.scrollY > 0 || composing) {
+        initialResultsPending = true;
+        status.textContent = '';
+      } else applied = render();
+      whenReady(applied, () => {
+        form.hidden = false;
+        if (recovering && document.activeElement === status) input.focus({ preventScroll: true });
+        if (returning) restoreReturn();
+      });
     }, () => {
+      waitingForIndex = false;
       status.textContent = status.getAttribute('data-status-unavailable');
       if (!retry) return;
       retry.hidden = false;

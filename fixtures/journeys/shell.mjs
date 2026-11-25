@@ -281,14 +281,16 @@ export async function shell(env) {
       },
     });
   await go(item.url);
-  const toc = page.locator('.reading-outline a[href*="#"]');
-  for (let index = 0; index < (await toc.count()); index++)
+  // Compact layouts move the same sections navigation into the masthead.
+  const fragments = await page.locator('.reading-sections a[href*="#"]').evaluateAll(
+    (links) => [...new Set(links.map((link) => link.getAttribute("href")))],
+  );
+  for (const [index, href] of fragments.entries())
     await run({
       id: `outline:${index}`,
       kind: "reading",
       operation: async () => {
-        const link = toc.nth(index),
-          href = await link.getAttribute("href");
+        const link = page.locator('.reading-sections a[href=' + JSON.stringify(href) + ']').first();
         if (!(await link.isVisible())) {
           const details = link.locator("xpath=ancestor::details[1]");
           if (

@@ -1,0 +1,13 @@
+{% macro still(body, class) %}
+<div class="{{ class }}">
+{% if body.images | length == 1 or body.images | length == 2 %}
+{% set primary = body.images | first %}
+<picture data-gazette-image-block>
+  {% if body.images | length == 2 %}{% set portrait = body.images | last %}<source media="screen and (orientation: portrait)" srcset="{{ portrait.url }}"{% if portrait.width and portrait.height %} width="{{ portrait.width }}" height="{{ portrait.height }}"{% endif %}>{% endif %}
+  <img src="{{ primary.url }}" alt="{{ primary.alt }}"{% if primary.address %} data-gazette-image="{{ primary.address }}"{% endif %}{% if primary.width and primary.height %} width="{{ primary.width }}" height="{{ primary.height }}"{% endif %}{% if primary.loading %} loading="{{ primary.loading }}"{% endif %}{% if primary.fetch_priority %} fetchpriority="{{ primary.fetch_priority }}"{% endif %}>
+</picture>
+{% else %}
+{{ body.html | safe }}
+{% endif %}
+</div>
+{% endmacro still %}

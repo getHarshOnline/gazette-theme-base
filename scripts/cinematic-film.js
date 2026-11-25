@@ -101,10 +101,12 @@ export function mountCinematicFilm({ element, film }) {
   if (Object.values(urls).some(list => list.length !== film.frames)) return;
   const canvas = document.createElement('canvas');
   const initialLayout = wrapper.getAttribute('data-film-layout');
+  const initialTiming = wrapper.getAttribute('data-film-timing');
   const transparent = Boolean(film.transparent);
   const ctx = canvas.getContext('2d', {alpha:transparent});
   if (!ctx) return;
   wrapper.setAttribute('data-film-layout',flow?'flow':'pinned');
+  if (!flow) wrapper.setAttribute('data-film-timing', `${film.approach ?? 0},${film.departureAt ?? 1}`);
   canvas.setAttribute('aria-hidden','true'); element.append(canvas);
   const lifecycle = new AbortController();
   const motionSetting = motionPreference(document);
@@ -707,6 +709,7 @@ export function mountCinematicFilm({ element, film }) {
     restoreAttribute(wrapper,'data-island-state',initialState);
     restoreAttribute(wrapper,'data-film-position',initialPosition);
     restoreAttribute(wrapper,'data-film-layout',initialLayout);
+    restoreAttribute(wrapper,'data-film-timing',initialTiming);
     if(initialDistance)wrapper.style.setProperty('--film-distance',initialDistance);else wrapper.style.removeProperty('--film-distance');
     if(initialCopyClip)wrapper.style.setProperty('--film-copy-clip',initialCopyClip);else wrapper.style.removeProperty('--film-copy-clip');
     restorePresentation();

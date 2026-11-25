@@ -11,8 +11,8 @@ const settingsSource = imageModesSource + readFileSync(new URL('../scripts/setti
 const restoreSource = readFileSync(new URL('../templates/partials/preferences.html', import.meta.url), 'utf8')
   .replace(/<\/?script>/g, '');
 
-function fixture({ scheme = 'light dark', stored = {}, blocked = false, media = '(prefers-color-scheme: dark)' } = {}) {
-  const attributes = new Map();
+function fixture({ scheme = 'light dark', stored = {}, blocked = false, reduced = false, media = '(prefers-color-scheme: dark)' } = {}) {
+  const attributes = new Map([['data-mode', 'system']]);
   const storage = new Map(Object.entries(stored));
   const events = [];
   const root = {
@@ -46,7 +46,7 @@ function fixture({ scheme = 'light dark', stored = {}, blocked = false, media = 
     return key ? { querySelectorAll: () => groups[key] } : null;
   } };
   const context = vm.createContext({
-    document: { documentElement: root, dispatchEvent: event => events.push(event), querySelectorAll: () => [source] },
+    document: { documentElement: root, defaultView: { matchMedia: () => ({ matches: reduced }) }, dispatchEvent: event => events.push(event), querySelectorAll: () => [source] },
     window: { localStorage, addEventListener() {} }, getComputedStyle: () => ({ colorScheme: scheme }),
     CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options.detail; } }
   });
@@ -63,13 +63,12 @@ function fixture({ scheme = 'light dark', stored = {}, blocked = false, media = 
   };
 }
 
-test('opening a dark-first world reflects Dark without saving a choice', () => {
-  const f = fixture({ scheme: 'dark' });
-  assert.equal(f.selected('color-mode'), 'dark');
-  assert.equal(f.root.getAttribute('data-mode'), null);
-  assert.equal(f.storage.has('color-mode'), false);
-  f.activate('color-mode', 'dark', 'click');
-  assert.equal(f.storage.get('color-mode'), 'dark');
+test('a first visit follows the colour scheme and enables motion unless the system asks to reduce', () => {
+  const normal = fixture({ scheme: 'dark' });
+  assert.equal(normal.selected('color-mode'), 'system');
+  assert.equal(normal.selected('motion-preference'), 'allow');
+  assert.equal(normal.storage.size, 0);
+  assert.equal(fixture({ reduced: true }).selected('motion-preference'), 'system');
 });
 
 test('System persists as System across navigation, regardless of current scheme', () => {
@@ -86,7 +85,7 @@ test('light-first worlds remain unsaved System until a deliberate choice', () =>
   const f = fixture();
   assert.equal(f.selected('color-mode'), 'system');
   assert.equal(f.storage.size, 0);
-  f.activate('color-mode', 'system', 'click');
+  f.activate('color-mode', 'system');
   assert.equal(f.storage.get('color-mode'), 'system');
 });
 
@@ -96,7 +95,7 @@ test('explicit modes restore, invalid modes do not; blocked storage keeps a loca
     assert.equal(f.root.getAttribute('data-mode'), mode);
     assert.equal(f.selected('color-mode'), mode);
   }
-  assert.equal(fixture({ stored: { 'color-mode': 'invalid' } }).root.getAttribute('data-mode'), null);
+  assert.equal(fixture({ stored: { 'color-mode': 'invalid' } }).root.getAttribute('data-mode'), 'system');
   const blocked = fixture({ blocked: true });
   blocked.activate('color-mode', 'light');
   assert.equal(blocked.root.getAttribute('data-mode'), 'light');
@@ -104,16 +103,16 @@ test('explicit modes restore, invalid modes do not; blocked storage keeps a loca
   assert.equal(blocked.status.textContent,'Applies here; could not save.');
 });
 
-test('motion retains its remove-on-System contract and emits only on change', () => {
+test('motion keeps explicit System distinct from the first-visit choice', () => {
   const f = fixture({ stored: { 'motion-preference': 'reduce' } });
   assert.equal(f.selected('motion-preference'), 'reduce');
   assert.equal(f.events.length, 0);
   f.activate('motion-preference', 'system');
-  assert.equal(f.root.getAttribute('data-motion'), null);
-  assert.equal(f.storage.has('motion-preference'), false);
+  assert.equal(f.root.getAttribute('data-motion'), 'system');
+  assert.equal(f.storage.get('motion-preference'), 'system');
   assert.equal(f.events.length, 1);
   assert.equal(f.events[0].type, 'motion-preference');
-  assert.equal(f.events[0].detail.motion, null);
+  assert.equal(f.events[0].detail.motion, 'system');
 });
 
 test('a restored or changed colour mode moves image dark sources with it', () => {
@@ -124,7 +123,7 @@ test('a restored or changed colour mode moves image dark sources with it', () =>
   restored.activate('color-mode', 'system');
   assert.equal(restored.media(), '(prefers-color-scheme: dark)');
   const pinned = fixture({ scheme: 'dark', media: 'all' });
-  assert.equal(pinned.media(), 'all');
+  assert.equal(pinned.media(), '(prefers-color-scheme: dark)');
   pinned.activate('color-mode', 'system');
   assert.equal(pinned.media(), '(prefers-color-scheme: dark)', 'System follows the operating system, not the world starting mode');
 });

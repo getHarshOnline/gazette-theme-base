@@ -12,7 +12,7 @@
 {% set publication_metadata = site.metadata | default(value=false) %}
 <!doctype html>
 
-<html{% if content.language is defined %} lang="{{ content.language }}"{% endif %}{% if presentation.palette %} data-palette="{{ presentation.palette }}"{% endif %} data-page-mode="{% block page_mode %}{{ frame::page_mode(content=content,product_entrance=product_entrance) }}{% endblock page_mode %}" data-footer-treatment="{% block footer_treatment %}{% if product_entrance or content.structure.kind == 'page' and content.structure.family.kind == 'project' %}colophon{% else %}quiet{% endif %}{% endblock footer_treatment %}">
+<html data-mode="system"{% if content.language is defined %} lang="{{ content.language }}"{% endif %}{% if presentation.palette %} data-palette="{{ presentation.palette }}"{% endif %} data-page-mode="{% block page_mode %}{{ frame::page_mode(content=content,product_entrance=product_entrance) }}{% endblock page_mode %}" data-footer-treatment="{% block footer_treatment %}{% if product_entrance or content.structure.kind == 'page' and content.structure.family.kind == 'project' %}colophon{% else %}quiet{% endif %}{% endblock footer_treatment %}">
 <head>
   <meta charset="utf-8">
 
@@ -73,7 +73,6 @@
 
   <a class="skip-link" href="#main">{{ presentation.chrome.skip_to_content_label }}</a>
   {% endif %}
-  {% include "base/partials/link-descriptions.html" %}
   {% set serving_site = content.site %}
   {% set is_search_page = presentation.search is defined and presentation.search.page is defined and presentation.search.page and presentation.search.page.content.id == content.id %}
   {% set services_link = false %}
@@ -174,6 +173,8 @@
     {{ invitations::services(destination=services_link,copy=presentation.chrome.regions,source=serving_site,present=has_services_invitation,closing=true) }}
     {% endblock closing %}
   </main>
+  {% include "base/partials/link-descriptions.html" %}
+  {% include "base/partials/shell-dialog.html" %}
   {% include "base/partials/selection-assistance.html" %}
   {% include "base/partials/footer.html" %}
 </body>

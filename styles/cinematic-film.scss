@@ -9,7 +9,7 @@
   .cinematic-story, .cinematic-beat { position: relative; }
   .cinematic-beat { isolation: isolate; }
   .cinematic-still { position: absolute; inset: 0; z-index: -1; }
-  .cinematic-still > [data-gazette-image-block] { block-size: 100%; }
+  .cinematic-still > :is(picture,[data-gazette-image-block]) { display: block; block-size: 100%; }
   .cinematic-still p { margin: 0; block-size: 100%; }
   .cinematic-still img { display: block; inline-size: 100%; block-size: 100%; object-fit: cover; }
   .cinematic-still > [data-gazette-image-block]:nth-child(2) { display: none; }
@@ -62,7 +62,7 @@
     .cinematic-beat { break-inside: avoid; padding: var(--space-5); }
     .cinematic-still,
     :is([data-island-state='preparing'],[data-island-state='drawn']):has(> [data-gazette-fallback] > .cinematic-story) .cinematic-still { display: block !important; }
-    .cinematic-still,.cinematic-still > [data-gazette-image-block],.cinematic-still > [data-gazette-image-block] > p {
+    .cinematic-still,.cinematic-still > :is(picture,[data-gazette-image-block]),.cinematic-still > [data-gazette-image-block] > p {
       position: static !important; inset: auto !important;
       block-size: auto !important; min-block-size: 0 !important; max-block-size: none !important;
       overflow: visible !important; clip-path: none !important;

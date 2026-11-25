@@ -2,7 +2,7 @@ import { syncImageModes, watchImageModes } from './image-modes.js';
 
 const contracts = {
   'color-mode': { attribute: 'data-mode', values: ['light', 'dark', 'system'] },
-  'motion-preference': { attribute: 'data-motion', values: ['reduce', 'allow'] }
+  'motion-preference': { attribute: 'data-motion', values: ['reduce', 'allow', 'system'] }
 };
 
 export function mountSettings(tenant) {
@@ -12,8 +12,8 @@ export function mountSettings(tenant) {
   for (const [key, contract] of Object.entries(contracts)) {
     const group = tenant.querySelector(`[data-setting="${key}"]`);
     if (!group) continue;
-    const defaultMode = key === 'color-mode' && getComputedStyle(root).colorScheme === 'dark'
-      ? 'dark' : 'system';
+    const defaultMode = key === 'motion-preference' && !document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+      ? 'allow' : 'system';
     const selected = root.getAttribute(contract.attribute) || defaultMode;
     for (const input of group.querySelectorAll('input[type="radio"]')) {
       input.checked = input.value === selected;
@@ -37,7 +37,7 @@ export function mountSettings(tenant) {
       };
       input.addEventListener('change', applyChoice);
       input.addEventListener('click', () => {
-        if (key === 'color-mode' && !root.hasAttribute(contract.attribute)) applyChoice();
+        if (!root.hasAttribute(contract.attribute)) applyChoice();
       });
     }
   }

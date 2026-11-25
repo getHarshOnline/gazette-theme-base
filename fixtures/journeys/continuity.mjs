@@ -335,11 +335,10 @@ export async function reviewFilmResize(options) {
   const { sceneIndex, progress, film, toHeight = 600 } = options;
   check(
     Number.isInteger(sceneIndex) &&
-      progress >= 0 &&
-      progress <= 1 &&
+      (progress === undefined || progress >= 0 && progress <= 1) &&
       film &&
       film.layout !== "flow",
-    "Supply the actual pinned film recipe, sceneIndex and reading progress",
+    "Supply the actual pinned film recipe and scene index",
   );
   check(
     (film.departureAt ?? 1) > 0 &&
@@ -375,8 +374,9 @@ export async function reviewFilmResize(options) {
         );
       if (!(d > 0)) return null;
       const lead = recipe.approach * innerHeight;
-      const p = recipe.progress,
-        end = recipe.departureAt;
+      const end = recipe.departureAt;
+      // Without an authored test position, enter halfway through the occupied hold.
+      const p = recipe.progress ?? (lead + d / 2) / (d + lead) * end;
       const offset =
         p <= end
           ? (p / end) * (d + lead) - lead

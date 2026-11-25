@@ -72,9 +72,10 @@ function fixture({ saved, blocked = false, absent = false, invalid = false, boot
       disconnect() { this.observed.clear(); }
     };
   }
+  let settingsReady = !bootstrap;
   document.querySelector = () => ({ querySelector: selector => ({
     'dialog': { showModal() {} },
-    '[data-command-trigger="settings"]': { hidden: !usable },
+    '[data-command-trigger="settings"]': { hidden: !usable || !settingsReady },
     '[data-tenant="settings"]': tenant
   })[selector] });
   const context = vm.createContext({ ...(bootstrap ? { document } : {}), createAnalytics(configuration, window) {
@@ -86,6 +87,7 @@ function fixture({ saved, blocked = false, absent = false, invalid = false, boot
   const controller = bootstrap ? null : context.mountAnalyticsConsent(tenant);
   return {
     browser, document, field, status, warning, reload, storage, controller, events, submissions, observers,
+    openSettings() { settingsReady = true; document.emit('publication-shell-ready'); },
     anchor(button, kind = 'internal-native', { href = true, anchor = true } = {}) {
       const attributes = { 'data-enquiry-button': button, 'data-gazette-destination-kind': kind };
       const link = { hasAttribute: name => name === 'href' && href,
@@ -176,12 +178,12 @@ test('disposing removes controls and listeners and stops an active controller', 
 
 test('the standalone module waits for deferred Settings setup before restoring consent', async () => {
   const f = fixture({ saved: 'allow', bootstrap: true });
-  assert.equal(f.creates, 0); f.document.emit('DOMContentLoaded');
+  assert.equal(f.creates, 0); f.openSettings();
   assert.equal(f.grants, 1); await f.loaded(); assert.equal(f.events.length, 1);
 });
 test('an unavailable Settings trigger prevents restoring a saved grant', () => {
   const f = fixture({ saved: 'allow', bootstrap: true, usable: false });
-  f.document.emit('DOMContentLoaded'); assert.equal(f.creates, 0); assert.equal(f.field.hidden, true);
+  f.openSettings(); assert.equal(f.creates, 0); assert.equal(f.field.hidden, true);
 });
 
 test('marked links emit nothing before consent or while loading, and never replay those clicks', async () => {

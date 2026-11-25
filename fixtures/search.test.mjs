@@ -38,7 +38,8 @@ test('shared acquisition retains and searches a complete corpus beyond eight MiB
 const { describeResultContext, readResultContextLabels, renderResultContext, formatResultDate } = await import('data:text/javascript;base64,' + Buffer.from(readFileSync(new URL('../scripts/result-context.js', import.meta.url))).toString('base64'));
 
 const source = readFileSync(new URL('../scripts/search.js', import.meta.url), 'utf8')
-  .replace(/^import .*;\n/gm, '').replace(/^export \{.*\} from .*;\n/gm, '').replace('export function mountSearch', 'function mountSearch');
+  .replace(/^import .*;\n/gm, '').replace(/^export \{.*\} from .*;\n/gm, '').replace('export function mountSearch', 'function mountSearch')
+  .replace("import('@base/search-sdk')", 'Promise.resolve({ loadIndex })');
 const linkSource = readFileSync(new URL('../scripts/crossings.js', import.meta.url), 'utf8').replaceAll('export function', 'function');
 class Element {
   constructor(tag = '') { this.tag = tag; this.attrs = {}; this.handlers = {}; this.children = []; this.value = ''; this.hidden = false; this.textContent = ''; this.scrollTop = 0; }
@@ -92,6 +93,7 @@ test('lazy single acquisition retains latest query; closed tenant does not reope
   const f = fixture(() => { calls++; return new Promise(resolve => { done = resolve; }); });
   assert.equal(calls, 0);
   f.controller.activate(); f.type('old'); f.type('latest'); f.controller.deactivate();
+  await flush();
   done({ search(query) { assert.equal(query, 'latest'); return [{ record: record('Latest') }]; } });
   await flush();
   assert.equal(f.list.hidden, true);
@@ -166,6 +168,7 @@ test('return waits for the native index and restores the exact identity rather t
   f.controller.activate({restore:{query:'  answer ',id:'page:Answer',url:'https://example.test/mount/answer/'},isCurrent:()=>true});
   assert.equal(f.input.value,'  answer ');
   assert.equal(f.status.textContent,'loading');
+  await flush();
   done({search:()=>[{record:record('Other','https://example.test/other/')},{record:record('Answer')}]}); await flush();
   assert.equal(f.input.getAttribute('aria-activedescendant'),'results-1');
   assert.equal(f.input.focused,true); assert.equal(resultOption(f,1).getAttribute('aria-selected'),'true');
@@ -189,6 +192,7 @@ test('input, dismissal and intervening activity never surrender control to a pen
     if(action==='input')f.type('new query');
     if(action==='dismiss')f.controller.deactivate();
     if(action==='activity')current=false;
+    await flush();
     done({search:()=>[{record:record('Answer')}]}); await flush();
     assert.equal(f.input.getAttribute('aria-activedescendant'),null,action);
     if(action==='input')assert.equal(f.input.value,'new query');

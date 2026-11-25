@@ -184,6 +184,9 @@
   .publication-body p:has(math:not([display='block'])) { text-wrap: wrap; }
   p:has(> math[display='block']) { overflow-x: auto; padding-block: var(--space-3); }
   p > math[display='block'] { inline-size: max-content; min-inline-size: 100%; }
+  @media print {
+    :is(.publication-body,.reading-notes__body) math { font-size: clamp(0.75em,3.5vi,1em); }
+  }
   @include tables.recipes;
   main:has(> .quote-deck--folder) > .publication-layout--framing { max-inline-size: var(--layout-measure); margin-inline: auto; }
   .publication-index { list-style: none; padding: 0; margin-block-start: var(--space-section); }

@@ -12,7 +12,7 @@ The command Search input keeps focus while the active result moves through the l
 
 ## Full-page Search
 
-Search results preserve their supplied title, excerpt, publication context and resolved destination. Its complete native catalogue remains usable without scripts or after acquisition failure. The shared page controller enhances it only after the whole selected corpus loads. Typing updates the bounded native SDK query, filters, chronology, complete counts and shareable query/page state.
+Search results preserve their supplied title, excerpt, publication context and resolved destination. The Search page starts its controller and corpus together. A dedicated worker loads the corpus and runs the shared SDK, leaving the page free for scrolling and typing. The native catalogue stays readable until the complete results are ready, without scripts, and after acquisition failure. Browsers that cannot start the worker use the same SDK in the page. The latest query and filters determine the results and shareable URL.
 
 The anchored native select picker uses the active domain’s tokens, with ordinary select fallback. Additional result context uses a compact native disclosure card beside a direct title link; it does not inherit command-listbox interaction. The shared depth carousel presents the actual results through native scrolling, selection and destination links.
 

@@ -6,7 +6,7 @@
 {% if resources and copy %}
 <nav class="project-links project-resources" aria-label="{{ copy | get(key='base:product-resources', default='') }}{% if resources.name is defined and resources.name %}: {{ resources.name }}{% endif %}">
   <ul>
-  {% for kind in ['code-documentation', 'learn', 'github', 'mentions', 'available-through'] %}
+  {% for kind in ['code-documentation', 'learn', 'github', 'mentions', 'available-through', 'license', 'notice'] %}
     {% set label_key = ['base:product-', kind] | join(sep='') %}
     {% set description_key = [label_key, '-description'] | join(sep='') %}
     {% set missing_key = [label_key, '-unavailable'] | join(sep='') %}

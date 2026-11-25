@@ -44,5 +44,7 @@
   @media print {
     [data-gazette-table] { overflow: visible; }
     th,td { overflow-wrap: anywhere; }
+    [data-gazette-table] table { table-layout: fixed; }
+    [data-gazette-table] table > :is(thead,tbody,tfoot) > tr > :is(th,td) { padding-inline: var(--space-1); }
   }
 }

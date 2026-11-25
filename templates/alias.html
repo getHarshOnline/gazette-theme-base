@@ -7,4 +7,4 @@
 {% include "base/partials/preferences.html" %}
 {% include "base/partials/resources.html" %}
 {% block head_extra %}{% endblock head_extra %}
-</head><body>{% include "base/partials/link-descriptions.html" %}<main id="main"><h1>{{ redirect_title }}</h1><p><a href="{{ route.canonical_url }}" {{ links::attributes(copy=presentation.chrome.regions | default(value=false), destination=presentation.redirect_destination | default(value=false)) }}>{{ presentation.chrome.regions | get(key="base:redirect-link", default=route.canonical_url) }}</a></p></main></body></html>
+</head><body><main id="main"><h1>{{ redirect_title }}</h1><p><a href="{{ route.canonical_url }}" {{ links::attributes(copy=presentation.chrome.regions | default(value=false), destination=presentation.redirect_destination | default(value=false)) }}>{{ presentation.chrome.regions | get(key="base:redirect-link", default=route.canonical_url) }}</a></p></main>{% include "base/partials/link-descriptions.html" %}</body></html>

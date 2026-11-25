@@ -32,6 +32,7 @@
   pre .syntax-punctuation { color: var(--material-code-punctuation); }
   pre .syntax-comment,pre .syntax-comment * { color: var(--material-code-comment); }
   @media print {
+    :not(pre) > code { overflow-wrap: anywhere; }
     pre {
       color: var(--color-ink); background: var(--color-sheet);
       border: var(--stroke-hair) solid var(--color-line);
